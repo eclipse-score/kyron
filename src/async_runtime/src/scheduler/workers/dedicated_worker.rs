@@ -20,6 +20,7 @@ use crate::{
         scheduler_mt::{AsyncScheduler, DedicatedScheduler},
         task::async_task::TaskPollResult,
         waker::create_waker,
+        workers::{spawn_thread, Thread, ThreadParameters},
     },
     TaskRef,
 };
@@ -33,7 +34,7 @@ use super::worker_types::WorkerId;
 const LOCAL_STORAGE_SIZE_REDUCTION: usize = 8;
 
 pub(crate) struct DedicatedWorker {
-    thread_handle: Option<std::thread::JoinHandle<()>>,
+    thread_handle: Option<Thread>,
     id: WorkerId,
 }
 
@@ -47,6 +48,7 @@ impl DedicatedWorker {
         scheduler: Arc<AsyncScheduler>,
         dedicated_scheduler: Arc<DedicatedScheduler>,
         ready_notifier: ThreadReadyNotifier,
+        thread_params: &ThreadParameters,
     ) {
         self.thread_handle = {
             let queue = self.get_queue(&dedicated_scheduler);
@@ -54,9 +56,9 @@ impl DedicatedWorker {
             let local_size = queue.capacity() / LOCAL_STORAGE_SIZE_REDUCTION;
 
             Some(
-                std::thread::Builder::new()
-                    .name(format!("dworker{}", self.id.worker_id()))
-                    .spawn(move || {
+                spawn_thread(
+                    &self.id,
+                    move || {
                         let internal = WorkerInner {
                             dedicated_scheduler,
                             consumer: queue,
@@ -65,8 +67,10 @@ impl DedicatedWorker {
                         };
 
                         Self::run_internal(internal, scheduler, ready_notifier);
-                    })
-                    .unwrap(),
+                    },
+                    thread_params,
+                )
+                .unwrap(),
             )
         };
     }

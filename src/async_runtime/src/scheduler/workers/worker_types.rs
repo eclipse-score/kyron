@@ -29,6 +29,7 @@ pub fn create_steal_queue(size: usize) -> TaskStealQueue {
 pub(super) const WORKER_STATE_SLEEPING_CV: u8 = 0b00000000;
 pub(super) const WORKER_STATE_NOTIFIED: u8 = 0b00000001; // Was asked to wake-up
 pub(super) const WORKER_STATE_EXECUTING: u8 = 0b00000011;
+pub(super) const WORKER_STATE_SHUTTINGDOWN: u8 = 0b00000100;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct UniqueWorkerId(u64);
@@ -118,7 +119,7 @@ pub(crate) struct WorkerInteractorInnner {
 
     pub(super) state: WorkerState,
     pub(super) mtx: std::sync::Mutex<()>,
-    pub(super) cv: std::sync::Condvar,
+    pub(crate) cv: std::sync::Condvar,
 }
 
 impl WorkerInteractor {

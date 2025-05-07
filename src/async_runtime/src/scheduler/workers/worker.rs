@@ -14,7 +14,7 @@
 use core::task::Context;
 use std::{rc::Rc, sync::Arc};
 
-use crate::scheduler::{scheduler_mt::DedicatedScheduler, waker::create_waker};
+use crate::scheduler::{scheduler_mt::DedicatedScheduler, waker::create_waker, workers::Thread};
 use foundation::base::fast_rand::FastRand;
 use foundation::containers::spmc_queue::BoundProducerConsumer;
 use foundation::prelude::*;
@@ -24,14 +24,16 @@ use crate::scheduler::{
     context::{ctx_get_worker_id, ctx_initialize, ContextBuilder},
     scheduler_mt::AsyncScheduler,
     task::async_task::*,
+    workers::{spawn_thread, ThreadParameters},
 };
 
 use super::worker_types::*;
 
 // The facade to represent this in runtime
 pub(crate) struct Worker {
-    thread_handle: Option<std::thread::JoinHandle<()>>,
+    thread_handle: Option<Thread>,
     id: WorkerId,
+    scheduler: Option<Arc<AsyncScheduler>>,
 }
 
 #[derive(PartialEq)]
@@ -63,8 +65,12 @@ struct WorkerInner {
 ///
 ///
 impl Worker {
-    pub(crate) fn new(_prio: Option<u16>, id: WorkerId) -> Self {
-        Self { thread_handle: None, id }
+    pub(crate) fn new(id: WorkerId) -> Self {
+        Self {
+            thread_handle: None,
+            id,
+            scheduler: None,
+        }
     }
 
     pub(crate) fn start(
@@ -72,31 +78,34 @@ impl Worker {
         scheduler: Arc<AsyncScheduler>,
         dedicated_scheduler: Arc<DedicatedScheduler>,
         ready_notifier: ThreadReadyNotifier,
+        thread_params: &ThreadParameters,
     ) {
+        self.scheduler = Some(scheduler.clone());
         self.thread_handle = {
             let interactor = scheduler.worker_access[self.id.worker_id() as usize].clone();
             let id = self.id;
 
             // Entering a thread
-            Some(
-                std::thread::Builder::new()
-                    .name(format!("aworker{}", self.id.worker_id()))
-                    .spawn(move || {
-                        let prod_consumer = interactor.steal_handle.get_boundedl().unwrap();
+            let thread = spawn_thread(
+                &self.id,
+                move || {
+                    let prod_consumer = interactor.steal_handle.get_boundedl().unwrap();
 
-                        let internal = WorkerInner {
-                            own_interactor: interactor,
-                            local_state: LocalState::Executing,
-                            scheduler: scheduler.clone(),
-                            id,
-                            producer_consumer: Rc::new(prod_consumer),
-                            randomness_source: FastRand::new(82382389432984 / (id.worker_id() as u64 + 1)), // Random seed for now as const
-                        };
+                    let internal = WorkerInner {
+                        own_interactor: interactor,
+                        local_state: LocalState::Executing,
+                        scheduler: scheduler.clone(),
+                        id,
+                        producer_consumer: Rc::new(prod_consumer),
+                        randomness_source: FastRand::new(82382389432984 / (id.worker_id() as u64 + 1)), // Random seed for now as const
+                    };
 
-                        Self::run_internal(internal, dedicated_scheduler, ready_notifier);
-                    })
-                    .unwrap(),
+                    Self::run_internal(internal, dedicated_scheduler, ready_notifier);
+                },
+                thread_params,
             )
+            .unwrap();
+            Some(thread)
         };
     }
 
@@ -107,6 +116,19 @@ impl Worker {
         ready_notifier.ready();
 
         worker.run();
+    }
+
+    pub(crate) fn stop(&mut self) {
+        if let Some(scheduler) = &self.scheduler {
+            // Set the state to shutting down
+            scheduler.worker_access[self.id.worker_id() as usize]
+                .state
+                .0
+                .store(WORKER_STATE_SHUTTINGDOWN, std::sync::atomic::Ordering::SeqCst);
+
+            // wake up the worker in case it is parked, it then shuts down
+            scheduler.notify_worker(self.id.worker_id());
+        }
     }
 }
 
@@ -129,6 +151,12 @@ impl WorkerInner {
 
     fn run(&mut self) {
         loop {
+            // Check if we should stop
+            if self.own_interactor.state.0.load(std::sync::atomic::Ordering::Acquire) == WORKER_STATE_SHUTTINGDOWN {
+                debug!("Worker{} received stop request, shutting down", self.id.worker_id());
+                return;
+            }
+
             let (task_opt, should_notify) = self.try_pick_work();
 
             if let Some(task) = task_opt {
@@ -188,6 +216,10 @@ impl WorkerInner {
                 debug!("Notified while try to sleep, searching again");
                 return;
             }
+            Err(WORKER_STATE_SHUTTINGDOWN) => {
+                // If we should shutdown, we simply need to return. And the run loop exits itself.
+                return;
+            }
             Err(s) => {
                 panic!("Inconsistent state when parking: {}", s);
             }
@@ -205,6 +237,10 @@ impl WorkerInner {
                 Ok(_) => {
                     self.scheduler.transition_from_parked(self.get_worker_id());
                     debug!("Woken up from sleep");
+                    break;
+                }
+                Err(WORKER_STATE_SHUTTINGDOWN) => {
+                    // break here and run loop will exit
                     break;
                 }
                 Err(_) => {

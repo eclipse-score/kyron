@@ -25,6 +25,8 @@ use foundation::containers::trigger_queue::TriggerQueue;
 use foundation::prelude::*;
 use foundation::threading::thread_wait_barrier::ThreadWaitBarrier;
 
+use crate::scheduler::{workers::ThreadParameters, SchedulerType};
+
 pub struct ExecutionEngine {
     async_workers: Vec<Worker>,
     async_queues: Vec<TaskStealQueue>,
@@ -32,6 +34,8 @@ pub struct ExecutionEngine {
 
     dedicated_workers: Vec<DedicatedWorker>,
     dedicated_scheduler: Arc<DedicatedScheduler>,
+
+    thread_params: ThreadParameters,
 }
 
 impl ExecutionEngine {
@@ -52,6 +56,7 @@ impl ExecutionEngine {
                 self.async_scheduler.clone(),
                 self.dedicated_scheduler.clone(),
                 start_barrier.get_notifier().unwrap(),
+                &self.thread_params,
             );
         });
 
@@ -60,6 +65,7 @@ impl ExecutionEngine {
                 self.async_scheduler.clone(),
                 self.dedicated_scheduler.clone(),
                 start_barrier.get_notifier().unwrap(),
+                &self.thread_params,
             );
         });
 
@@ -81,10 +87,19 @@ impl ExecutionEngine {
     }
 }
 
+impl Drop for ExecutionEngine {
+    fn drop(&mut self) {
+        // Stop all workers
+        for worker in self.async_workers.iter_mut() {
+            worker.stop();
+        }
+    }
+}
+
 pub struct ExecutionEngineBuilder {
     async_workers_cnt: usize,
     queue_size: usize,
-    priority: Option<u16>,
+    thread_params: ThreadParameters,
 
     dedicated_workers_ids: GrowableVec<UniqueWorkerId>,
 }
@@ -100,8 +115,8 @@ impl ExecutionEngineBuilder {
         Self {
             async_workers_cnt: 1,
             queue_size: 256,
-            priority: None,
             dedicated_workers_ids: GrowableVec::new(2),
+            thread_params: ThreadParameters::default(),
         }
     }
 
@@ -123,9 +138,24 @@ impl ExecutionEngineBuilder {
         self
     }
 
-    pub fn priority(mut self, prio: u16) -> Self {
-        self.priority = Some(prio);
-        todo!()
+    pub fn thread_priority(mut self, thread_prio: u8) -> Self {
+        self.thread_params.priority = Some(thread_prio);
+        self
+    }
+
+    pub fn thread_affinity(mut self, thread_affinity: usize) -> Self {
+        self.thread_params.affinity = Some(thread_affinity);
+        self
+    }
+
+    pub fn thread_scheduler(mut self, thread_scheduler_type: SchedulerType) -> Self {
+        self.thread_params.scheduler_type = Some(thread_scheduler_type);
+        self
+    }
+
+    pub fn thread_stack_size(mut self, thread_stack_size: u64) -> Self {
+        self.thread_params.stack_size = Some(thread_stack_size);
+        self
     }
 
     ///
@@ -167,10 +197,12 @@ impl ExecutionEngineBuilder {
         let mut async_workers = Vec::new(self.async_workers_cnt);
 
         for i in 0..self.async_workers_cnt {
-            async_workers.push(Worker::new(
-                self.priority,
-                WorkerId::new(format!("arunner{}", i).as_str().into(), 0, i as u8, WorkerType::Async),
-            ));
+            async_workers.push(Worker::new(WorkerId::new(
+                format!("arunner{}", i).as_str().into(),
+                0,
+                i as u8,
+                WorkerType::Async,
+            )));
         }
 
         // Create dedicated workers part
@@ -199,6 +231,7 @@ impl ExecutionEngineBuilder {
             async_scheduler,
             dedicated_workers,
             dedicated_scheduler,
+            thread_params: self.thread_params,
         }
     }
 }

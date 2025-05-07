@@ -154,6 +154,10 @@ impl AsyncScheduler {
         }
     }
 
+    pub(super) fn notify_worker(&self, worker_id: u8) {
+        self.worker_access[worker_id as usize].cv.notify_one();
+    }
+
     //
     // A worker should be notified only if no other workers are already in the searching state.
     //

@@ -18,3 +18,20 @@ pub mod scheduler_mt;
 pub mod task;
 pub mod waker;
 pub(crate) mod workers;
+
+#[derive(Clone)]
+pub enum SchedulerType {
+    Fifo,
+    RoundRobin,
+    Other,
+}
+
+impl From<&SchedulerType> for iceoryx2_bb_posix::scheduler::Scheduler {
+    fn from(scheduler_type: &SchedulerType) -> Self {
+        match scheduler_type {
+            SchedulerType::Fifo => Self::Fifo,
+            SchedulerType::RoundRobin => Self::RoundRobin,
+            SchedulerType::Other => Self::Other,
+        }
+    }
+}
