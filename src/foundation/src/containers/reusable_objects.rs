@@ -44,6 +44,8 @@ pub struct ReusableObjects<T: ReusableObjectTrait> {
     size: usize,                     // number of futures
 }
 
+unsafe impl<T: ReusableObjectTrait + Send> Send for ReusableObjects<T> {}
+
 impl<T: ReusableObjectTrait> ReusableObjects<T> {
     ///
     /// Creates a pool with `cnt` objects available using `init` fn

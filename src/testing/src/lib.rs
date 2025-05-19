@@ -15,3 +15,10 @@ pub mod mock_fn;
 pub mod poller;
 pub mod prelude;
 pub mod waker;
+
+pub fn assert_poll_ready<T: PartialEq + std::fmt::Debug>(res: std::task::Poll<T>, val: T) {
+    match res {
+        std::task::Poll::Ready(v) => assert_eq!(val, v),
+        std::task::Poll::Pending => panic!("Shall have Ready value and not Pending"),
+    }
+}

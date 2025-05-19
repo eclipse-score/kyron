@@ -32,7 +32,7 @@ impl SchedulerSyncMock {
     pub fn wait_for_wake(&self) -> bool {
         let mut u = self
             .cv
-            .wait_timeout_while(self.mtx.lock().unwrap(), Duration::from_millis(100), |g| !*g)
+            .wait_timeout_while(self.mtx.lock().unwrap(), Duration::from_millis(10), |g| !*g)
             .unwrap();
 
         if u.1.timed_out() {

@@ -11,4 +11,5 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
+pub mod spmc_broadcast;
 pub mod spsc;

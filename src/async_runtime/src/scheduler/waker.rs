@@ -147,7 +147,6 @@ mod tests {
     use crate::testing::*;
     use loom::model::Builder;
     use std::sync::Arc;
-    use testing::*;
 
     #[test]
     fn test_atomic_waker_mt() {

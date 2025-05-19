@@ -11,8 +11,8 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
-use foundation::prelude::*;
-use std::{future::Future, sync::Arc, task::Waker};
+use foundation::{not_recoverable_error, prelude::*};
+use std::{future::Future, marker::PhantomData, sync::Arc, task::Waker};
 
 use crate::{
     futures::{FutureInternalReturn, FutureState},
@@ -25,7 +25,16 @@ use crate::{
 pub fn create_channel_default<T: Copy>() -> (Sender<T, CHANNEL_SIZE>, Receiver<T, CHANNEL_SIZE>) {
     let chan = Arc::new(Channel::new());
 
-    (Sender { chan: chan.clone() }, Receiver { chan })
+    (
+        Sender {
+            chan: chan.clone(),
+            _not_sync: PhantomData,
+        },
+        Receiver {
+            chan,
+            _not_sync: PhantomData,
+        },
+    )
 }
 
 ///
@@ -34,11 +43,21 @@ pub fn create_channel_default<T: Copy>() -> (Sender<T, CHANNEL_SIZE>, Receiver<T
 pub fn create_channel<T: Copy, const SIZE: usize>() -> (Sender<T, SIZE>, Receiver<T, SIZE>) {
     let chan = Arc::new(Channel::<T, SIZE>::new());
 
-    (Sender { chan: chan.clone() }, Receiver { chan })
+    (
+        Sender {
+            chan: chan.clone(),
+            _not_sync: PhantomData,
+        },
+        Receiver {
+            chan,
+            _not_sync: PhantomData,
+        },
+    )
 }
 
 pub struct Sender<T: Copy, const SIZE: usize> {
     chan: Arc<Channel<T, SIZE>>,
+    _not_sync: PhantomData<T>,
 }
 
 unsafe impl<T: Send + Copy, const SIZE: usize> Send for Sender<T, SIZE> {}
@@ -66,6 +85,7 @@ impl<T: Copy, const SIZE: usize> Drop for Sender<T, SIZE> {
 
 pub struct Receiver<T: Copy, const SIZE: usize> {
     chan: Arc<Channel<T, SIZE>>,
+    _not_sync: PhantomData<*const ()>,
 }
 
 impl<T: Copy, const SIZE: usize> Drop for Receiver<T, SIZE> {
@@ -111,7 +131,7 @@ pub(super) struct Channel<T: Copy, const SIZE: usize> {
 }
 
 impl<T: Copy, const SIZE: usize> Channel<T, SIZE> {
-    fn new() -> Self {
+    pub(super) fn new() -> Self {
         Self {
             queue: spsc::queue::Queue::new(),
             waker_store: AtomicWakerStore::default(),
@@ -119,7 +139,7 @@ impl<T: Copy, const SIZE: usize> Channel<T, SIZE> {
         }
     }
 
-    fn sender_dropping(&self) {
+    pub(super) fn sender_dropping(&self) {
         let prev = self.connected_state.swap(SENDER_GONE, std::sync::atomic::Ordering::SeqCst);
 
         if prev == BOTH_IN {
@@ -130,15 +150,19 @@ impl<T: Copy, const SIZE: usize> Channel<T, SIZE> {
         }
     }
 
-    fn receiver_dropping(&self) {
+    pub(super) fn receiver_dropping(&self) {
         self.connected_state.store(RECV_GONE, std::sync::atomic::Ordering::SeqCst);
         let _ = self.waker_store.take();
+    }
+
+    pub(super) fn get_queue(&self) -> &spsc::queue::Queue<T, SIZE> {
+        &self.queue
     }
 
     ///
     /// Safety: Upper layer needs to assure that there is no other `send` caller at the same time, otherwise this will panic
     ///
-    fn send(&self, value: &T) -> Result<(), CommonErrors> {
+    pub(crate) fn send(&self, value: &T) -> Result<(), CommonErrors> {
         // if receiver is gone here,
         if self.connected_state.load(std::sync::atomic::Ordering::Acquire) == RECV_GONE {
             Err(CommonErrors::GenericError)
@@ -160,7 +184,7 @@ impl<T: Copy, const SIZE: usize> Channel<T, SIZE> {
     ///
     /// Safety: Upper layer needs to assure that there is no other `receive` caller at the same time, otherwise this will panic
     ///
-    fn receive(&self, consumer: &mut spsc::queue::Consumer<'_, T, SIZE>, waker: Waker) -> Result<T, CommonErrors> {
+    pub(super) fn receive(&self, consumer: &mut spsc::queue::Consumer<'_, T, SIZE>, waker: Waker) -> Result<T, CommonErrors> {
         loop {
             let empty = self.queue.is_empty();
 
@@ -207,6 +231,8 @@ struct ReceiverFuture<'a, T: Copy, const SIZE: usize> {
     state: FutureState,
 }
 
+unsafe impl<const SIZE: usize, T: Copy> Send for ReceiverFuture<'_, T, SIZE> {}
+
 impl<T: Copy, const SIZE: usize> Future for ReceiverFuture<'_, T, SIZE> {
     type Output = Option<T>;
 
@@ -222,7 +248,7 @@ impl<T: Copy, const SIZE: usize> Future for ReceiverFuture<'_, T, SIZE> {
                 },
                 |v| FutureInternalReturn::ready(Some(v)),
             ),
-            FutureState::Finished => todo!(),
+            FutureState::Finished => not_recoverable_error!("Cannot reuse future!"),
         };
 
         self.state.assign_and_propagate(res)
