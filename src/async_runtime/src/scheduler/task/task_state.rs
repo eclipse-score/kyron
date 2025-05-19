@@ -1,12 +1,15 @@
-// Copyright (c) 2025 Qorix GmbH
+//
+// Copyright (c) 2025 Contributors to the Eclipse Foundation
+//
+// See the NOTICE file(s) distributed with this work for additional
+// information regarding copyright ownership.
 //
 // This program and the accompanying materials are made available under the
-// terms of the Apache License, Version 2.0 which is available at
-// https://www.apache.org/licenses/LICENSE-2.0.
+// terms of the Apache License Version 2.0 which is available at
+// <https://www.apache.org/licenses/LICENSE-2.0>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
-
 use foundation::sync::foundation_atomic::FoundationAtomicU32;
 
 /// TODO: For now no use-case for IDLE, I keep it.

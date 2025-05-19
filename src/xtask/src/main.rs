@@ -1,5 +1,20 @@
+//
+// Copyright (c) 2025 Contributors to the Eclipse Foundation
+//
+// See the NOTICE file(s) distributed with this work for additional
+// information regarding copyright ownership.
+//
+// This program and the accompanying materials are made available under the
+// terms of the Apache License Version 2.0 which is available at
+// <https://www.apache.org/licenses/LICENSE-2.0>
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+
 use std::collections::HashMap;
 use std::env;
+use std::fs;
+use std::path::Path;
 use std::process::{exit, Command};
 
 fn main() {
@@ -47,7 +62,11 @@ fn main() {
             envs.insert("RUSTFLAGS".into(), "--cfg loom".into());
             run_build("loom_build", &["test", "--release"], envs, cli_env_vars, &passthrough_args);
         }
+        "check_lic" => {
+            check_license_header();
+        }
         "check" => {
+            check_license_header();
             debug_build(envs.clone(), cli_env_vars.clone(), &passthrough_args);
             clippy(envs.clone(), cli_env_vars.clone(), &passthrough_args);
             test(envs, cli_env_vars, &passthrough_args);
@@ -110,9 +129,62 @@ fn print_usage_and_exit() -> ! {
     build:test     build and runs tests
     build:loom     builds and tuns loom tests only
     clippy         runs clippy
-    check          runs fundamental checks, good to run before push 
-    
+    check          runs fundamental checks, good to run before push
+    check_lic      runs source code license check
+
     [ENV_VAR=value ...] [-- cargo args...]"
     );
     exit(1);
+}
+
+const REQUIRED_HEADER: &str = r#"//
+// Copyright (c) 2025 Contributors to the Eclipse Foundation
+//
+// See the NOTICE file(s) distributed with this work for additional
+// information regarding copyright ownership.
+//
+// This program and the accompanying materials are made available under the
+// terms of the Apache License Version 2.0 which is available at
+// <https://www.apache.org/licenses/LICENSE-2.0>
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+"#;
+
+fn check_license_header() {
+    let project_dir = std::env::current_dir().expect("Failed to get current directory").join("src");
+    let mut missing_header_files = Vec::new();
+
+    visit_dirs(&project_dir, &mut missing_header_files);
+
+    if missing_header_files.is_empty() {
+        println!("All files have the required license header.");
+    } else {
+        println!("The following files are missing the required license header:");
+        println!("\n{}\n", REQUIRED_HEADER);
+        for file in missing_header_files {
+            println!("{}", file.display());
+        }
+    }
+}
+
+fn visit_dirs(dir: &Path, missing_header_files: &mut Vec<std::path::PathBuf>) {
+    if dir.is_dir() {
+        for entry in fs::read_dir(dir).expect("Failed to read directory") {
+            let entry = entry.expect("Failed to get directory entry");
+            let path = entry.path();
+            if path.is_dir() {
+                visit_dirs(&path, missing_header_files);
+            } else if path.extension().is_some_and(|ext| ext == "rs") {
+                check_file(&path, missing_header_files);
+            }
+        }
+    }
+}
+
+fn check_file(file_path: &Path, missing_header_files: &mut Vec<std::path::PathBuf>) {
+    let content = fs::read_to_string(file_path).expect("Failed to read file");
+    if !content.starts_with(REQUIRED_HEADER) {
+        missing_header_files.push(file_path.to_path_buf());
+    }
 }

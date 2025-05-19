@@ -1,8 +1,12 @@
-// Copyright (c) 2025 Qorix GmbH
+//
+// Copyright (c) 2025 Contributors to the Eclipse Foundation
+//
+// See the NOTICE file(s) distributed with this work for additional
+// information regarding copyright ownership.
 //
 // This program and the accompanying materials are made available under the
-// terms of the Apache License, Version 2.0 which is available at
-// https://www.apache.org/licenses/LICENSE-2.0.
+// terms of the Apache License Version 2.0 which is available at
+// <https://www.apache.org/licenses/LICENSE-2.0>
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -127,7 +131,7 @@ pub struct SpmcStealQueue<T: Send> {
     /// The counter used for insertion operation
     head: FoundationAtomicU32,
 
-    /// This holds tuple (steal_place, real_tail). steal_place is used for tracking stealing, real_tail is used for pop values out of queue         
+    /// This holds tuple (steal_place, real_tail). steal_place is used for tracking stealing, real_tail is used for pop values out of queue
     tail: FoundationAtomicU64,
 
     /// Used to turn head/tail into index of `data`
