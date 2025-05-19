@@ -23,18 +23,18 @@ use foundation::prelude::{CommonErrors, FoundationAtomicU8};
 use std::sync::Arc;
 
 ///
-/// This is a pool of futures that holds `dyn Future<Output = OutType>` objects (same as Box) and after future is dropped, it is again available in poll to reuse.
+/// This is a pool of futures that holds `dyn Future<Output = OutType>` objects (same as Box) and after future is dropped, it is again available in pool to reuse.
 /// This means that after init, there is no more dynamic allocation done by claiming future.
-/// Keep in mind you can only put here futures that are compatible with future [`Layout`] that was claimed by [`ReusableBoxFuturePoll::new`]
+/// Keep in mind you can only put here futures that are compatible with future [`Layout`] that was claimed by [`ReusableBoxFuturePool::new`]
 ///
 /// # Key consideration
-///  - this is round robin poll. This means that even if some Future in middle finishes, next will pickup in round robin fashion and if there is no available future, it witt return error
+///  - this is round robin pool. This means that even if some Future in middle finishes, next will pickup in round robin fashion and if there is no available future, it witt return error
 ///
 /// # Use cases
 ///  - The main usage of this is when you recreate same futures in some cyclic manner and you know it shall be recycled after a cycle.
 ///
 ///
-pub struct ReusableBoxFuturePoll<OutType> {
+pub struct ReusableBoxFuturePool<OutType> {
     boxes: Box<[IndirectStorage<OutType>]>, // Stores (initialization_maker, pointer to allocated storage)
     states: Box<[Arc<BoxState>]>,           // state of boxes, matches via index with above
     position: usize,                        // position in round robin queue
@@ -52,15 +52,15 @@ pub struct ReusableBoxFuture<OutType> {
     _pin: PhantomPinned,
 }
 
-unsafe impl<OutType> Send for ReusableBoxFuturePoll<OutType> {}
+unsafe impl<OutType> Send for ReusableBoxFuturePool<OutType> {}
 
 type IndirectStorage<OutType> = NonNull<dyn Future<Output = OutType> + Send + 'static>;
 
 const FUTURE_TAKEN: u8 = 1; // Future is taken by user, not available
-const FUTURE_FREE: u8 = 0; // Future is in a poll, can be taken
-const FUTURE_POLL_GONE: u8 = 0xFF; // Poll is dropped or dropping and the future has to drop itself instead being dropped by poll
+const FUTURE_FREE: u8 = 0; // Future is in a pool, can be taken
+const FUTURE_POOL_GONE: u8 = 0xFF; // Pool is dropped or dropping and the future has to drop itself instead being dropped by pool
 
-impl<OutType> ReusableBoxFuturePoll<OutType> {
+impl<OutType> ReusableBoxFuturePool<OutType> {
     ///
     /// Creates a pool with `cnt` futures available
     ///
@@ -89,7 +89,7 @@ impl<OutType> ReusableBoxFuturePoll<OutType> {
     }
 
     ///
-    /// Try to obtain next future. This means that if next one in poll is free, it will return it, otherwise Err()
+    /// Try to obtain next future. This means that if next one in pool is free, it will return it, otherwise Err()
     ///
     /// # Returns
     ///
@@ -144,7 +144,7 @@ impl<OutType> ReusableBoxFuturePoll<OutType> {
     {
         unsafe {
             let data = storage.as_ptr() as *mut U;
-            data.write(future); // The drop happens before this region is back into a poll so we can just write to it
+            data.write(future); // The drop happens before this region is back into a pool so we can just write to it
 
             // This is really important line. We rewrite ptr with same ptr but in practice we rewrite with U type ptr which will force compiler to update underlying vtable doe dyn type.
             // If this is not done, then it will think that it has old vtable and will use it! (don't replace with ptr.as_ptr(), its same but lacks the type which is crucial here)
@@ -169,7 +169,7 @@ impl<OutType> ReusableBoxFuturePoll<OutType> {
     }
 }
 
-impl<OutType> Drop for ReusableBoxFuturePoll<OutType> {
+impl<OutType> Drop for ReusableBoxFuturePool<OutType> {
     fn drop(&mut self) {
         for index in 0..self.size {
             let boxed = &self.boxes[index];
@@ -177,7 +177,7 @@ impl<OutType> Drop for ReusableBoxFuturePoll<OutType> {
             // Here we assume future is in usage, if yes, we are setting flag and dealloc will happen at future side, if not, then wew had FUTURE_FREE and we can dealloc it (drop always done in future)
             match self.states[index].0.compare_exchange(
                 FUTURE_TAKEN,
-                FUTURE_POLL_GONE,
+                FUTURE_POOL_GONE,
                 std::sync::atomic::Ordering::AcqRel,
                 std::sync::atomic::Ordering::Acquire,
             ) {
@@ -225,9 +225,9 @@ impl<OutType> Drop for ReusableBoxFuture<OutType> {
                 ) {
                     Ok(_) => {}
 
-                    // Means that poll is dropped probably and we need to cleanup own memory
+                    // Means that pool is dropped probably and we need to cleanup own memory
                     Err(val) => {
-                        assert_eq!(val, FUTURE_POLL_GONE);
+                        assert_eq!(val, FUTURE_POOL_GONE);
                         unsafe {
                             dealloc(self.this.memory.as_ptr() as *mut u8, self.this.layout);
                         }
@@ -297,7 +297,7 @@ mod tests {
                 dropped: FoundationAtomicU16::new(0),
             });
 
-            Self { mock: mock }
+            Self { mock }
         }
     }
 
@@ -374,7 +374,7 @@ mod tests {
             let (fut, mock) = get_mock();
 
             {
-                let mut p = ReusableBoxFuturePoll::<u32>::new(3, TestFuture::default());
+                let mut p = ReusableBoxFuturePool::<u32>::new(3, TestFuture::default());
                 {
                     let r = p.next(fut);
                     assert!(r.is_ok());
@@ -392,7 +392,7 @@ mod tests {
             let (fut2, _) = get_mock();
 
             {
-                let mut p = ReusableBoxFuturePoll::<u32>::new(3, TestFuture::default());
+                let mut p = ReusableBoxFuturePool::<u32>::new(3, TestFuture::default());
                 let mut r = p.next(fut);
                 assert!(r.is_ok());
 
@@ -408,17 +408,17 @@ mod tests {
     }
 
     #[test]
-    fn test_future_is_never_dropped_once_poll_is_out() {
+    fn test_future_is_never_dropped_once_pool_is_out() {
         let (fut, mock) = get_mock();
         let r;
 
         {
-            let mut p = ReusableBoxFuturePoll::<u32>::new(3, TestFuture::default());
+            let mut p = ReusableBoxFuturePool::<u32>::new(3, TestFuture::default());
             r = p.next(fut);
             assert!(r.is_ok());
         }
 
-        // Poll is gone, but no drop was executed
+        // Pool is gone, but no drop was executed
         assert!(!mock.was_dropped());
 
         drop(r);
@@ -429,7 +429,7 @@ mod tests {
     #[test]
     fn test_no_more_futures_return_err() {
         {
-            let mut p = ReusableBoxFuturePoll::<u32>::new(3, async { 1 });
+            let mut p = ReusableBoxFuturePool::<u32>::new(3, async { 1 });
 
             let r = p.next(async { 1 });
             assert!(r.is_ok());
@@ -445,7 +445,7 @@ mod tests {
         }
 
         {
-            let mut p = ReusableBoxFuturePoll::<u32>::new(3, async { 1 });
+            let mut p = ReusableBoxFuturePool::<u32>::new(3, async { 1 });
 
             let r = p.next(async { 1 });
             assert!(r.is_ok());
@@ -466,7 +466,7 @@ mod tests {
     #[test]
     fn test_return_future_if_available() {
         {
-            let mut p = ReusableBoxFuturePoll::<u32>::new(3, async { 1 });
+            let mut p = ReusableBoxFuturePool::<u32>::new(3, async { 1 });
 
             let r = p.next(async { 1 });
             assert!(r.is_ok());
@@ -482,7 +482,7 @@ mod tests {
         }
 
         {
-            let mut p = ReusableBoxFuturePoll::<u32>::new(3, async { 1 });
+            let mut p = ReusableBoxFuturePool::<u32>::new(3, async { 1 });
 
             let r = p.next(async { 1 });
             assert!(r.is_ok());
@@ -529,7 +529,7 @@ mod tests {
 
     #[test]
     fn test_mixing_not_compatible_futures_return_error() {
-        let mut p = ReusableBoxFuturePoll::<u32>::new(3, test1());
+        let mut p = ReusableBoxFuturePool::<u32>::new(3, test1());
         let mut r = p.next(test1());
         assert!(r.is_ok());
 
@@ -539,7 +539,7 @@ mod tests {
 
     #[test]
     fn test_replacing_future_really_replaces_it() {
-        let mut p = ReusableBoxFuturePoll::<u32>::new(1, TestFuture::default());
+        let mut p = ReusableBoxFuturePool::<u32>::new(1, TestFuture::default());
 
         let (fut, mut mock) = get_mock();
         p.next(fut).unwrap();
@@ -558,11 +558,11 @@ mod tests {
 
     #[test]
     fn test_panic_while_drop() {
-        struct TestWrapper(ReusableBoxFuturePoll<u32>);
+        struct TestWrapper(ReusableBoxFuturePool<u32>);
         impl UnwindSafe for TestWrapper {}
         impl RefUnwindSafe for TestWrapper {}
 
-        let mut p = TestWrapper(ReusableBoxFuturePoll::<u32>::new(1, TestFuture::default()));
+        let mut p = TestWrapper(ReusableBoxFuturePool::<u32>::new(1, TestFuture::default()));
 
         let (panic_fur, panic_mock) = get_mock_panic();
 
