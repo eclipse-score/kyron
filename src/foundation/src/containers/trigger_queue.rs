@@ -96,6 +96,10 @@ impl<T> TriggerQueue<T> {
         let mut data = self.mtx.lock().unwrap();
         let ret = data.push(value);
 
+        if !ret {
+            return false;
+        }
+
         if self.state.load(std::sync::atomic::Ordering::Relaxed) {
             drop(data);
             self.cv.notify_one();
@@ -285,11 +289,14 @@ mod tests {
         let queue_clone = Arc::clone(&queue);
 
         const NUM_ITEMS: i32 = 1000;
-
+        let mut i = 0;
         // Spawn producer thread
         let producer = thread::spawn(move || {
-            for i in 0..NUM_ITEMS {
-                queue_clone.push(i);
+            while i < NUM_ITEMS {
+                if queue_clone.push(i) {
+                    i += 1;
+                }
+
                 // Small delay to test interleaving
                 if i % 100 == 0 {
                     thread::sleep(Duration::from_millis(1));
@@ -312,7 +319,6 @@ mod tests {
                     Err(_) => panic!("Unexpected error"),
                 }
             }
-
             sum
         });
 
