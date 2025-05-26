@@ -96,7 +96,6 @@ impl<OutType> MockFnBuilder<OutType> {
 
     ///
     /// Set how many times exactly the call() must be invoked
-    /// If used, times() must be called exactly once
     ///
     pub fn times(mut self, count: usize) -> Self {
         if self.0.is_will_repeatedly_set {
@@ -216,7 +215,7 @@ mod tests {
 
     #[test]
     #[should_panic]
-    fn test_panic_call_count_more_than_specified_times() {
+    fn test_panic_call_count_more_than_specified_times_should_panic() {
         let mut mock = MockFnBuilder::<bool>::new().times(3).build();
 
         for _ in 0..4 {
@@ -234,7 +233,7 @@ mod tests {
 
     #[test]
     #[should_panic]
-    fn test_call_count_more_than_will_once_count() {
+    fn test_call_count_more_than_will_once_count_should_panic() {
         let mut mock = MockFnBuilder::<bool>::new().will_once(true).will_once(false).build();
 
         assert!(mock.call());
@@ -244,7 +243,7 @@ mod tests {
 
     #[test]
     #[should_panic]
-    fn test_panic_call_count_less_than_will_once_count() {
+    fn test_panic_call_count_less_than_will_once_count_should_panic() {
         let mut mock = MockFnBuilder::<bool>::new().will_once(true).will_once(false).build();
 
         assert!(mock.call());
@@ -260,8 +259,24 @@ mod tests {
     }
 
     #[test]
+    fn test_with_all_clauses() {
+        let mut mock = MockFnBuilder::<bool>::new()
+            .times(5)
+            .will_once(false)
+            .will_once(true)
+            .will_repeatedly(false)
+            .build();
+
+        assert!(!mock.call());
+        assert!(mock.call());
+        for _ in 0..3 {
+            assert!(!mock.call());
+        }
+    }
+
+    #[test]
     #[should_panic]
-    fn test_panic_call_count_less_than_min_count_with_repeatedly() {
+    fn test_panic_call_count_less_than_min_count_with_repeatedly_should_panic() {
         let mut mock = MockFnBuilder::<bool>::new().will_once(true).will_repeatedly(false).build();
 
         assert!(mock.call());
