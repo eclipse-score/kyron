@@ -29,12 +29,12 @@ pub struct MockFn<OutType> {
     call_count: AtomicUsize,
     default_value: OutType,
     expected_count: usize,
+    is_built: bool,
     is_times_set: bool,
     is_will_once_set: bool,
     is_will_repeatedly_set: bool,
     min_count: usize,
     returns: VecDeque<OutType>,
-    should_ignore_check_at_drop: bool,
 }
 
 impl<OutType: Default> Default for MockFn<OutType> {
@@ -43,12 +43,12 @@ impl<OutType: Default> Default for MockFn<OutType> {
             call_count: AtomicUsize::new(0),
             default_value: OutType::default(),
             expected_count: 0,
+            is_built: false,
             is_times_set: false,
             is_will_once_set: false,
             is_will_repeatedly_set: false,
             min_count: 0,
             returns: VecDeque::new(),
-            should_ignore_check_at_drop: false,
         }
     }
 }
@@ -59,12 +59,12 @@ impl<OutType: Clone> Clone for MockFn<OutType> {
             call_count: AtomicUsize::new(self.call_count.load(Relaxed)),
             default_value: self.default_value.clone(),
             expected_count: self.expected_count,
+            is_built: self.is_built,
             is_times_set: self.is_times_set,
             is_will_once_set: self.is_will_once_set,
             is_will_repeatedly_set: self.is_will_repeatedly_set,
             min_count: self.min_count,
             returns: self.returns.clone(),
-            should_ignore_check_at_drop: self.should_ignore_check_at_drop,
         }
     }
 }
@@ -85,12 +85,12 @@ impl<OutType> MockFnBuilder<OutType> {
             call_count: AtomicUsize::new(0),
             default_value: def_val,
             expected_count: 0,
+            is_built: false,
             is_times_set: false,
             is_will_once_set: false,
             is_will_repeatedly_set: false,
             min_count: 0,
             returns: VecDeque::new(),
-            should_ignore_check_at_drop: false,
         })
     }
 
@@ -98,11 +98,7 @@ impl<OutType> MockFnBuilder<OutType> {
     /// Set how many times exactly the call() must be invoked
     ///
     pub fn times(mut self, count: usize) -> Self {
-        if self.0.is_will_repeatedly_set {
-            // no need to check the call count at drop() as we're panicking anyway
-            self.0.should_ignore_check_at_drop = true;
-            panic!("times() called after will_repeatedly()!")
-        }
+        assert!(!self.0.is_will_repeatedly_set, "times() called after will_repeatedly()!");
 
         self.0.is_times_set = true;
         self.0.expected_count = count;
@@ -113,11 +109,7 @@ impl<OutType> MockFnBuilder<OutType> {
     /// Ensure that the call() is invoked at least one more time and the call() returns the ret_val
     ///
     pub fn will_once(mut self, ret_val: OutType) -> Self {
-        if self.0.is_will_repeatedly_set {
-            // no need to check the call count at drop() as we're panicking anyway
-            self.0.should_ignore_check_at_drop = true;
-            panic!("will_once() called after will_repeatedly()!")
-        }
+        assert!(!self.0.is_will_repeatedly_set, "will_once() called after will_repeatedly()!");
 
         self.0.is_will_once_set = true;
         self.0.returns.push_back(ret_val);
@@ -130,11 +122,7 @@ impl<OutType> MockFnBuilder<OutType> {
     /// If used, will_repeatedly() must be called the last
     ///
     pub fn will_repeatedly(mut self, ret_val: OutType) -> Self {
-        if self.0.is_will_repeatedly_set {
-            // no need to check the call count at drop() as we're panicking anyway
-            self.0.should_ignore_check_at_drop = true;
-            panic!("will_repeatedly() is called more than once!")
-        }
+        assert!(!self.0.is_will_repeatedly_set, "will_repeatedly() is called more than once!");
 
         self.0.is_will_repeatedly_set = true;
         self.0.default_value = ret_val;
@@ -147,6 +135,7 @@ impl<OutType> MockFnBuilder<OutType> {
         if self.0.is_will_once_set && !self.0.is_will_repeatedly_set {
             self.0.expected_count = self.0.min_count;
         }
+        self.0.is_built = true;
         self.0
     }
 }
@@ -167,8 +156,9 @@ impl<OutType: Clone> CallableTrait<OutType> for MockFn<OutType> {
 
 impl<OutType> Drop for MockFn<OutType> {
     fn drop(&mut self) {
-        // check the call counts only if we haven't panicked before
-        if !self.should_ignore_check_at_drop {
+        // check the call counts only after build() is invoked, since we do not care about any
+        // transient objects
+        if self.is_built {
             let call_count = self.call_count.load(Relaxed);
             if self.expected_count > 0 {
                 // the times() clause or only will_once() is set, so check for exact call counts
