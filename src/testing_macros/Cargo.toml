@@ -1,0 +1,12 @@
+[package]
+name = "testing_macros"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+proc-macro = true
+
+
+[dependencies]
+quote = "1.0"
+syn = "2.0"

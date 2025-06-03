@@ -25,6 +25,20 @@ rust_library(
     ],
 )
 
+rust_library(
+    name = "libasync_runtime_mocked",
+    testonly = True,
+    srcs = glob(["src/**/*.rs"]),
+    crate_features = ["runtime-api-mock"],
+    crate_name = "async_runtime",
+    visibility = ["//visibility:public"],
+    deps = all_crate_deps(
+        normal = True,
+    ) + [
+        "//src/foundation:libfoundation",
+    ],
+)
+
 rust_test(
     name = "tests",
     crate = ":libasync_runtime",

@@ -2,10 +2,3 @@
 name = "testing"
 version.workspace = true
 edition.workspace = true
-
-[dependencies]
-async_runtime.workspace = true
-orchestration.workspace = true
-
-[dev-dependencies]
-foundation.workspace = true

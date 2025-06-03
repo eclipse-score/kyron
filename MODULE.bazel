@@ -80,6 +80,7 @@ crate.from_cargo(
         "//:src/logging_tracing/Cargo.toml",
         "//:src/orchestration/Cargo.toml",
         "//:src/testing/Cargo.toml",
+        "//src/testing_macros:Cargo.toml",
         "//:src/xtask/Cargo.toml",
     ],
 )

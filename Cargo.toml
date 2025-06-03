@@ -7,6 +7,7 @@ members=[
     "src/logging_tracing",
     "src/xtask",
     "src/testing",
+    "src/testing_macros",
 ]
 
 [workspace.package]
@@ -19,6 +20,7 @@ foundation = { path = "src/foundation" }
 logging_tracing = { path = "src/logging_tracing" }
 orchestration = { path = "src/orchestration" }
 testing = { path = "src/testing" }
+testing_macros = { path = "src/testing_macros" }
 xtask = { path = "src/xtask" }
 
 iceoryx2 = { git = "https://github.com/qorix-group/iceoryx2.git", branch = "iox2-682-vec-fix-miri" }

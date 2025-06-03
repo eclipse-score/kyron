@@ -588,6 +588,13 @@ impl TaskRef {
     pub(crate) fn abort(&self) -> bool {
         unsafe { (self.header.as_ref().vtable.abort)(self.header) }
     }
+
+    #[allow(dead_code)]
+    pub(crate) fn is_done(&self) -> bool {
+        let snapshot = unsafe { self.header.as_ref().state.get() };
+
+        snapshot.is_completed() || snapshot.is_canceled()
+    }
 }
 
 impl Drop for TaskRef {

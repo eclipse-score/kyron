@@ -803,7 +803,9 @@ dependencies = [
  "iceoryx2-bb-container",
  "libc",
  "logging_tracing",
+ "orchestration",
  "testing",
+ "testing_macros",
  "tracing",
  "tracing-subscriber",
 ]
@@ -1170,10 +1172,13 @@ dependencies = [
 [[package]]
 name = "testing"
 version = "0.1.0"
+
+[[package]]
+name = "testing_macros"
+version = "0.1.0"
 dependencies = [
- "async_runtime",
- "foundation",
- "orchestration",
+ "quote",
+ "syn",
 ]
 
 [[package]]

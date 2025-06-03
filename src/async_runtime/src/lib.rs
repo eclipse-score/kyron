@@ -61,8 +61,9 @@ pub mod prelude;
 pub mod runtime;
 pub mod safety;
 pub mod scheduler;
-#[cfg(test)]
-mod testing;
+
+#[cfg(any(test, feature = "runtime-api-mock"))]
+pub mod testing;
 
 ///
 /// Spawns a given `future` into runtime and let it execute on any of configured workers

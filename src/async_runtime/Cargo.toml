@@ -17,3 +17,7 @@ unexpected_cfgs = { level = "warn", check-cfg = ['cfg(loom)'] }
 
 [dev-dependencies]
 testing.workspace = true
+
+
+[features]
+runtime-api-mock = []

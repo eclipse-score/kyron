@@ -11,6 +11,8 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
+#![allow(dead_code)]
+
 use std::{future::Future, sync::Arc, task::Waker, time::Duration};
 
 use foundation::prelude::FoundationAtomicU16;
@@ -20,6 +22,9 @@ use crate::{
     scheduler::{scheduler_mt::SchedulerTrait, waker::create_waker},
     AsyncTask, TaskRef,
 };
+
+#[cfg(feature = "runtime-api-mock")]
+pub mod mock;
 
 #[derive(Default)]
 pub struct SchedulerSyncMock {
@@ -88,7 +93,6 @@ pub fn create_mock_scheduler() -> ArcInternal<SchedulerMock> {
     ArcInternal::new(SchedulerMock::default())
 }
 
-#[allow(dead_code)]
 pub fn create_mock_scheduler_sync() -> ArcInternal<SchedulerSyncMock> {
     ArcInternal::new(SchedulerSyncMock::default())
 }
@@ -102,7 +106,7 @@ pub async fn test_function_ret<T>(ret: T) -> T {
     ret
 }
 
-pub fn get_dummy_task_waker() -> (
+pub(crate) fn get_dummy_task_waker() -> (
     Waker,
     Arc<AsyncTask<(), Box<dyn Future<Output = ()> + Send + 'static>, Arc<SchedulerMock>>>,
 ) {
@@ -111,11 +115,14 @@ pub fn get_dummy_task_waker() -> (
     (create_waker(TaskRef::new(task.clone())), task)
 }
 
-pub fn get_waker_from_task(task: &Arc<AsyncTask<(), Box<dyn Future<Output = ()> + Send + 'static>, Arc<SchedulerMock>>>) -> Waker {
+pub fn get_task_based_waker() -> Waker {
+    get_dummy_task_waker().0
+}
+
+pub(crate) fn get_waker_from_task(task: &Arc<AsyncTask<(), Box<dyn Future<Output = ()> + Send + 'static>, Arc<SchedulerMock>>>) -> Waker {
     create_waker(TaskRef::new(task.clone()))
 }
 
-#[allow(dead_code)]
 pub fn get_dummy_sync_task_waker(sched: Arc<SchedulerSyncMock>) -> Waker {
     let task = Arc::new(AsyncTask::new(box_future(async {}), 0, sched));
 
