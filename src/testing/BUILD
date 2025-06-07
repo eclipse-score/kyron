@@ -19,4 +19,7 @@ rust_library(
     crate_name = "testing",
     edition = "2021",
     visibility = ["//visibility:public"],
+    deps = [
+        "//src/foundation:libfoundation",
+    ],
 )

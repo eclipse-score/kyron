@@ -11,6 +11,8 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
+use foundation::containers::reusable_objects::ReusableObjectTrait;
+
 use std::collections::VecDeque;
 use std::sync::atomic::{AtomicUsize, Ordering::Relaxed};
 
@@ -28,7 +30,7 @@ pub struct MockFnBuilder<OutType>(MockFn<OutType>);
 pub struct MockFn<OutType> {
     call_count: AtomicUsize,
     default_value: OutType,
-    expected_count: usize,
+    expected_count: isize,
     is_built: bool,
     is_times_set: bool,
     is_will_once_set: bool,
@@ -42,7 +44,7 @@ impl<OutType: Default> Default for MockFn<OutType> {
         Self {
             call_count: AtomicUsize::new(0),
             default_value: OutType::default(),
-            expected_count: 0,
+            expected_count: -1,
             is_built: false,
             is_times_set: false,
             is_will_once_set: false,
@@ -84,7 +86,7 @@ impl<OutType> MockFnBuilder<OutType> {
         Self(MockFn {
             call_count: AtomicUsize::new(0),
             default_value: def_val,
-            expected_count: 0,
+            expected_count: -1,
             is_built: false,
             is_times_set: false,
             is_will_once_set: false,
@@ -101,7 +103,7 @@ impl<OutType> MockFnBuilder<OutType> {
         assert!(!self.0.is_will_repeatedly_set, "times() called after will_repeatedly()!");
 
         self.0.is_times_set = true;
-        self.0.expected_count = count;
+        self.0.expected_count = count as isize;
         self
     }
 
@@ -133,7 +135,7 @@ impl<OutType> MockFnBuilder<OutType> {
     pub fn build(mut self) -> MockFn<OutType> {
         // if only will_once is set, the min_count becomes the expected_count
         if self.0.is_will_once_set && !self.0.is_will_repeatedly_set {
-            self.0.expected_count = self.0.min_count;
+            self.0.expected_count = self.0.min_count as isize;
         }
         self.0.is_built = true;
         self.0
@@ -160,10 +162,10 @@ impl<OutType> Drop for MockFn<OutType> {
         // transient objects
         if self.is_built {
             let call_count = self.call_count.load(Relaxed);
-            if self.expected_count > 0 {
+            if self.expected_count >= 0 {
                 // the times() clause or only will_once() is set, so check for exact call counts
                 assert_eq!(
-                    call_count, self.expected_count,
+                    call_count as isize, self.expected_count,
                     "MockFn is called {} times, but should be {} times!",
                     call_count, self.expected_count
                 );
@@ -178,6 +180,10 @@ impl<OutType> Drop for MockFn<OutType> {
             }
         }
     }
+}
+
+impl<OutType> ReusableObjectTrait for MockFn<OutType> {
+    fn reusable_clear(&mut self) {}
 }
 
 #[cfg(test)]

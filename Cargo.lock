@@ -1172,6 +1172,9 @@ dependencies = [
 [[package]]
 name = "testing"
 version = "0.1.0"
+dependencies = [
+ "foundation",
+]
 
 [[package]]
 name = "testing_macros"

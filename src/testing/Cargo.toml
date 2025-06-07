@@ -2,3 +2,6 @@
 name = "testing"
 version.workspace = true
 edition.workspace = true
+
+[dependencies]
+foundation.workspace = true
