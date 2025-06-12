@@ -158,12 +158,14 @@ impl AsyncScheduler {
     }
 
     fn try_notify_siblings_worker_unconditional(&self, _: Option<usize>) {
-        let guard = self.parked_workers_indexes.lock().unwrap();
-        let index_opt = guard.first();
+        let mut guard = self.parked_workers_indexes.lock().unwrap();
+        // Pop the worker index so that another worker can be notified next time (instead of the same one)
+        // TODO: Change to random pop - currently Vec does not support erasing.
+        let index_opt = guard.pop();
 
         if let Some(index) = index_opt {
-            trace!("Notifying worker at index {} to wakeup", *index);
-            self.worker_access[*index].unpark();
+            trace!("Notifying worker at index {} to wakeup", index);
+            self.worker_access[index].unpark();
         } else {
             // No one is sleeping but no one is searching, means they are before sleep. For now we simply notify all (as we only use syscall once someone really sleeps)
             for w in &self.worker_access {

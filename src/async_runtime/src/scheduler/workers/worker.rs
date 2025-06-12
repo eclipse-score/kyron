@@ -330,7 +330,7 @@ impl WorkerInner {
         }
 
         trace!("Stolen {:?}", stolen);
-        (self.producer_consumer.pop(), stolen > 1)
+        (self.producer_consumer.pop(), stolen > 0)
     }
 
     //
@@ -345,7 +345,7 @@ impl WorkerInner {
         let taken = self.try_take_global_work_internal();
 
         if taken > 0 {
-            (self.producer_consumer.pop(), taken > 1)
+            (self.producer_consumer.pop(), taken > 0)
         } else {
             (None, false)
         }
