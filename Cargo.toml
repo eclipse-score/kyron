@@ -9,6 +9,9 @@ members=[
     "src/testing",
     "src/testing_macros",
 ]
+exclude=[
+    "component_integration_tests"
+]
 
 [workspace.package]
 version = "0.1.0"
