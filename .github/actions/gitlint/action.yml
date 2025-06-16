@@ -33,7 +33,7 @@ runs:
       git fetch origin +refs/pull/${{ inputs.pr-number }}/head && \
       if ! gitlint --commits origin/main..HEAD; then \
         echo -e "\nWARNING: Your commit message does not follow the required format." && \
-        echo "Formatting rules: https://eclipse-score.github.io/score/process/guidance/git/index.html" && \
+        echo "Formatting rules: https://eclipse-score.github.io/score/main/contribute/general/git.html#commit-message-format" && \
         echo -e "To fix your commit message, run:\n" && \
         echo " git commit --amend" && \
         echo "Then update your commit (fix gitlint warnings). Finally, force-push:" && \
