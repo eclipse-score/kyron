@@ -43,8 +43,7 @@ fn init_tracing_subscriber() {
         .json()
         .finish();
 
-    tracing::subscriber::set_global_default(subscriber)
-        .expect("Setting default subscriber failed!");
+    tracing::subscriber::set_global_default(subscriber).expect("Setting default subscriber failed!");
 }
 
 fn main() {

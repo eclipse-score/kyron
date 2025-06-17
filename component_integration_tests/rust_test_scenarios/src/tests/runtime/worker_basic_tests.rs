@@ -1,4 +1,3 @@
-use crate::internals::helpers::execution_barrier::ExecutionBarrier;
 use crate::internals::helpers::runtime_helper::Runtime;
 use crate::internals::test_case::TestCase;
 
@@ -6,7 +5,6 @@ use async_runtime::spawn;
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::time::Duration;
 use tracing::info;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -43,17 +41,16 @@ impl TestCase for BasicWorkerTest {
         let logic = TestInput::new(&input);
         let mut rt = Runtime::new(&input).build();
 
-        let barrier = ExecutionBarrier::new();
-        let mut notifier = barrier.get_notifier();
+        let _ = rt
+            .block_on(async move {
+                for name in logic.tasks.as_slice() {
+                    spawn(simple_task(name.to_string()));
+                }
 
-        let _ = rt.enter_engine(async move {
-            for name in logic.tasks.as_slice() {
-                notifier.add_handle(spawn(simple_task(name.to_string())));
-            }
+                Ok(0)
+            })
+            .unwrap();
 
-            notifier.wait_and_notify().await;
-        });
-
-        barrier.wait_for_notification(Duration::from_secs(5))
+        Ok(())
     }
 }

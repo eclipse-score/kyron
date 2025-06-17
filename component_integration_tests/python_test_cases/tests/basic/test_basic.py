@@ -1,5 +1,5 @@
 import pytest
-from qtesting_tools.log_container import LogContainer
+from testing_tools.log_container import LogContainer
 
 
 class TestOnlyShutdown1W2Q:

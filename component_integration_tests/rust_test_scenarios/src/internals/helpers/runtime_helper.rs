@@ -21,13 +21,8 @@ impl Runtime {
             "Creating AsyncRuntime with {} queue size and {} workers",
             self.task_queue_size, self.workers
         );
-        AsyncRuntimeBuilder::new()
-            .with_engine(
-                ExecutionEngineBuilder::new()
-                    .task_queue_size(self.task_queue_size)
-                    .workers(self.workers),
-            )
-            .build()
-            .unwrap()
+        let (builder, _engine_id) =
+            AsyncRuntimeBuilder::new().with_engine(ExecutionEngineBuilder::new().task_queue_size(self.task_queue_size).workers(self.workers));
+        builder.build().unwrap()
     }
 }
