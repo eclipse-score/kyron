@@ -11,8 +11,8 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 pub mod reusable_box_future;
+pub mod sleep;
 pub mod yield_now;
-
 ///
 /// Helper state that can be used to implement Futures.
 ///

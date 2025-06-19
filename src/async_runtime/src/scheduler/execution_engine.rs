@@ -19,6 +19,7 @@ use super::workers::dedicated_worker::DedicatedWorker;
 use super::workers::safety_worker::SafetyWorker;
 use super::workers::worker::Worker;
 use super::workers::worker_types::*;
+use crate::scheduler::driver::Drivers;
 use crate::{
     box_future,
     core::types::UniqueWorkerId,
@@ -112,12 +113,15 @@ impl ExecutionEngine {
             self.async_workers.len() as u32 + self.dedicated_workers.len() as u32 + safety_worker_count,
         ));
 
+        let drivers = Drivers::new();
+
         if safety_worker_count > 0 {
             self.safety_worker
                 .as_mut()
                 .expect("Safety worker has to present as check was done above")
                 .start(
                     self.async_scheduler.clone(),
+                    drivers.clone(),
                     self.dedicated_scheduler.clone(),
                     start_barrier.get_notifier().unwrap(),
                     &self.thread_params,
@@ -127,6 +131,7 @@ impl ExecutionEngine {
         self.async_workers.iter_mut().for_each(|w| {
             w.start(
                 self.async_scheduler.clone(),
+                drivers.clone(),
                 self.dedicated_scheduler.clone(),
                 start_barrier.get_notifier().unwrap(),
                 &self.thread_params,
@@ -136,6 +141,7 @@ impl ExecutionEngine {
         self.dedicated_workers.iter_mut().for_each(|w| {
             w.start(
                 self.async_scheduler.clone(),
+                drivers.clone(),
                 self.dedicated_scheduler.clone(),
                 start_barrier.get_notifier().unwrap(),
                 &self.thread_params,

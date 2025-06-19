@@ -9,6 +9,9 @@ foundation.workspace = true
 iceoryx2-pal-concurrency-sync.workspace = true
 iceoryx2-bb-container.workspace = true
 iceoryx2-bb-posix.workspace = true
+plotters = "0.3"
+rand = "0.8"
+rand_distr = "0.4"
 
 [target.'cfg(loom)'.dependencies]
 loom = { version = "0.7", features = ["checkpoint"] }

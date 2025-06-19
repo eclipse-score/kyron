@@ -15,6 +15,7 @@ use crate::core::types::BoxCustom;
 use crate::core::types::FutureBox;
 use crate::futures::reusable_box_future::ReusableBoxFuture;
 use crate::safety::SafetyResult;
+use crate::scheduler::driver::Drivers;
 use core::cell::Cell;
 use core::cell::RefCell;
 use foundation::containers::spmc_queue::BoundProducerConsumer;
@@ -279,6 +280,18 @@ impl Handler {
 
         handle
     }
+
+    pub(crate) fn unpark_some_async_worker(&self) {
+        match self.inner {
+            HandlerImpl::Async(ref sched) => {
+                sched.scheduler.try_notify_siblings_workers(None);
+            }
+            HandlerImpl::Dedicated(ref sched) => {
+                // Nothing to do here, dedicated workers are not parked
+                sched.scheduler.try_notify_siblings_workers(None);
+            }
+        }
+    }
 }
 
 ///
@@ -295,7 +308,12 @@ pub(crate) struct WorkerContext {
     /// Access to scheduler and others, mounted in pre_run phase of each Worker
     pub(super) handler: RefCell<Option<Rc<Handler>>>,
 
+    pub(super) drivers: Option<Drivers>,
+
+    /// Helper flag to check if safety was enabled in runtime builder
     is_safety_enabled: bool,
+
+    wakeup_time: Cell<Option<u64>>,
 }
 
 thread_local! {
@@ -307,15 +325,17 @@ pub(crate) struct ContextBuilder {
     handle: Option<Handler>,
     worker_id: Option<WorkerId>,
     is_with_safety: bool,
+    drivers: Drivers,
 }
 
 impl ContextBuilder {
-    pub(crate) fn new() -> Self {
+    pub(crate) fn new(drivers: Drivers) -> Self {
         Self {
             tid: 0,
             handle: None,
             worker_id: None,
             is_with_safety: false,
+            drivers,
         }
     }
 
@@ -374,6 +394,8 @@ impl ContextBuilder {
             worker_id: Cell::new(self.worker_id.expect("Worker type must be set in context builder!")),
             handler: RefCell::new(Some(Rc::new(self.handle.expect("Handler type must be set in context builder!")))),
             is_safety_enabled: self.is_with_safety,
+            wakeup_time: Cell::new(None),
+            drivers: Some(self.drivers),
         }
     }
 }
@@ -423,6 +445,36 @@ pub(crate) fn ctx_get_worker_id() -> WorkerId {
 pub(crate) fn ctx_is_with_safety() -> bool {
     CTX.try_with(|ctx| ctx.borrow().as_ref().expect("Called before CTX init?").is_safety_enabled)
         .unwrap_or_default()
+}
+
+pub(crate) fn ctx_set_wakeup_time(time: u64) {
+    CTX.try_with(|ctx| ctx.borrow().as_ref().expect("Called before CTX init?").wakeup_time.set(Some(time)))
+        .unwrap_or_default();
+}
+
+///
+/// Returns currently set wakeup time for worker
+///
+pub(crate) fn ctx_get_wakeup_time() -> u64 {
+    CTX.try_with(|ctx| {
+        ctx.borrow()
+            .as_ref()
+            .expect("Called before CTX init?")
+            .wakeup_time
+            .get()
+            .unwrap_or_default()
+    })
+    .unwrap_or_default()
+}
+
+pub(crate) fn ctx_unset_wakeup_time() {
+    CTX.try_with(|ctx| ctx.borrow().as_ref().expect("Called before CTX init?").wakeup_time.take())
+        .unwrap_or_default();
+}
+
+pub(crate) fn ctx_get_drivers() -> Drivers {
+    CTX.try_with(|ctx| ctx.borrow().as_ref().expect("Called before CTX init?").drivers.clone().unwrap())
+        .unwrap()
 }
 
 #[cfg(test)]

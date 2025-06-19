@@ -14,7 +14,7 @@
 use core::task::Context;
 use std::{rc::Rc, sync::Arc};
 
-use crate::scheduler::{scheduler_mt::DedicatedScheduler, waker::create_waker, workers::Thread};
+use crate::scheduler::{context::ctx_get_drivers, driver::Drivers, scheduler_mt::DedicatedScheduler, waker::create_waker, workers::Thread};
 use foundation::base::fast_rand::FastRand;
 use foundation::containers::spmc_queue::BoundProducerConsumer;
 use foundation::prelude::*;
@@ -54,6 +54,8 @@ struct WorkerInner {
     local_state: LocalState, // small optimization to not touch global atomic state if we don't  really need
     id: WorkerId,
     randomness_source: FastRand,
+
+    next_task_tick: u64,
 }
 
 ///
@@ -80,6 +82,7 @@ impl Worker {
     pub(crate) fn start(
         &mut self,
         scheduler: Arc<AsyncScheduler>,
+        drivers: Drivers,
         dedicated_scheduler: Arc<DedicatedScheduler>,
         ready_notifier: ThreadReadyNotifier,
         thread_params: &ThreadParameters,
@@ -104,9 +107,10 @@ impl Worker {
                         id,
                         producer_consumer: Rc::new(prod_consumer),
                         randomness_source: FastRand::new(82382389432984 / (id.worker_id() as u64 + 1)), // Random seed for now as const
+                        next_task_tick: 0,
                     };
 
-                    Self::run_internal(internal, dedicated_scheduler, ready_notifier, with_safety);
+                    Self::run_internal(internal, drivers, dedicated_scheduler, ready_notifier, with_safety);
                 },
                 thread_params,
             )
@@ -115,8 +119,14 @@ impl Worker {
         };
     }
 
-    fn run_internal(mut worker: WorkerInner, dedicated_scheduler: Arc<DedicatedScheduler>, ready_notifier: ThreadReadyNotifier, with_safety: bool) {
-        worker.pre_run(dedicated_scheduler, with_safety);
+    fn run_internal(
+        mut worker: WorkerInner,
+        drivers: Drivers,
+        dedicated_scheduler: Arc<DedicatedScheduler>,
+        ready_notifier: ThreadReadyNotifier,
+        with_safety: bool,
+    ) {
+        worker.pre_run(drivers, dedicated_scheduler, with_safety);
 
         // Let the engine know what we are ready to handle tasks
         ready_notifier.ready();
@@ -141,8 +151,8 @@ impl Worker {
 }
 
 impl WorkerInner {
-    fn pre_run(&mut self, dedicated_scheduler: Arc<DedicatedScheduler>, with_safety: bool) {
-        let mut builder = ContextBuilder::new()
+    fn pre_run(&mut self, drivers: Drivers, dedicated_scheduler: Arc<DedicatedScheduler>, with_safety: bool) {
+        let mut builder = ContextBuilder::new(drivers)
             .thread_id(0)
             .with_async_handle(self.producer_consumer.clone(), self.scheduler.clone(), dedicated_scheduler)
             .with_worker_id(self.id);
@@ -201,60 +211,7 @@ impl WorkerInner {
             }
         }
 
-        let mut guard = self.own_interactor.mtx.lock().unwrap();
-
-        match self.own_interactor.state.0.compare_exchange(
-            WORKER_STATE_EXECUTING,
-            WORKER_STATE_SLEEPING_CV,
-            std::sync::atomic::Ordering::SeqCst,
-            std::sync::atomic::Ordering::SeqCst,
-        ) {
-            Ok(_) => {
-                debug!("Definite sleep decision");
-            }
-            Err(WORKER_STATE_NOTIFIED) => {
-                // We were notified before, so we shall continue
-                self.scheduler.transition_from_parked(self.get_worker_id());
-
-                self.own_interactor
-                    .state
-                    .0
-                    .store(WORKER_STATE_EXECUTING, std::sync::atomic::Ordering::SeqCst);
-                debug!("Notified while try to sleep, searching again");
-                return;
-            }
-            Err(WORKER_STATE_SHUTTINGDOWN) => {
-                // If we should shutdown, we simply need to return. And the run loop exits itself.
-                return;
-            }
-            Err(s) => {
-                panic!("Inconsistent state when parking: {}", s);
-            }
-        }
-
-        loop {
-            guard = self.own_interactor.cv.wait(guard).unwrap();
-
-            match self.own_interactor.state.0.compare_exchange(
-                WORKER_STATE_NOTIFIED,
-                WORKER_STATE_EXECUTING,
-                std::sync::atomic::Ordering::SeqCst,
-                std::sync::atomic::Ordering::SeqCst,
-            ) {
-                Ok(_) => {
-                    self.scheduler.transition_from_parked(self.get_worker_id());
-                    debug!("Woken up from sleep");
-                    break;
-                }
-                Err(WORKER_STATE_SHUTTINGDOWN) => {
-                    // break here and run loop will exit
-                    break;
-                }
-                Err(_) => {
-                    continue; // spurious wake-up
-                }
-            }
-        }
+        ctx_get_drivers().park(&self.scheduler, &self.own_interactor);
     }
 
     fn run_task(&mut self, task: TaskRef, should_notify: bool) {
@@ -278,6 +235,10 @@ impl WorkerInner {
     }
 
     fn try_pick_work(&mut self) -> (Option<TaskRef>, bool) {
+        self.next_task_tick = self.next_task_tick.wrapping_add(1);
+
+        self.maybe_run_driver();
+
         // First check our queue for work
         let mut task = self.producer_consumer.pop();
         if task.is_some() {
@@ -385,6 +346,15 @@ impl WorkerInner {
     fn get_worker_id(&self) -> usize {
         self.id.worker_id() as usize
     }
+
+    // Function responsible to run work under the driver (ie process timeouts, etc.)
+    fn maybe_run_driver(&mut self) {
+        const EVENT_POLLING_TICK: u64 = 31;
+
+        if self.next_task_tick % EVENT_POLLING_TICK == 0 {
+            ctx_get_drivers().process_work();
+        }
+    }
 }
 
 #[cfg(test)]
@@ -425,6 +395,7 @@ mod tests {
     // for an example CI run.
     #[cfg(not(miri))]
     fn test_worker_stop() {
+        use crate::scheduler::driver::Drivers;
         use crate::{box_future, AsyncTask, FoundationAtomicBool, TaskRef};
         use foundation::prelude::debug;
         use foundation::threading::thread_wait_barrier::ThreadWaitBarrier;
@@ -451,7 +422,7 @@ mod tests {
             engine_has_safety_worker: false,
             scheduler: Some(scheduler.clone()),
         };
-        worker.start(scheduler.clone(), dedicated_scheduler, ready_notifier, &thread_params);
+        worker.start(scheduler.clone(), Drivers::new(), dedicated_scheduler, ready_notifier, &thread_params);
 
         match barrier.wait_for_all(Duration::from_secs(5)) {
             Ok(_) => {

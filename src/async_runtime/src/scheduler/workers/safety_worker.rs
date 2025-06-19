@@ -21,6 +21,7 @@ use iceoryx2_bb_posix::thread::Thread;
 use crate::{
     scheduler::{
         context::{ctx_initialize, ContextBuilder},
+        driver::Drivers,
         scheduler_mt::{AsyncScheduler, DedicatedScheduler},
         task::async_task::TaskPollResult,
         waker::create_waker,
@@ -66,6 +67,7 @@ impl SafetyWorker {
     pub(crate) fn start(
         &mut self,
         scheduler: Arc<AsyncScheduler>,
+        drivers: Drivers,
         dedicated_scheduler: Arc<DedicatedScheduler>,
         ready_notifier: ThreadReadyNotifier,
         thread_params: &ThreadParameters,
@@ -88,7 +90,7 @@ impl SafetyWorker {
                             stop_signal,
                         };
 
-                        Self::run_internal(internal, dedicated_scheduler, scheduler, ready_notifier);
+                        Self::run_internal(internal, drivers, dedicated_scheduler, scheduler, ready_notifier);
                     },
                     thread_params,
                 )
@@ -99,11 +101,12 @@ impl SafetyWorker {
 
     fn run_internal(
         mut worker: WorkerInner,
+        drivers: Drivers,
         dedicated_scheduler: Arc<DedicatedScheduler>,
         scheduler: Arc<AsyncScheduler>,
         ready_notifier: ThreadReadyNotifier,
     ) {
-        worker.pre_run(dedicated_scheduler, scheduler);
+        worker.pre_run(drivers, dedicated_scheduler, scheduler);
 
         // Let the engine know what we are ready to handle tasks
         ready_notifier.ready();
@@ -121,8 +124,8 @@ struct WorkerInner {
 }
 
 impl WorkerInner {
-    fn pre_run(&mut self, dedicated_scheduler: Arc<DedicatedScheduler>, scheduler: Arc<AsyncScheduler>) {
-        let builder = ContextBuilder::new()
+    fn pre_run(&mut self, drivers: Drivers, dedicated_scheduler: Arc<DedicatedScheduler>, scheduler: Arc<AsyncScheduler>) {
+        let builder = ContextBuilder::new(drivers)
             .thread_id(0)
             .with_dedicated_handle(scheduler, dedicated_scheduler)
             .with_worker_id(self.id)

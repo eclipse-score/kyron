@@ -12,15 +12,18 @@
 //
 
 use std::sync::RwLock;
-use std::{alloc::Layout, ptr::NonNull, task::Waker, time::Instant};
+use std::time::Duration;
+use std::{alloc::Layout, ptr::NonNull, task::Waker};
 
 use foundation::create_arr_storage;
 use foundation::prelude::{AllocationError, FixedSizePoolAllocator};
 use foundation::prelude::{BaseAllocator, CommonErrors};
 
+use crate::time::clock::*;
 use crate::time::wheel::ExpireInfo;
 use crate::time::wheel::TimeEntry;
 
+pub mod clock;
 pub mod wheel;
 
 //
@@ -43,13 +46,17 @@ const MAX_LEVELS: usize = 5;
 
 pub struct TimeDriver {
     inner: RwLock<Inner>,
+    start_time: Instant,
 }
 
 impl TimeDriver {
     /// Creates a new TimeDriver with a specified number of timers supported.
     pub fn new(num_of_timers: usize) -> Self {
+        let now: Instant = Clock::now();
+
         Self {
-            inner: RwLock::new(Inner::new(num_of_timers, Instant::now())),
+            inner: RwLock::new(Inner::new(num_of_timers, now)),
+            start_time: now,
         }
     }
 
@@ -89,6 +96,20 @@ impl TimeDriver {
     pub fn next_process_time(&self) -> Option<Instant> {
         let inner = self.inner.read().unwrap();
         inner.next_process_time().map(|(instant, _)| instant)
+    }
+
+    pub fn instant_into_u64(&self, point: Instant) -> u64 {
+        point
+            .saturating_duration_since(self.start_time)
+            .as_millis()
+            .try_into()
+            .unwrap_or(u64::MAX)
+    }
+
+    pub fn duration_since_now(&self, point: Instant) -> Duration {
+        let now = Clock::now();
+
+        Duration::from_millis(self.instant_into_u64(point) - self.instant_into_u64(now))
     }
 }
 
@@ -147,7 +168,13 @@ impl Inner {
     }
 
     fn register_timeout(&self, expire_at: Instant, waker: Waker) -> Result<(), CommonErrors> {
-        assert!(expire_at >= self.start_time, "Cannot register timeout in the past");
+        assert!(
+            expire_at >= self.start_time,
+            "Cannot register timeout in the past {:?}, start {:?}",
+            expire_at,
+            self.start_time
+        );
+
         let expire_at_msec = self.instant_into_u64(expire_at);
 
         if expire_at_msec < self.last_check_time {
@@ -162,21 +189,38 @@ impl Inner {
     }
 
     fn process_internal(&mut self, now: u64) {
-        assert!(now >= self.last_check_time, "Cannot process time in the past");
+        assert!(
+            now >= self.last_check_time,
+            "Cannot process time in the past (now {} last check {})",
+            now,
+            self.last_check_time
+        );
 
         loop {
             match self.find_next_expiring(self.last_check_time) {
                 // we are checking what expires when from last time
                 Some(info) if info.deadline <= now => {
                     self.process_expired(&info);
-                    self.last_check_time = info.deadline; // advance last_check_time to the expiration time since this is where we are now
+                    self.set_last_check_time(info.deadline); // advance last_check_time to the expiration time since this is where we are now
                 }
                 _ => {
-                    self.last_check_time = now; // finally. no one expires so we can set current processing time
+                    // finally. no one expires so we can set current processing time
+                    self.set_last_check_time(now);
                     break;
                 }
             }
         }
+    }
+
+    fn set_last_check_time(&mut self, now: u64) {
+        debug_assert!(
+            self.last_check_time <= now,
+            "Now cannot go back, now {}, last check {}",
+            now,
+            self.last_check_time
+        );
+
+        self.last_check_time = now;
     }
 
     fn find_next_expiring(&self, now: u64) -> Option<ExpireInfo> {
@@ -192,6 +236,7 @@ impl Inner {
 
     fn process_expired(&mut self, info: &ExpireInfo) {
         let iter = self.levels[info.level as usize].aquire_slot(info);
+        // let now = self.instant_into_u64(Clock::now());
 
         for e in iter {
             let data = unsafe { e.as_ref() };
@@ -206,26 +251,36 @@ impl Inner {
                     self.pool.deallocate(e.cast::<u8>(), Layout::new::<TimeEntry>())
                 };
             } else {
-                // Re-register the timeout if it is still valid
-                for l in &mut self.levels {
-                    if l.register_wakeup_on_timeout(info.deadline, data.data.expire_at, e) {
-                        break;
-                    }
-                }
+                let level = self.compute_level_for_timer(info.deadline, data.data.expire_at);
+                self.levels[level].register_wakeup_on_timeout(data.data.expire_at, e);
             }
         }
     }
 
+    // API assumes that expire_at_msec fits into MAX_TIMEOUT_TIME
     fn register_timeout_internal(&self, expire_at_msec: u64, waker: Waker) -> Result<(), CommonErrors> {
         let entry = self.allocate_entry(waker, expire_at_msec).map_err(|_| CommonErrors::NoSpaceLeft)?;
 
-        for e in &self.levels {
-            if e.register_wakeup_on_timeout(self.last_check_time, expire_at_msec, entry) {
-                return Ok(());
-            }
-        }
+        let level = self.compute_level_for_timer(self.last_check_time, expire_at_msec);
+        self.levels[level].register_wakeup_on_timeout(expire_at_msec, entry);
 
-        Err(CommonErrors::GenericError) // Cannot schedule such a long timeout
+        Ok(())
+    }
+
+    // find out on which level we shall register timer
+    fn compute_level_for_timer(&self, last_check_time: u64, expire_at: u64) -> usize {
+        const SLOT_MASK: u64 = (1 << 6) - 1; // Slots are using 6 bits
+
+        // XOR here "turn on" first bit that tells us whats the logical distance between last_check_time and expire_at
+        // OR only prevents issues with 0
+        let masked = last_check_time ^ expire_at | SLOT_MASK;
+
+        let leading_zeros = masked.leading_zeros() as usize;
+        let significant = 63 - leading_zeros;
+
+        // The u64 range for 6 bits can cover around 10 levels. We will not return more than 6 from
+        // here anyway since expire_at is limited to MAX_TIMEOUT_TIME on upper levels
+        significant / 6
     }
 
     fn allocate_entry(&self, waker: Waker, expire_at: u64) -> Result<NonNull<TimeEntry>, AllocationError> {
@@ -342,7 +397,7 @@ mod tests {
 
     #[test]
     fn when_no_more_timers_returns_error() {
-        let start_time = Instant::now();
+        let start_time = Clock::now();
 
         let driver = Inner::new(1, start_time);
 
@@ -353,7 +408,7 @@ mod tests {
 
     #[test]
     fn test_time_driver() {
-        let start_time = Instant::now();
+        let start_time = Clock::now();
 
         let mock = MockWaker::new(MockFnBuilder::new().times(2).build());
         let mut driver = Inner::new(123, start_time);
@@ -385,8 +440,22 @@ mod tests {
     }
 
     #[test]
+    fn poll_within_same_level_window() {
+        let start_time = Clock::now();
+
+        let mock = MockWaker::new(MockFnBuilder::new().times(0).build());
+        let mut driver = Inner::new(123, start_time);
+
+        let waker: Waker = mock.into_arc().into();
+
+        driver.process_internal(1238);
+        driver.register_timeout_internal(1916, waker.clone()).unwrap();
+        driver.process_internal(1239);
+    }
+
+    #[test]
     fn public_register_before_last_poll() {
-        let start_time = Instant::now();
+        let start_time = Clock::now();
 
         let mock = MockWaker::new(MockFnBuilder::new().times(1).build());
 
@@ -396,12 +465,12 @@ mod tests {
 
         let waker: Waker = mock.into_arc().into();
 
-        let now = Instant::now();
+        let now = Clock::now();
         let reg_time = start_time + now.checked_duration_since(start_time).unwrap() / 2;
 
         driver.register_timeout(reg_time, waker.clone()).unwrap();
 
-        let poll_time = Instant::now();
+        let poll_time = Clock::now();
         assert!(poll_time > reg_time, "Poll time should not be equal to registration time");
 
         driver.process_timeouts(poll_time);
@@ -411,7 +480,7 @@ mod tests {
 
     #[test]
     fn public_register_too_long_timeout() {
-        let start_time = Instant::now();
+        let start_time = Clock::now();
 
         let mock = MockWaker::new(MockFnBuilder::new().times(0).build());
         let driver = Inner::new(123, start_time);
@@ -419,7 +488,7 @@ mod tests {
 
         let waker: Waker = mock.into_arc().into();
 
-        let reg_time = Instant::now().checked_add(Duration::from_millis(MAX_TIMEOUT_TIME + 1)).unwrap();
+        let reg_time = Clock::now().checked_add(Duration::from_millis(MAX_TIMEOUT_TIME + 1)).unwrap();
         assert_eq!(driver.register_timeout(reg_time, waker.clone()), Err(CommonErrors::WrongArgs));
     }
 
@@ -480,7 +549,7 @@ mod tests {
     #[cfg(not(miri))]
     fn fuzzy_polling_before_in_after() {
         const NUM_OF_TIMERS: usize = 30000;
-        let start_time = Instant::now();
+        let start_time = Clock::now();
 
         let mut rng = SimpleRng::new();
         let seed: u64 = rng.get_seed();
@@ -560,7 +629,7 @@ mod tests {
     #[cfg(not(miri))]
     fn fuzzy_polling_in_random_places() {
         const NUM_OF_TIMERS: usize = 30000;
-        let start_time = Instant::now();
+        let start_time = Clock::now();
 
         let mut rng = SimpleRng::new();
         let seed: u64 = rng.get_seed();
@@ -600,7 +669,7 @@ mod tests {
     #[cfg(not(miri))]
     fn fuzzy_polling_in_random_places_with_many_nodes_in_slots() {
         const NUM_OF_TIMERS: usize = 30000;
-        let start_time = Instant::now();
+        let start_time = Clock::now();
 
         let mut rng = SimpleRng::new();
         let seed: u64 = rng.get_seed();

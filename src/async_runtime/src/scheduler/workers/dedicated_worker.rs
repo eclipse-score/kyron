@@ -21,6 +21,7 @@ use std::{
 use crate::{
     scheduler::{
         context::{ctx_initialize, ContextBuilder},
+        driver::Drivers,
         scheduler_mt::{AsyncScheduler, DedicatedScheduler},
         task::async_task::TaskPollResult,
         waker::create_waker,
@@ -61,6 +62,7 @@ impl DedicatedWorker {
     pub(crate) fn start(
         &mut self,
         scheduler: Arc<AsyncScheduler>,
+        drivers: Drivers,
         dedicated_scheduler: Arc<DedicatedScheduler>,
         ready_notifier: ThreadReadyNotifier,
         thread_params: &ThreadParameters,
@@ -85,7 +87,7 @@ impl DedicatedWorker {
                             stop_signal,
                         };
 
-                        Self::run_internal(internal, scheduler, ready_notifier, with_safety);
+                        Self::run_internal(internal, drivers, scheduler, ready_notifier, with_safety);
                     },
                     thread_params,
                 )
@@ -105,8 +107,14 @@ impl DedicatedWorker {
             .expect("There shall be consumer available as only we shall pick it")
     }
 
-    fn run_internal(mut worker: WorkerInner, scheduler: Arc<AsyncScheduler>, ready_notifier: ThreadReadyNotifier, with_safety: bool) {
-        worker.pre_run(scheduler, with_safety);
+    fn run_internal(
+        mut worker: WorkerInner,
+        drivers: Drivers,
+        scheduler: Arc<AsyncScheduler>,
+        ready_notifier: ThreadReadyNotifier,
+        with_safety: bool,
+    ) {
+        worker.pre_run(drivers, scheduler, with_safety);
 
         // Let the engine know what we are ready to handle tasks
         ready_notifier.ready();
@@ -125,8 +133,8 @@ struct WorkerInner {
 }
 
 impl WorkerInner {
-    fn pre_run(&mut self, scheduler: Arc<AsyncScheduler>, with_safety: bool) {
-        let mut builder = ContextBuilder::new()
+    fn pre_run(&mut self, drivers: Drivers, scheduler: Arc<AsyncScheduler>, with_safety: bool) {
+        let mut builder = ContextBuilder::new(drivers)
             .thread_id(0)
             .with_dedicated_handle(scheduler, self.dedicated_scheduler.clone())
             .with_worker_id(self.id);

@@ -98,7 +98,8 @@
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
     "cSpell.words": [
-        "imidietelly"
+        "imidietelly",
+        "nondecreasing"
     ],
     "editor.formatOnSave": true,
     "[rust]": {

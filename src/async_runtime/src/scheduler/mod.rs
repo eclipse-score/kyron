@@ -12,6 +12,7 @@
 //
 
 pub mod context;
+pub(crate) mod driver;
 pub mod execution_engine;
 pub mod join_handle;
 pub mod safety_waker;

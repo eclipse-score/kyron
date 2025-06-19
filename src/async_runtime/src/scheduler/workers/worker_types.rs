@@ -25,10 +25,10 @@ pub fn create_steal_queue(size: usize) -> TaskStealQueue {
     Arc::new(SpmcStealQueue::new(size as u32))
 }
 
-pub(super) const WORKER_STATE_SLEEPING_CV: u8 = 0b00000000;
-pub(super) const WORKER_STATE_NOTIFIED: u8 = 0b00000001; // Was asked to wake-up
-pub(super) const WORKER_STATE_EXECUTING: u8 = 0b00000011;
-pub(super) const WORKER_STATE_SHUTTINGDOWN: u8 = 0b00000100;
+pub(in super::super) const WORKER_STATE_SLEEPING_CV: u8 = 0b00000000;
+pub(in super::super) const WORKER_STATE_NOTIFIED: u8 = 0b00000001; // Was asked to wake-up
+pub(in super::super) const WORKER_STATE_EXECUTING: u8 = 0b00000011;
+pub(in super::super) const WORKER_STATE_SHUTTINGDOWN: u8 = 0b00000100;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub(crate) struct WorkerId {
@@ -100,8 +100,8 @@ impl WorkerState {
 pub(crate) struct WorkerInteractorInnner {
     pub(crate) steal_handle: StealHandle,
 
-    pub(super) state: WorkerState,
-    pub(super) mtx: std::sync::Mutex<()>,
+    pub(crate) state: WorkerState,
+    pub(crate) mtx: std::sync::Mutex<()>,
     pub(crate) cv: std::sync::Condvar,
 }
 

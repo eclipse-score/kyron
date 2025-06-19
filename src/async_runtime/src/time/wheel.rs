@@ -11,12 +11,11 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
+use foundation::prelude::*;
 use std::ptr::NonNull;
 use std::sync::atomic::Ordering;
 
 use std::task::Waker;
-
-use foundation::sync::foundation_atomic::*;
 
 pub(super) struct TimeoutData {
     pub waker: Waker,
@@ -67,6 +66,9 @@ impl TimeWheel {
         }
     }
 
+    ///
+    /// Returns the next slot time that expires (this is likely less than the real deadline in this slot in specific timer)
+    ///
     pub(super) fn next_expiration(&self, now: u64) -> Option<ExpireInfo> {
         let next_occupied_slot = self.next_occupied_slot(now)?;
 
@@ -81,9 +83,11 @@ impl TimeWheel {
 
         assert!(
             slot_deadline >= now,
-            "Slot deadline should be in the future now {} deadline {}",
+            "Slot deadline should be in the future now {} deadline {} on level {}, wheel_start {}",
             now,
-            slot_deadline
+            slot_deadline,
+            self.level,
+            wheel_start
         );
 
         Some(ExpireInfo {
@@ -120,14 +124,8 @@ impl TimeWheel {
         TimeSlotIterator { head: entries }
     }
 
-    pub(super) fn register_wakeup_on_timeout(&self, now: u64, expire_at: u64, mut data: NonNull<TimeEntry>) -> bool {
-        let expire_in = expire_at - now;
-
-        if !self.is_in_wheel_range(expire_in) {
-            return false;
-        }
-
-        let slot_id = (expire_in / self.slot_range()) as usize;
+    pub(super) fn register_wakeup_on_timeout(&self, expire_at: u64, mut data: NonNull<TimeEntry>) {
+        let slot_id = ((expire_at / self.slot_range()) as usize) % 64;
 
         self.occupied_slots.fetch_or(1 << slot_id, Ordering::Relaxed);
 
@@ -141,7 +139,7 @@ impl TimeWheel {
                 .compare_exchange(curr, data.as_ptr(), Ordering::AcqRel, Ordering::Acquire)
             {
                 Ok(_) => {
-                    break true; // Head points to new item, we can exit the loop
+                    break; // Head points to new item, we can exit the loop
                 }
                 Err(_) => {
                     // If the head was changed, we retry
@@ -157,10 +155,6 @@ impl TimeWheel {
 
     fn level_range(&self) -> u64 {
         self.slot_range() * super::SLOTS_CNT
-    }
-
-    fn is_in_wheel_range(&self, to_go: u64) -> bool {
-        to_go < self.level_range()
     }
 }
 
