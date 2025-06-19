@@ -532,8 +532,6 @@ mod tests {
 
                 let sched = create_mock_scheduler_sync();
 
-                let mut i = 0;
-
                 loop {
                     let waker = get_dummy_sync_task_waker(sched.clone());
 

@@ -18,7 +18,7 @@ use crate::scheduler::waker::create_waker;
 
 use std::cell::RefCell;
 use std::future::Future;
-use std::ops::DerefMut;
+
 use std::sync::Arc;
 use std::task::Context;
 
@@ -27,7 +27,7 @@ use crate::futures::reusable_box_future::ReusableBoxFuture;
 use crate::scheduler::{join_handle::JoinHandle, task::async_task::TaskRef};
 use std::collections::VecDeque;
 
-use crate::{testing::*, AsyncTask};
+use crate::testing::*;
 
 ///
 /// Mock runtime API with possibility to poll tasks manually.
@@ -79,16 +79,46 @@ impl MockRuntime {
 }
 
 thread_local! {
-    static RUNTIME_MOCK_INSTANCE: RefCell<MockRuntime> = RefCell::new(MockRuntime{tasks: VecDeque::new(), sched: Arc::new(SchedulerMock::default())});
+    static RUNTIME_MOCK_INSTANCE: RefCell<Option<MockRuntime>> = RefCell::new(None);
 }
 
+static DEV_CODE_ALLOW_ROUTING_OVER_MOCK: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+pub fn init_runtime_mock() {
+    RUNTIME_MOCK_INSTANCE.set(Some(MockRuntime {
+        tasks: VecDeque::new(),
+        sched: Arc::new(SchedulerMock::default()),
+    }));
+}
+
+///
+/// Allows to run development process with RUNTIME MOCK compiled in so it will route to real runtime.
+/// THIS IS ONLY ALLOWED IN DEV CODE, NOT IN PRODUCTION.
+pub unsafe fn allow_routing_over_mock() {
+    DEV_CODE_ALLOW_ROUTING_OVER_MOCK.store(true, std::sync::atomic::Ordering::Relaxed);
+    println!(
+        "\n{bar}\n\
+     {warn:^80}\n\
+     {msg:^80}\n\
+     {bar}\n",
+        bar = "═".repeat(80),
+        warn = "⚠️  UNSAFE RUN DETECTED! ⚠️",
+        msg =
+            "This build include RUNTIME API MOCK AND SHALL NOT BE USED IN ANY PRODUCTION! THIS WORKS BECAUSE YOU EXPLICITLY ALLOWED IT IN DEV CODE.",
+    );
+}
 ///
 /// Reset runtime
 ///
 pub fn runtime_reset() {
     RUNTIME_MOCK_INSTANCE.with(|instance| {
         let mut instance = instance.borrow_mut();
-        instance.tasks.clear();
+
+        instance
+            .as_mut()
+            .expect("Runtime mock instance is not initialized. Did you call `init_runtime_mock`?")
+            .tasks
+            .clear();
     });
 }
 
@@ -96,7 +126,12 @@ pub fn runtime_reset() {
 /// Get access to mock instance within closure `c`
 ///
 pub fn runtime_instance<C: FnMut(&mut MockRuntime) -> T, T>(mut c: C) -> T {
-    RUNTIME_MOCK_INSTANCE.with(|instance| c(instance.borrow_mut().deref_mut()))
+    RUNTIME_MOCK_INSTANCE.with(|instance| {
+        c(instance
+            .borrow_mut()
+            .as_mut()
+            .expect("Runtime mock instance is not initialized. Did you call `init_runtime_mock`?"))
+    })
 }
 
 ///
@@ -119,14 +154,22 @@ pub fn spawn_from_boxed<T>(boxed: FutureBox<T>) -> JoinHandle<T>
 where
     T: Send + 'static,
 {
-    RUNTIME_MOCK_INSTANCE.with(|instance| {
-        let mut instance = instance.borrow_mut();
+    if DEV_CODE_ALLOW_ROUTING_OVER_MOCK.load(std::sync::atomic::Ordering::Relaxed) {
+        crate::spawn_from_boxed(boxed)
+    } else {
+        RUNTIME_MOCK_INSTANCE.with(|instance| {
+            let mut instance = instance.borrow_mut();
 
-        let task = Arc::new(AsyncTask::new(boxed, 0, instance.sched.clone()));
-        let task_ref = TaskRef::new(task);
-        instance.tasks.push_back(task_ref.clone());
-        JoinHandle::new(task_ref)
-    })
+            let runtime = instance
+                .as_mut()
+                .expect("Runtime mock instance is not initialized. Did you call `init_runtime_mock`?");
+
+            let task = Arc::new(AsyncTask::new(boxed, 0, runtime.sched.clone()));
+            let task_ref = TaskRef::new(task);
+            runtime.tasks.push_back(task_ref.clone());
+            JoinHandle::new(task_ref)
+        })
+    }
 }
 
 ///
@@ -136,14 +179,22 @@ pub fn spawn_from_reusable<T>(reusable: ReusableBoxFuture<T>) -> JoinHandle<T>
 where
     T: Send + 'static,
 {
-    RUNTIME_MOCK_INSTANCE.with(|instance| {
-        let mut instance = instance.borrow_mut();
+    if DEV_CODE_ALLOW_ROUTING_OVER_MOCK.load(std::sync::atomic::Ordering::Relaxed) {
+        crate::spawn_from_reusable(reusable)
+    } else {
+        RUNTIME_MOCK_INSTANCE.with(|instance| {
+            let mut instance = instance.borrow_mut();
 
-        let task = Arc::new(AsyncTask::new(reusable.into_pin(), 0, instance.sched.clone()));
-        let task_ref = TaskRef::new(task);
-        instance.tasks.push_back(task_ref.clone());
-        JoinHandle::new(task_ref)
-    })
+            let runtime = instance
+                .as_mut()
+                .expect("Runtime mock instance is not initialized. Did you call `init_runtime_mock`?");
+
+            let task = Arc::new(AsyncTask::new(reusable.into_pin(), 0, runtime.sched.clone()));
+            let task_ref = TaskRef::new(task);
+            runtime.tasks.push_back(task_ref.clone());
+            JoinHandle::new(task_ref)
+        })
+    }
 }
 
 ///
@@ -166,14 +217,22 @@ pub fn spawn_from_boxed_on_dedicated<T>(boxed: FutureBox<T>, _worker_id: UniqueW
 where
     T: Send + 'static,
 {
-    RUNTIME_MOCK_INSTANCE.with(|instance| {
-        let mut instance = instance.borrow_mut();
+    if DEV_CODE_ALLOW_ROUTING_OVER_MOCK.load(std::sync::atomic::Ordering::Relaxed) {
+        crate::spawn_from_boxed_on_dedicated(boxed, _worker_id)
+    } else {
+        RUNTIME_MOCK_INSTANCE.with(|instance| {
+            let mut instance = instance.borrow_mut();
 
-        let task = Arc::new(AsyncTask::new(boxed, 0, instance.sched.clone()));
-        let task_ref = TaskRef::new(task);
-        instance.tasks.push_back(task_ref.clone());
-        JoinHandle::new(task_ref)
-    })
+            let runtime = instance
+                .as_mut()
+                .expect("Runtime mock instance is not initialized. Did you call `init_runtime_mock`?");
+
+            let task = Arc::new(AsyncTask::new(boxed, 0, runtime.sched.clone()));
+            let task_ref = TaskRef::new(task);
+            runtime.tasks.push_back(task_ref.clone());
+            JoinHandle::new(task_ref)
+        })
+    }
 }
 
 ///
@@ -183,14 +242,22 @@ pub fn spawn_from_reusable_on_dedicated<T>(reusable: ReusableBoxFuture<T>, _work
 where
     T: Send + 'static,
 {
-    RUNTIME_MOCK_INSTANCE.with(|instance| {
-        let mut instance = instance.borrow_mut();
+    if DEV_CODE_ALLOW_ROUTING_OVER_MOCK.load(std::sync::atomic::Ordering::Relaxed) {
+        crate::spawn_from_reusable_on_dedicated(reusable, _worker_id)
+    } else {
+        RUNTIME_MOCK_INSTANCE.with(|instance| {
+            let mut instance = instance.borrow_mut();
 
-        let task = Arc::new(AsyncTask::new(reusable.into_pin(), 0, instance.sched.clone()));
-        let task_ref = TaskRef::new(task);
-        instance.tasks.push_back(task_ref.clone());
-        JoinHandle::new(task_ref)
-    })
+            let runtime = instance
+                .as_mut()
+                .expect("Runtime mock instance is not initialized. Did you call `init_runtime_mock`?");
+
+            let task = Arc::new(AsyncTask::new(reusable.into_pin(), 0, runtime.sched.clone()));
+            let task_ref = TaskRef::new(task);
+            runtime.tasks.push_back(task_ref.clone());
+            JoinHandle::new(task_ref)
+        })
+    }
 }
 
 pub mod safety {
@@ -224,14 +291,22 @@ pub mod safety {
         T: Send + 'static,
         E: Send + 'static,
     {
-        RUNTIME_MOCK_INSTANCE.with(|instance| {
-            let mut instance = instance.borrow_mut();
+        if DEV_CODE_ALLOW_ROUTING_OVER_MOCK.load(std::sync::atomic::Ordering::Relaxed) {
+            crate::safety::spawn_from_boxed(boxed)
+        } else {
+            RUNTIME_MOCK_INSTANCE.with(|instance| {
+                let mut instance = instance.borrow_mut();
 
-            let task = Arc::new(AsyncTask::new_safety(true, boxed, 0, instance.sched.clone()));
-            let task_ref = TaskRef::new(task);
-            instance.tasks.push_back(task_ref.clone());
-            JoinHandle::new(task_ref)
-        })
+                let runtime = instance
+                    .as_mut()
+                    .expect("Runtime mock instance is not initialized. Did you call `init_runtime_mock`?");
+
+                let task = Arc::new(AsyncTask::new_safety(true, boxed, 0, runtime.sched.clone()));
+                let task_ref = TaskRef::new(task);
+                runtime.tasks.push_back(task_ref.clone());
+                JoinHandle::new(task_ref)
+            })
+        }
     }
 
     pub fn spawn_from_reusable<T, E>(reusable: ReusableBoxFuture<SafetyResult<T, E>>) -> JoinHandle<SafetyResult<T, E>>
@@ -239,14 +314,22 @@ pub mod safety {
         T: Send + 'static,
         E: Send + 'static,
     {
-        RUNTIME_MOCK_INSTANCE.with(|instance| {
-            let mut instance = instance.borrow_mut();
+        if DEV_CODE_ALLOW_ROUTING_OVER_MOCK.load(std::sync::atomic::Ordering::Relaxed) {
+            crate::safety::spawn_from_reusable(reusable)
+        } else {
+            RUNTIME_MOCK_INSTANCE.with(|instance| {
+                let mut instance = instance.borrow_mut();
 
-            let task = Arc::new(AsyncTask::new_safety(true, reusable.into_pin(), 0, instance.sched.clone()));
-            let task_ref = TaskRef::new(task);
-            instance.tasks.push_back(task_ref.clone());
-            JoinHandle::new(task_ref)
-        })
+                let runtime = instance
+                    .as_mut()
+                    .expect("Runtime mock instance is not initialized. Did you call `init_runtime_mock`?");
+
+                let task = Arc::new(AsyncTask::new_safety(true, reusable.into_pin(), 0, runtime.sched.clone()));
+                let task_ref = TaskRef::new(task);
+                runtime.tasks.push_back(task_ref.clone());
+                JoinHandle::new(task_ref)
+            })
+        }
     }
 
     pub fn spawn_on_dedicated<F, T, E>(future: F, worker_id: UniqueWorkerId) -> JoinHandle<F::Output>
@@ -265,14 +348,22 @@ pub mod safety {
         T: Send + 'static,
         E: Send + 'static,
     {
-        RUNTIME_MOCK_INSTANCE.with(|instance| {
-            let mut instance = instance.borrow_mut();
+        if DEV_CODE_ALLOW_ROUTING_OVER_MOCK.load(std::sync::atomic::Ordering::Relaxed) {
+            crate::safety::spawn_from_boxed_on_dedicated(boxed, _worker_id)
+        } else {
+            RUNTIME_MOCK_INSTANCE.with(|instance| {
+                let mut instance = instance.borrow_mut();
 
-            let task = Arc::new(AsyncTask::new_safety(true, boxed, 0, instance.sched.clone()));
-            let task_ref = TaskRef::new(task);
-            instance.tasks.push_back(task_ref.clone());
-            JoinHandle::new(task_ref)
-        })
+                let runtime = instance
+                    .as_mut()
+                    .expect("Runtime mock instance is not initialized. Did you call `init_runtime_mock`?");
+
+                let task = Arc::new(AsyncTask::new_safety(true, boxed, 0, runtime.sched.clone()));
+                let task_ref = TaskRef::new(task);
+                runtime.tasks.push_back(task_ref.clone());
+                JoinHandle::new(task_ref)
+            })
+        }
     }
 
     pub fn spawn_from_reusable_on_dedicated<T, E>(
@@ -283,13 +374,21 @@ pub mod safety {
         T: Send + 'static,
         E: Send + 'static,
     {
-        RUNTIME_MOCK_INSTANCE.with(|instance| {
-            let mut instance = instance.borrow_mut();
+        if DEV_CODE_ALLOW_ROUTING_OVER_MOCK.load(std::sync::atomic::Ordering::Relaxed) {
+            crate::safety::spawn_from_reusable_on_dedicated(reusable, _worker_id)
+        } else {
+            RUNTIME_MOCK_INSTANCE.with(|instance| {
+                let mut instance = instance.borrow_mut();
 
-            let task = Arc::new(AsyncTask::new_safety(true, reusable.into_pin(), 0, instance.sched.clone()));
-            let task_ref = TaskRef::new(task);
-            instance.tasks.push_back(task_ref.clone());
-            JoinHandle::new(task_ref)
-        })
+                let runtime = instance
+                    .as_mut()
+                    .expect("Runtime mock instance is not initialized. Did you call `init_runtime_mock`?");
+
+                let task = Arc::new(AsyncTask::new_safety(true, reusable.into_pin(), 0, runtime.sched.clone()));
+                let task_ref = TaskRef::new(task);
+                runtime.tasks.push_back(task_ref.clone());
+                JoinHandle::new(task_ref)
+            })
+        }
     }
 }
