@@ -4,6 +4,7 @@ MarkupSafe==3.0.2
 packaging==24.2
 pluggy==1.5.0
 pytest==8.3.5
+pytest-env==1.1.5
 pytest-html==4.1.1
 pytest-metadata==3.1.1
-testing_tools @ git+https://github.com/qorix-group/testing_tools.git@559afa546af7056c8ea2d983bfaa1b541174c619
+testing_tools @ git+https://github.com/qorix-group/testing_tools.git@latest
