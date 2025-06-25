@@ -4,7 +4,7 @@ from testing_tools.log_container import LogContainer
 
 class TestOnlyShutdown1W2Q:
     @pytest.fixture(scope="class")
-    def test_case_name(self):
+    def scenario_name(self):
         return "basic.only_shutdown"
 
     @pytest.fixture(scope="class")

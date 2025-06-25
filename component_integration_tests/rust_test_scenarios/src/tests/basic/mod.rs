@@ -1,2 +1,2 @@
-pub mod basic_test_group;
-pub mod basic_tests;
+pub mod basic;
+pub mod basic_scenario_group;

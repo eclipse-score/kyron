@@ -1,12 +1,12 @@
 use crate::internals::helpers::runtime_helper::Runtime;
-use crate::internals::test_case::TestCase;
+use crate::internals::scenario::Scenario;
 //use orchestration::{prelude::*, program::ProgramBuilder};
 use tracing::info;
 
-pub struct OnlyShutdownSequenceTest;
+pub struct OnlyShutdownSequence;
 
 /// Checks (almost) empty program with only shutdown
-impl TestCase for OnlyShutdownSequenceTest {
+impl Scenario for OnlyShutdownSequence {
     fn get_name(&self) -> &'static str {
         "only_shutdown"
     }

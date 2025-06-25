@@ -1,6 +1,6 @@
 use crate::internals::helpers::execution_barrier::RuntimeJoiner;
 use crate::internals::helpers::runtime_helper::Runtime;
-use crate::internals::test_case::TestCase;
+use crate::internals::scenario::Scenario;
 
 use async_runtime::spawn;
 
@@ -28,9 +28,9 @@ async fn simple_task(name: String) {
     checkpoint(name.as_str());
 }
 
-pub struct BasicWorkerTest;
+pub struct BasicWorker;
 
-impl TestCase for BasicWorkerTest {
+impl Scenario for BasicWorker {
     fn get_name(&self) -> &'static str {
         "worker"
     }

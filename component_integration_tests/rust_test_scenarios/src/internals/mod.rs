@@ -1,3 +1,3 @@
 pub mod helpers;
-pub mod test_case;
+pub mod scenario;
 pub mod test_context;

@@ -3,7 +3,7 @@ mod tests;
 
 use internals::helpers::monotonic_clock::MonotonicClockTime;
 use internals::test_context::TestContext;
-use tests::root_test_group::RootTestGroup;
+use tests::root_scenario_group::RootScenarioGroup;
 
 use clap::{Parser, ValueEnum};
 use std::io;
@@ -58,6 +58,6 @@ fn main() {
 
     init_tracing_subscriber();
 
-    let mut context = TestContext::new(Box::new(RootTestGroup::new()));
-    context.run_test(arguments.name.as_str(), input);
+    let mut context = TestContext::new(Box::new(RootScenarioGroup::new()));
+    context.run_scenario(arguments.name.as_str(), input);
 }

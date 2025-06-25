@@ -4,7 +4,7 @@ from testing_tools import LogContainer
 
 class TestThreeBlockedWorkersWithOneUnblocked:
     @pytest.fixture(scope="class")
-    def test_case_name(self):
+    def scenario_name(self):
         return "runtime.worker_with_blocking_tasks"
 
     @pytest.fixture(scope="class")

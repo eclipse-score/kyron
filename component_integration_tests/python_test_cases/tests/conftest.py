@@ -48,19 +48,19 @@ def build_scenarios(**kwargs):
 
 # Fixtures
 @pytest.fixture(scope="class")
-def execute_rust(test_config, test_case_name):
+def execute_rust(test_config, scenario_name):
     """
     Returns list of raw json messages from the test binary execution.
     """
-    return tt.execute_and_parse(test_config, test_case_name, expect_hang=False)
+    return tt.execute_and_parse(test_config, scenario_name, expect_hang=False)
 
 
 @pytest.fixture(scope="class")
-def execute_rust_expect_hang(test_config, test_case_name):
+def execute_rust_expect_hang(test_config, scenario_name):
     """
     Returns list of raw json messages from the test binary execution and expects the binary to hang.
     """
-    return tt.execute_and_parse(test_config, test_case_name, expect_hang=True)
+    return tt.execute_and_parse(test_config, scenario_name, expect_hang=True)
 
 
 @pytest.fixture(scope="class")
@@ -136,5 +136,5 @@ def pytest_runtest_makereport(item, call):
     outcome = yield
     report = outcome.get_result()
     report.description = str(item.function.__doc__)
-    report.tc = item.funcargs.get("test_case_name", "")
+    report.tc = item.funcargs.get("scenario_name", "")
     report.input = item.funcargs.get("test_config", "")
