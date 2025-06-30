@@ -3,7 +3,7 @@ mod tests;
 
 use internals::helpers::monotonic_clock::MonotonicClockTime;
 use internals::test_context::TestContext;
-use tests::root_scenario_group::RootScenarioGroup;
+use tests::RootScenarioGroup;
 
 use clap::{Parser, ValueEnum};
 use std::io;
