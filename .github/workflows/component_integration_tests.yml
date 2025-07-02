@@ -1,0 +1,52 @@
+name: Component Integration Tests
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+  merge_group:
+    types: [checks_requested]
+
+env:
+  CARGO_TERM_COLOR: always
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  component-integration-tests:
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+    runs-on: ${{ vars.REPO_RUNNER_LABELS && fromJSON(vars.REPO_RUNNER_LABELS) || 'ubuntu-latest' }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust Build Environment
+        uses: ./.github/actions/setup-rust-build
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Rust test scenarios
+        working-directory: component_integration_tests/rust_test_scenarios
+        run: cargo build
+
+      - name: Set up Python 3
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up Python virtual environment
+        working-directory: component_integration_tests/python_test_cases
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install -r requirements.txt
+
+      - name: Run Python tests with pytest
+        working-directory: component_integration_tests/python_test_cases
+        run: |
+          source .venv/bin/activate
+          python -m pytest
