@@ -93,16 +93,14 @@ def test_results(targeted_test_results):
 
 # Console log and HTML report
 @pytest.fixture(scope="function", autouse=True)
-def print_to_report(execute_rust, targeted_test_results, request):
+def print_to_report(unfiltered_test_results, targeted_test_results, request):
     if request.config.getoption("--test-traces"):
         traces = targeted_test_results
     else:
-        traces = execute_rust
+        traces = unfiltered_test_results
 
     for trace in traces:
-        # Convert timestamp to string for better readability in the report
-        trace["timestamp"] = str(trace["timestamp"])
-        print(str(trace))
+        print(trace)
 
 
 def pytest_html_report_title(report):
