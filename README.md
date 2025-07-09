@@ -33,44 +33,106 @@ Correct Bazel version will be installed on first run, based on `bazelversion` fi
 
 ## Build
 
-### Using Cargo
-
-You can either use manually usually `cargo` commands or use `xtask` approach
+List all targets:
 
 ```bash
-cargo xtask - print usage
+bazel query //...
 ```
 
-The `xtask` has advantage that it builds using separate build dirs, so when building `test` and `target`, there is no need to rebuild each time.
-
-#### Run some specific
-
-Use regular commands but prefer `cargo xtask`
+Build selected target:
 
 ```bash
-cargo xtask run --example basic
+bazel build <TARGET_NAME>
 ```
 
-### Using Bazel
+Build all targets:
 
 ```bash
-bazel run //orchestration:basic
+bazel build //...
 ```
 
-### Bazel
+## Run
 
-#### Targets
+List all binary targets, including examples:
 
-##### Tests
-
-Each component has defined test target as `component:tests` so You can run them via `bazel`:
-
-```txt
-bazel test //PATH_TO_COMPONENT:tests
+```bash
+bazel query 'kind(rust_binary, //src/...)'
 ```
 
-You can also run all tests via:
+> Bazel is not able to distinguish between examples and regular executables.
 
-```txt
+Run selected target:
+
+```bash
+bazel run <TARGET_NAME>
+```
+
+## Test
+
+List all test targets:
+
+```bash
+bazel query 'kind(rust_test, //...)'
+```
+
+Run all tests:
+
+```bash
 bazel test //...
+```
+
+Run unit tests (tests from `src/` directory):
+
+```bash
+bazel test //src/...
+```
+
+Run selected test target:
+
+```bash
+bazel test <TARGET_NAME>
+```
+
+## Cargo-based operations
+
+Please use Bazel whenever possible.
+
+### Build with Cargo
+
+It's recommended to use `cargo xtask`.
+It has the advantage of using separate build directories for each task.
+
+Build using `xtask` - debug and release:
+
+```bash
+cargo xtask build
+cargo xtask build:release
+```
+
+Build using `cargo` directly:
+
+```bash
+cargo build
+```
+
+### Run with Cargo
+
+List all examples:
+
+```bash
+cargo xtask run --example
+```
+
+Using `cargo xtask`:
+
+```bash
+cargo xtask run --example <EXAMPLE_NAME>
+```
+
+### Run unit tests with Cargo
+
+Using `cargo xtask`:
+
+```bash
+cargo xtask build:test --lib
 ```

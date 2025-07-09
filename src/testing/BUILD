@@ -10,8 +10,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
-load("@crates//:defs.bzl", "all_crate_deps")
-load("@rules_rust//rust:defs.bzl", "rust_library")
+load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
 
 rust_library(
     name = "test_utils",
@@ -22,4 +21,9 @@ rust_library(
     deps = [
         "//src/foundation:libfoundation",
     ],
+)
+
+rust_test(
+    name = "tests",
+    crate = ":test_utils",
 )
