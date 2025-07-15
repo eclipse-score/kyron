@@ -62,3 +62,13 @@ tracing-perfetto-sdk-sys = "0.12.0"
 tracing-perfetto-sdk-layer = { git = "https://github.com/qorix-group/tracing-perfetto-sdk.git", rev = "e27f6fc5bbad0c8cdf0c2c37b43e955467187199" }
 tracing-perfetto-sdk-schema = { git = "https://github.com/qorix-group/tracing-perfetto-sdk.git", rev = "e27f6fc5bbad0c8cdf0c2c37b43e955467187199" }
 tracing-perfetto-sdk-sys = { git = "https://github.com/qorix-group/tracing-perfetto-sdk.git", rev = "e27f6fc5bbad0c8cdf0c2c37b43e955467187199" }
+
+
+[workspace.lints.clippy]
+std_instead_of_core = "warn"
+alloc_instead_of_core = "warn"
+
+
+
+[workspace.lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(loom)'] }

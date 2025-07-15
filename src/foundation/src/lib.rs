@@ -11,7 +11,8 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
-use std::alloc::{self, Layout};
+use ::core::alloc::Layout;
+use std::alloc::{self};
 
 pub mod base;
 pub mod cell;

@@ -10,10 +10,11 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 //
+use ::core::sync::atomic::Ordering;
 use foundation::{
     containers::trigger_queue::TriggerQueueConsumer, prelude::FoundationAtomicBool, threading::thread_wait_barrier::ThreadReadyNotifier,
 };
-use std::sync::{atomic::Ordering, Arc};
+use std::sync::Arc;
 
 use ::core::task::Context;
 

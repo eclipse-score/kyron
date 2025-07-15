@@ -10,9 +10,9 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 //
-use std::sync::{atomic::Ordering, Arc};
-
+use ::core::sync::atomic::Ordering;
 use ::core::task::Context;
+use std::sync::Arc;
 
 use foundation::{containers::trigger_queue::TriggerQueue, threading::thread_wait_barrier::ThreadReadyNotifier};
 use iceoryx2_bb_posix::thread::Thread;

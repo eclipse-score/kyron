@@ -11,10 +11,11 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
+use ::core::alloc::Layout;
 use ::core::cell::UnsafeCell;
 use ::core::marker::PhantomData;
 use ::core::mem::MaybeUninit;
-use std::alloc::{self, Layout}; // TODO: maybe replace this too from iceoryx2
+use std::alloc::{self}; // TODO: maybe replace this too from iceoryx2
 use std::sync::Arc;
 
 use crate::prelude::*;

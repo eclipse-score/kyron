@@ -13,8 +13,7 @@ iceoryx2-bb-posix.workspace = true
 [target.'cfg(loom)'.dependencies]
 loom = { version = "0.7", features = ["checkpoint"] }
 
- [lints.rust]
-unexpected_cfgs = { level = "warn", check-cfg = ['cfg(loom)'] }
+
 
 [dev-dependencies]
 testing.workspace = true
@@ -22,3 +21,6 @@ testing.workspace = true
 
 [features]
 runtime-api-mock = []
+
+[lints]
+workspace = true

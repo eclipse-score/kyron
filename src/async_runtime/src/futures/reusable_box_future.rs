@@ -10,7 +10,8 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 //
-use std::alloc::{self, dealloc, Layout};
+use ::core::alloc::Layout;
+use std::alloc::{self, dealloc};
 
 use ::core::{
     future::Future,

@@ -14,7 +14,8 @@
 use ::core::ops::Deref;
 use ::core::ptr::NonNull;
 
-use std::alloc::{self, dealloc, Layout};
+use ::core::alloc::Layout;
+use std::alloc::{self, dealloc};
 use std::sync::Arc;
 
 use iceoryx2_bb_container::vec::Vec;
@@ -162,7 +163,7 @@ impl<T: ReusableObjectTrait> Drop for ReusableObjects<T> {
                 Ok(_) => {}
                 Err(actual) => unsafe {
                     assert_eq!(actual, OBJECT_FREE);
-                    std::sync::atomic::fence(::core::sync::atomic::Ordering::SeqCst); // we will drop the value, so we must sync memory first so we call drop() on current object
+                    ::core::sync::atomic::fence(::core::sync::atomic::Ordering::SeqCst); // we will drop the value, so we must sync memory first so we call drop() on current object
                     object.drop_in_place();
                     dealloc(object.as_ptr() as *mut u8, Layout::new::<T>());
                 },
