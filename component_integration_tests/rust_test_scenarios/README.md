@@ -14,6 +14,11 @@ bazel build //component_integration_tests/rust_test_scenarios:rust_test_scenario
 
 ## Standalone execution of Test Scenarios
 ### Cargo run
+You can list all available scenarios with:
+```bash
+cargo run -- --list-scenarios
+```
+
 ```bash
 cargo run -- --name TEST_GROUP.TEST_SCENARIO
 ```

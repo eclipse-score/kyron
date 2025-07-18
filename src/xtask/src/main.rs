@@ -77,6 +77,30 @@ fn main() {
             clippy(envs.clone(), cli_env_vars.clone(), &passthrough_args);
             test(envs, cli_env_vars, &passthrough_args);
         }
+        "build:scenarios" => {
+            run_build(
+                "debug_build",
+                &["build", "--manifest-path", "component_integration_tests/rust_test_scenarios/Cargo.toml"],
+                envs,
+                cli_env_vars,
+                &passthrough_args,
+            );
+        }
+        "run:scenarios" => {
+            run_build(
+                "debug_build",
+                &[
+                    "run",
+                    "--manifest-path",
+                    "component_integration_tests/rust_test_scenarios/Cargo.toml",
+                    "--bin",
+                    "rust_test_scenarios",
+                ],
+                envs,
+                cli_env_vars,
+                &passthrough_args,
+            );
+        }
         _ => print_usage_and_exit(),
     }
 }

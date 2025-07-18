@@ -15,6 +15,11 @@ pub trait ScenarioGroup {
         self.init();
         self.get_group_impl().find_scenario(name)
     }
+
+    fn list_scenarios(&mut self, prefix: Option<&str>) -> Vec<String> {
+        self.init();
+        self.get_group_impl().list_scenarios(prefix)
+    }
 }
 
 pub struct ScenarioGroupImpl {
@@ -61,5 +66,27 @@ impl ScenarioGroupImpl {
             }
             None
         }
+    }
+
+    pub fn list_scenarios(&mut self, prefix: Option<&str>) -> Vec<String> {
+        let mut names = Vec::new();
+
+        for scenario in &self.scenarios {
+            names.push(format!("{}.{}", prefix.unwrap(), scenario.get_name()));
+        }
+
+        for group in &mut self.groups {
+            let group_name = group.get_name().to_string();
+
+            let new_prefix = if prefix.is_none() {
+                group_name
+            } else {
+                format!("{}.{}", prefix.unwrap(), group_name)
+            };
+
+            names.extend(group.list_scenarios(Some(new_prefix.as_str())));
+        }
+
+        names
     }
 }

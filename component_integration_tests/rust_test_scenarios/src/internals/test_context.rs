@@ -16,4 +16,10 @@ impl TestContext {
             None => panic!("Scenario {} not found", name),
         };
     }
+    pub fn list_scenarios(&mut self) -> () {
+        let scenarios = self.root_group.list_scenarios(None);
+        for scenario in scenarios {
+            println!("{}", scenario);
+        }
+    }
 }

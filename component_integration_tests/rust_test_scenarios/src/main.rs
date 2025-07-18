@@ -19,7 +19,7 @@ enum InputType {
 
 #[derive(Parser, Debug)]
 pub struct Args {
-    #[arg(short, long)]
+    #[arg(short, long, default_value_t = String::from(""))]
     name: String,
 
     #[arg(short, long)]
@@ -27,14 +27,23 @@ pub struct Args {
 
     #[arg(long, value_enum, default_value_t = InputType::Stdin)]
     input_type: InputType,
+
+    #[arg(long, help = "List all available scenarios")]
+    list_scenarios: bool,
 }
 
 fn read_test_stdin_input() -> String {
-    println!("Please enter the TestInput in JSON format:");
+    println!("Please enter the TestInput in JSON format or press ENTER for default:");
     let mut buffer = String::new();
     io::stdin().read_line(&mut buffer).unwrap();
-    // TODO: Handle empty stdin as option none
-    return buffer;
+    let trimmed = buffer.trim();
+    if trimmed.is_empty() {
+        // Default value if input is empty
+        // This is enough for most tests but not all
+        r#"{"runtime": {"task_queue_size": 256, "workers": 2}}"#.to_string()
+    } else {
+        trimmed.to_string()
+    }
 }
 
 fn init_tracing_subscriber() {
@@ -50,6 +59,16 @@ fn init_tracing_subscriber() {
 
 fn main() {
     let arguments = Args::parse();
+    let mut context = TestContext::new(Box::new(RootScenarioGroup::new()));
+
+    if arguments.list_scenarios {
+        context.list_scenarios();
+        return;
+    }
+
+    if arguments.name.is_empty() {
+        panic!("Scenario name must be provided.");
+    }
 
     let mut input = arguments.input.clone();
     if arguments.input_type == InputType::Stdin {
@@ -57,7 +76,5 @@ fn main() {
     }
 
     init_tracing_subscriber();
-
-    let mut context = TestContext::new(Box::new(RootScenarioGroup::new()));
     context.run_scenario(arguments.name.as_str(), input);
 }
