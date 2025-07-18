@@ -17,7 +17,6 @@ use ::core::{
     ops::{Deref, DerefMut},
     slice::{Iter, IterMut},
 };
-
 use iceoryx2_bb_container::vec::*;
 
 ///
@@ -93,6 +92,15 @@ impl<T> GrowableVec<T> {
     /// Remove and return last elem in container
     pub fn pop(&mut self) -> Option<T> {
         self.inner.pop().map(|mu| unsafe { mu.assume_init() })
+    }
+
+    /// Removes the element at the specified index, and returns the element if the index is valid.
+    pub fn remove(&mut self, index: usize) -> Option<T> {
+        if index < self.inner.len() {
+            Some(unsafe { self.inner.remove(index).assume_init() })
+        } else {
+            None
+        }
     }
 
     // Adds `value` to end of vector. Return true if action succeeded
