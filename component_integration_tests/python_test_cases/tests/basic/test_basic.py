@@ -1,7 +1,9 @@
+from typing import Any
+
 import pytest
 from testing_utils import LogContainer
-from typing import Any
-from cit_scenario import CitScenario
+
+from component_integration_tests.python_test_cases.tests.cit_scenario import CitScenario
 
 
 class TestOnlyShutdown1W2Q(CitScenario):

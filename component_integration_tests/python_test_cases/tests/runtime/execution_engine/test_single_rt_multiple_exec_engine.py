@@ -1,8 +1,10 @@
+from functools import cached_property
+from typing import Any
+
 import pytest
 from testing_utils import LogContainer
-from cit_scenario import CitScenario
-from typing import Any
-from functools import cached_property
+
+from component_integration_tests.python_test_cases.tests.cit_scenario import CitScenario
 
 
 class TestSingleRuntimeMultipleExecEngine(CitScenario):

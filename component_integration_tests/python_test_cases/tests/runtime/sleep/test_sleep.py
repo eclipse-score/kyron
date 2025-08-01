@@ -1,8 +1,10 @@
 import math
 from typing import Any
+
 import pytest
 from testing_utils import LogContainer
-from cit_scenario import CitScenario
+
+from component_integration_tests.python_test_cases.tests.cit_scenario import CitScenario
 
 
 # Due to OS related condition variable wait behavior including scheduling, thread priority,

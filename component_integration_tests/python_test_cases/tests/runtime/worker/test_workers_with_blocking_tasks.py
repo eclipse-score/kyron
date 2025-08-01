@@ -1,7 +1,9 @@
+from typing import Any
+
 import pytest
 from testing_utils import LogContainer
-from cit_scenario import CitScenario
-from typing import Any
+
+from component_integration_tests.python_test_cases.tests.cit_scenario import CitScenario
 
 
 class TestThreeBlockedWorkersWithOneUnblocked(CitScenario):

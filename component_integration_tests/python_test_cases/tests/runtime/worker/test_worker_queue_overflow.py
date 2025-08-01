@@ -1,7 +1,12 @@
+from typing import Any
+
 import pytest
 from testing_utils import ScenarioResult
-from cit_scenario import CitScenario, ResultCode
-from typing import Any
+
+from component_integration_tests.python_test_cases.tests.cit_scenario import (
+    CitScenario,
+    ResultCode,
+)
 
 
 class TestQueueOverflow(CitScenario):

@@ -1,11 +1,14 @@
 from abc import abstractmethod
 from typing import Any
+
 import psutil
 import pytest
-
 from testing_utils import ScenarioResult
-from cit_scenario import CitScenario, ResultCode
 
+from component_integration_tests.python_test_cases.tests.cit_scenario import (
+    CitScenario,
+    ResultCode,
+)
 
 # region task_queue_size
 
