@@ -1,0 +1,54 @@
+name: Component Integration Tests in Bazel
+
+on:
+  push:
+    branches: [main, development]
+  pull_request:
+    branches: [main, development]
+    types: [opened, ready_for_review, reopened, synchronize]
+  schedule:
+    - cron: '0 0 * * *' # This runs every day at midnight UTC
+
+env:
+  CARGO_TERM_COLOR: always
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  build:
+    name: Build Bazel Code
+    runs-on: ${{ vars.REPO_RUNNER_LABELS && fromJSON(vars.REPO_RUNNER_LABELS) || 'ubuntu-latest' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.2.2
+
+      - name: Install protoc 26.1
+        uses: arduino/setup-protoc@v3
+        with:
+          version: 26.1
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Bazel
+        uses: bazel-contrib/setup-bazel@0.15.0
+        with:
+          bazelisk-version: 1.26.0 # newest LTS before 1 Jun 2025
+          disk-cache: true
+          repository-cache: true
+          bazelisk-cache: true
+
+      - name: Build with Bazel
+        run: |
+          bazel build //...
+
+      - name: Build Test Scenarios with Bazel
+        run: |
+          bazel build //component_integration_tests/rust_test_scenarios:rust_test_scenarios
+
+      - name: Build Test Scenarios with Bazel (PR)
+        if: github.event_name == 'pull_request' || github.event_name == 'push'
+        run: |
+          bazel test //component_integration_tests/python_test_cases:cit
+
+      - name: Build Test Scenarios with Bazel (Nightly)
+        if: github.event_name == 'schedule'
+        run: |
+          bazel test //component_integration_tests/python_test_cases:cit_repeat

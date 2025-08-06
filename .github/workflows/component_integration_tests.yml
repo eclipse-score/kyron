@@ -1,10 +1,13 @@
 name: Component Integration Tests
 
 on:
+  push:
+    branches: [main, development]
   pull_request:
-    types: [opened, reopened, synchronize]
-  merge_group:
-    types: [checks_requested]
+    branches: [main, development]
+    types: [opened, ready_for_review, reopened, synchronize]
+  schedule:
+    - cron: '0 0 * * *' # This runs every day at midnight UTC
 
 env:
   CARGO_TERM_COLOR: always
@@ -45,8 +48,16 @@ jobs:
           source .venv/bin/activate
           pip install -r requirements.txt
 
-      - name: Run Python tests with pytest
+      - name: Run Python tests with pytest (PR)
+        if: github.event_name == 'pull_request' || github.event_name == 'push'
         working-directory: component_integration_tests/python_test_cases
         run: |
           source .venv/bin/activate
           python -m pytest
+
+      - name: Run Python tests with pytest (Nightly)
+        if: github.event_name == 'schedule'
+        working-directory: component_integration_tests/python_test_cases
+        run: |
+          source .venv/bin/activate
+          python -m pytest --count 20 --repeat-scope session
