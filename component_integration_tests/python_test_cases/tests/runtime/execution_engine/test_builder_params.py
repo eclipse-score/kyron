@@ -205,8 +205,7 @@ class TestThreadStackSize_TooSmall(TestThreadStackSize):
         return True
 
     def test_invalid(self, results: ScenarioResult) -> None:
-        # SIGKILL is sent during thread construction.
-        assert results.return_code == ResultCode.SIGKILL
+        assert results.return_code == ResultCode.PANIC
         assert results.stderr is not None
         assert (
             "called `Result::unwrap()` on an `Err` value: StackSizeTooSmall"

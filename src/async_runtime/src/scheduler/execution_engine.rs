@@ -119,7 +119,6 @@ impl ExecutionEngine {
         let tq = Arc::new(TriggerQueue::new(1));
         let recv = tq.clone().get_consumer();
 
-        self.state = EngineState::Running(JoinHandle { recv });
         let boxed = box_future(async move {
             let res = future.await;
 
@@ -153,7 +152,6 @@ impl ExecutionEngine {
                     drivers.clone(),
                     self.dedicated_scheduler.clone(),
                     start_barrier.get_notifier().unwrap(),
-                    &self.thread_params,
                 );
         }
 
@@ -177,6 +175,8 @@ impl ExecutionEngine {
             );
         });
 
+        // Workers are spawned successfully
+        self.state = EngineState::Running(JoinHandle { recv });
         debug!("Engine starts waiting for workers to be ready");
 
         let res = start_barrier.wait_for_all(Duration::new(5, 0));
@@ -356,7 +356,7 @@ impl ExecutionEngineBuilder {
         let safety_worker_queue;
         let safety_worker = {
             if self.with_safe_worker.0 {
-                let w = SafetyWorker::new(WorkerId::new("SafetyWorker".into(), 0, 0, WorkerType::Dedicated));
+                let w = SafetyWorker::new(WorkerId::new("SafetyWorker".into(), 0, 0, WorkerType::Dedicated), self.with_safe_worker.1);
                 safety_worker_queue = Some(w.get_queue());
                 Some(w)
             } else {

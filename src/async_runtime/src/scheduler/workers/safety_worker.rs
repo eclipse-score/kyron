@@ -43,15 +43,17 @@ pub(crate) struct SafetyWorker {
     id: WorkerId,
     queue: Arc<TriggerQueue<TaskRef>>,
     stop_signal: Arc<FoundationAtomicBool>,
+    thread_params: ThreadParameters,
 }
 
 impl SafetyWorker {
-    pub(crate) fn new(id: WorkerId) -> Self {
+    pub(crate) fn new(id: WorkerId, thread_params: ThreadParameters) -> Self {
         SafetyWorker {
             id,
             thread_handle: None,
             queue: Arc::new(TriggerQueue::new(SAFETY_QUEUE_SIZE)),
             stop_signal: Arc::new(FoundationAtomicBool::new(false)),
+            thread_params,
         }
     }
 
@@ -69,7 +71,6 @@ impl SafetyWorker {
         drivers: Drivers,
         dedicated_scheduler: Arc<DedicatedScheduler>,
         ready_notifier: ThreadReadyNotifier,
-        thread_params: &ThreadParameters,
     ) {
         self.thread_handle = {
             let queue = self.queue.clone();
@@ -91,7 +92,7 @@ impl SafetyWorker {
 
                         Self::run_internal(internal, drivers, dedicated_scheduler, scheduler, ready_notifier);
                     },
-                    thread_params,
+                    &self.thread_params,
                 )
                 .unwrap(),
             )
