@@ -21,9 +21,9 @@ use crate::{
 };
 
 ///
-/// Creates Single Producer Single Consumer channel with [`CHANNEL_SIZE`] capacity
+/// Creates Single Producer Single Consumer channel with [`DEFAULT_CHANNEL_SIZE`] capacity
 ///
-pub fn create_channel_default<T: Copy>() -> (Sender<T, CHANNEL_SIZE>, Receiver<T, CHANNEL_SIZE>) {
+pub fn create_channel_default<T: Copy>() -> (Sender<T, DEFAULT_CHANNEL_SIZE>, Receiver<T, DEFAULT_CHANNEL_SIZE>) {
     let chan = Arc::new(Channel::new());
 
     (
@@ -120,7 +120,7 @@ impl<T: Copy, const SIZE: usize> Receiver<T, SIZE> {
     }
 }
 
-const CHANNEL_SIZE: usize = 8;
+pub const DEFAULT_CHANNEL_SIZE: usize = 8;
 const BOTH_IN: u8 = 0;
 const SENDER_GONE: u8 = 1;
 const RECV_GONE: u8 = 2;

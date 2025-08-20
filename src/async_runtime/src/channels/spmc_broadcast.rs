@@ -18,7 +18,7 @@ use foundation::{not_recoverable_error, prelude::*};
 
 use crate::futures::{FutureInternalReturn, FutureState};
 
-const CHANNEL_SIZE: usize = 8;
+pub const DEFAULT_CHANNEL_SIZE: usize = 8;
 
 ///
 /// Creates Single Producer Multiple Consumer channel. Please keep in mind this is broadcast channel, so all `Receiver`s will receive the same value.
@@ -37,9 +37,9 @@ pub fn create_channel<T: Copy, const SIZE: usize>(max_num_of_receivers: usize) -
 }
 
 ///
-/// Creates Single Producer Multiple Consumer channel with [`CHANNEL_SIZE`] capacity. Please keep in mind this is broadcast channel, so all `Receiver`s will receive the same value.
+/// Creates Single Producer Multiple Consumer channel with [`DEFAULT_CHANNEL_SIZE`] capacity. Please keep in mind this is broadcast channel, so all `Receiver`s will receive the same value.
 ///
-pub fn create_channel_default<T: Copy>(max_num_of_receivers: usize) -> (Sender<T, CHANNEL_SIZE>, Receiver<T, CHANNEL_SIZE>) {
+pub fn create_channel_default<T: Copy>(max_num_of_receivers: usize) -> (Sender<T, DEFAULT_CHANNEL_SIZE>, Receiver<T, DEFAULT_CHANNEL_SIZE>) {
     let chan = Arc::new(Channel::new(max_num_of_receivers));
 
     (
@@ -157,7 +157,7 @@ impl<T: Copy, const SIZE: usize> Drop for Receiver<T, SIZE> {
     }
 }
 
-struct Channel<T: Copy, const SIZE: usize = CHANNEL_SIZE> {
+struct Channel<T: Copy, const SIZE: usize = DEFAULT_CHANNEL_SIZE> {
     channels: Vec<super::spsc::Channel<T, SIZE>>,
     next_free_receiver: FoundationAtomicU8,
 }
