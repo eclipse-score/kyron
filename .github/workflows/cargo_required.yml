@@ -57,6 +57,12 @@ jobs:
         if: github.event.pull_request.draft == false
         run: cargo +nightly-2025-05-30 fetch --locked
 
+      - name: Purge Miri artifacts
+        if: github.event.pull_request.draft == false
+        run: |
+          rm -rf target/miri
+          rm -rf ~/.cache/miri
+
       - name: Prefetch and build dependencies for Miri
         if: github.event.pull_request.draft == false
         run: cargo +nightly-2025-05-30 miri setup
