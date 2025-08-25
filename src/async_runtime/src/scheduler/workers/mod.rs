@@ -40,6 +40,12 @@ where
     }
 
     let mut tb = ThreadBuilder::new().name(&name);
+
+    // If both scheduler type and priority are configured, disable inheritance from parent thread.
+    if thread_params.scheduler_type.is_some() && thread_params.priority.is_some() {
+        tb = tb.inherit_scheduling_attributes(false);
+    }
+
     if let Some(priority) = thread_params.priority {
         tb = tb.priority(priority);
     }

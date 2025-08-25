@@ -301,6 +301,8 @@ impl ExecutionEngineBuilder {
     }
 
     /// Configures thread priority for the async workers.
+    /// Ensure to configure scheduler type also.
+    /// If priority or scheduler type is `None`, then both attributes will be inherited from parent thread.
     pub fn thread_priority(mut self, thread_prio: u8) -> Self {
         self.thread_params.priority = Some(thread_prio);
         self
@@ -313,6 +315,8 @@ impl ExecutionEngineBuilder {
     }
 
     /// Configures the scheduler type for the async workers.
+    /// Ensure to configure priority also.
+    /// If priority or scheduler type is `None`, then both attributes will be inherited from parent thread.
     pub fn thread_scheduler(mut self, thread_scheduler_type: SchedulerType) -> Self {
         self.thread_params.scheduler_type = Some(thread_scheduler_type);
         self
@@ -326,21 +330,31 @@ impl ExecutionEngineBuilder {
     }
 
     /// Enables the safety worker with the given thread parameters `params`.
-    ///
+    /// If priority or scheduler type is `None`, then both attributes will be inherited from parent thread.
     pub fn enable_safety_worker(mut self, params: ThreadParameters) -> Self {
         self.with_safe_worker = (true, params);
+        if params.priority.is_none() ^ params.scheduler_type.is_none() {
+            warn!("Either priority or scheduler type is 'None' for safety worker, both attributes will be inherited from parent thread.");
+        }
         self
     }
 
     ///
-    /// Adds new dedicated worker identified by `id` to the engine
-    ///
+    /// Adds new dedicated worker identified by `id` to the engine with given thread parameters `params`.
+    /// If priority or scheduler type is `None`, then both attributes will be inherited from parent thread.
     #[allow(dead_code)]
     pub fn with_dedicated_worker(mut self, id: UniqueWorkerId, params: ThreadParameters) -> Self {
         assert!(
             !self.dedicated_workers_ids.iter().any(|(worker_id, _)| *worker_id == id),
             "Cannot register same unique worker multiple times!"
         );
+
+        if params.priority.is_none() ^ params.scheduler_type.is_none() {
+            warn!(
+                "Either priority or scheduler type is 'None' for dedicated worker {:?}, both attributes will be inherited from parent thread.",
+                id
+            );
+        }
 
         self.dedicated_workers_ids.push((id, params));
         debug!("Registered worker {:?}", id);
@@ -383,6 +397,9 @@ impl ExecutionEngineBuilder {
 
         let mut async_workers = Vec::new(self.async_workers_cnt);
 
+        if self.thread_params.priority.is_none() ^ self.thread_params.scheduler_type.is_none() {
+            warn!("Either priority or scheduler type is 'None' for async worker, both attributes will be inherited from parent thread.");
+        }
         for i in 0..self.async_workers_cnt {
             async_workers.push(Worker::new(
                 self.thread_params.priority,
