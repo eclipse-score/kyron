@@ -7,7 +7,7 @@ on:
     branches: [main, development]
     types: [opened, ready_for_review, reopened, synchronize]
   schedule:
-    - cron: '0 0 * * *' # This runs every day at midnight UTC
+    - cron: '45 1 * * *' # This runs every day at 1:45 UTC
 
 env:
   CARGO_TERM_COLOR: always
@@ -16,9 +16,7 @@ env:
 jobs:
   component-integration-tests:
     permissions:
-      contents: write
-      pages: write
-      id-token: write
+      contents: read
     runs-on: ${{ vars.REPO_RUNNER_LABELS && fromJSON(vars.REPO_RUNNER_LABELS) || 'ubuntu-latest' }}
     defaults:
       run:

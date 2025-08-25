@@ -7,7 +7,7 @@ on:
     branches: [main, development]
     types: [opened, ready_for_review, reopened, synchronize]
   schedule:
-    - cron: '0 0 * * *' # This runs every day at midnight UTC
+    - cron: '15 1 * * *' # This runs every day at 1:15 UTC
 
 env:
   CARGO_TERM_COLOR: always
@@ -35,9 +35,25 @@ jobs:
           repository-cache: true
           bazelisk-cache: true
 
-      - name: Build with Bazel
+      - name: Bazel info (discover paths)
+        id: bazel-info
         run: |
-          bazel build //...
+          echo "BAZEL_OUTPUT_BASE=$(bazel info output_base)" >> $GITHUB_ENV
+          echo "BAZEL_USER_ROOT=$(bazel info output_user_root)" >> $GITHUB_ENV
+          echo "BAZEL_REPO_CACHE=$(bazel info repository_cache)" >> $GITHUB_ENV
+          bazel info
+
+      - name: Cache Bazel output base
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.BAZEL_OUTPUT_BASE }}/action_cache
+            ${{ env.BAZEL_OUTPUT_BASE }}/bazel-out
+            ${{ env.BAZEL_OUTPUT_BASE }}/external
+            ${{ env.BAZEL_OUTPUT_BASE }}/execroot
+          key: bazel-ob-${{ runner.os }}-${{ hashFiles('MODULE.bazel', 'MODULE.bazel.lock', '**/*.bzl', 'Cargo.lock') }}
+          restore-keys: |
+            bazel-ob-${{ runner.os }}-
 
       - name: Build Test Scenarios with Bazel
         run: |

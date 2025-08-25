@@ -2,6 +2,29 @@
 
 Incubation repo for orchestration
 
+[![Nightly CIT](../../actions/workflows/component_integration_tests.yml/badge.svg)](../../actions/workflows/component_integration_tests.yml)
+[![Nightly CIT (Bazel)](../../actions/workflows/component_integration_tests_bazel.yml/badge.svg)](../../actions/workflows/component_integration_tests_bazel.yml)
+
+## Continuous Integration Nightly Tests
+
+This repository includes two GitHub Actions workflows for component integration testing:
+
+### Component Integration Tests (Cargo-based)
+- **Schedule**: Runs nightly at 1:45 UTC
+- **Build System**: Uses Cargo for Rust components
+- **Testing**: Executes Python test suite with pytest
+- **Nightly Mode**: Runs tests 20 times with `--count 20 --repeat-scope session` for enhanced reliability testing
+- **Triggers**: Push/PR to main/development branches, and scheduled nightly runs
+
+### Component Integration Tests (Bazel-based)
+- **Schedule**: Runs nightly at 1:15 UTC
+- **Build System**: Uses Bazel for all components
+- **Testing**: Builds Rust test scenarios and runs Python component integration tests
+- **Nightly Mode**: Uses `cit_repeat` target for flake detection
+- **Triggers**: Push/PR to main/development branches, and scheduled nightly runs
+
+Monitor via the status badges above and the Actions tab
+
 ## Setup
 
 ### System dependencies
