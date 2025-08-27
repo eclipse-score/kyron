@@ -11,9 +11,5 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
-pub mod net;
-pub mod poll;
-pub mod rawfd;
-pub mod registry;
-pub mod selector;
-pub mod types;
+#[cfg(feature = "iceoryx2_ipc")]
+pub mod iceoryx2;

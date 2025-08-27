@@ -6,6 +6,10 @@ edition.workspace = true
 [dependencies]
 foundation.workspace = true
 
+iceoryx2 = {workspace = true, optional = true}
+iceoryx2-cal = {workspace = true, optional = true}
+
+
 iceoryx2-pal-concurrency-sync.workspace = true
 iceoryx2-bb-container.workspace = true
 iceoryx2-bb-posix.workspace = true
@@ -15,13 +19,14 @@ libc.workspace = true
 loom = { version = "0.7", features = ["checkpoint"] }
 
 
-
 [dev-dependencies]
 testing.workspace = true
 testing_macros.workspace = true
 
 [features]
+default = ["iceoryx2_ipc"]
 runtime-api-mock = []
+iceoryx2_ipc = ["iceoryx2", "iceoryx2-cal"]
 
 [lints]
 workspace = true

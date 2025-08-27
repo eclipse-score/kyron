@@ -57,6 +57,7 @@ pub mod channels;
 pub mod core;
 pub mod futures;
 pub mod io;
+pub mod ipc;
 pub mod mio;
 pub mod net;
 pub mod prelude;

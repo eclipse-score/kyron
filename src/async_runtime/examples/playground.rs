@@ -10,17 +10,21 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 //
-
+#![allow(dead_code, unused_imports, unused_variables)]
+use async_runtime::futures::sleep;
+use async_runtime::ipc::iceoryx2::EventBuilderAsyncExt;
 use async_runtime::prelude::*;
 use async_runtime::{
     runtime::async_runtime::AsyncRuntimeBuilder,
     safety::{self, ensure_safety_enabled},
     scheduler::execution_engine::*,
-    spawn, spawn_on_dedicated,
+    spawn,
 };
 
 use ::core::future::Future;
 use foundation::prelude::*;
+use iceoryx2::prelude::*;
+use std::time::Duration;
 
 pub struct X {}
 
@@ -50,7 +54,7 @@ fn main() {
     tracing_subscriber::fmt()
         // .with_span_events(FmtSpan::FULL) // Ensures span open/close events are logged
         .with_target(false) // Optional: Remove module path
-        .with_max_level(Level::DEBUG)
+        .with_max_level(Level::INFO)
         .with_thread_ids(true)
         .with_thread_names(true)
         .init();
@@ -69,47 +73,36 @@ fn main() {
         // TASK
         error!("We do have first enter into runtime ;)");
 
-        let handle = spawn(async {
+        spawn(async {
             // TASK
             error!("And again from one we are in another ;)");
+            let node = NodeBuilder::new().create::<ipc_threadsafe::Service>().unwrap();
 
-            let _ = safety::spawn(async {
-                //TASK
-                error!("And again from one nested from dedicated ;)");
+            let event = node
+                .service_builder(&"MyEventNameq".try_into().unwrap())
+                .event()
+                .open_or_create()
+                .unwrap();
 
-                Err(0) as Result<i32, i32>
-            })
-            .await
-            .unwrap()
-            .is_err();
+            let listener = event.listener_builder().create_async().unwrap();
 
-            let x = "dedicated".into();
+            let mut count = 0;
+            loop {
+                // info!("Waiting for Iceoryx event in batches ...");
+                listener
+                    .wait_all(&mut |event_id| {
+                        info!("Received Iceoryx event: {}", event_id.as_value() + count * 256);
+                        if event_id.as_value() == 254 {
+                            count += 1;
+                        }
+                    })
+                    .await
+                    .unwrap();
+            }
+        })
+        .await
+        .unwrap();
 
-            error!("I RUN FROM SAFETY FROM NOW ON !!!");
-
-            spawn_on_dedicated(
-                async {
-                    // TASK
-                    error!("I AM DEDICATED  ;)");
-
-                    error!("I AM DEDICATED RESTORED  ;)");
-                    1
-                },
-                x,
-            )
-            .await
-            .unwrap();
-
-            1
-        });
-
-        let res = handle.await;
-        error!("After await res is {}", res.unwrap());
-
-        let x = X {};
-
-        x.await;
-        error!("After multi waker");
         Ok(0)
     });
 }

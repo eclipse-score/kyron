@@ -10,18 +10,9 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 //
-
-// TODO: To be removed once used in IO APIs
-#![allow(dead_code)]
-
-use core::{
-    ops::Deref,
-    task::{ready, Context, Poll},
-};
+use core::task::{ready, Context, Poll};
 
 use foundation::prelude::{error, CommonErrors};
-
-use std::io::{Error, ErrorKind};
 
 use crate::{
     io::{
@@ -31,6 +22,8 @@ use crate::{
     },
     mio::types::{IoEventInterest, IoRegistryEntry},
 };
+use core::ops::{Deref, DerefMut};
+use std::io::{Error, ErrorKind};
 
 /// Bridge between MIO layer and async world that let other upper layers use it in concrete implementations.
 /// This is a basic building block for async IO operations in implementations like networking part.
@@ -165,6 +158,12 @@ impl<T: IoRegistryEntry<AsyncSelector> + core::fmt::Debug> Deref for BridgedFd<T
 
     fn deref(&self) -> &Self::Target {
         &self.mio_object
+    }
+}
+
+impl<T: IoRegistryEntry<AsyncSelector> + core::fmt::Debug> DerefMut for BridgedFd<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.mio_object
     }
 }
 

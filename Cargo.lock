@@ -28,8 +28,10 @@ name = "async_runtime"
 version = "0.1.0"
 dependencies = [
  "foundation",
+ "iceoryx2",
  "iceoryx2-bb-container",
  "iceoryx2-bb-posix",
+ "iceoryx2-cal",
  "iceoryx2-pal-concurrency-sync",
  "libc",
  "loom",

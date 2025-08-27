@@ -41,6 +41,7 @@ xtask = { path = "src/xtask" }
 orchestration_macros = { path = "src/orchestration_macros" }
 
 iceoryx2 = { git = "https://github.com/eclipse-iceoryx/iceoryx2.git", rev = "bc26cd6f47463f9d6170a3a9f7baaf2a79b5d846" }
+iceoryx2-cal = { git = "https://github.com/eclipse-iceoryx/iceoryx2.git", rev = "bc26cd6f47463f9d6170a3a9f7baaf2a79b5d846" }
 iceoryx2-bb-container = { git = "https://github.com/eclipse-iceoryx/iceoryx2.git", rev = "bc26cd6f47463f9d6170a3a9f7baaf2a79b5d846" }
 iceoryx2-bb-derive-macros = { git = "https://github.com/eclipse-iceoryx/iceoryx2.git", rev = "bc26cd6f47463f9d6170a3a9f7baaf2a79b5d846" }
 iceoryx2-bb-elementary = { git = "https://github.com/eclipse-iceoryx/iceoryx2.git", rev = "bc26cd6f47463f9d6170a3a9f7baaf2a79b5d846" }
