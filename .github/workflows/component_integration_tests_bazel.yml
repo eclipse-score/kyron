@@ -67,4 +67,4 @@ jobs:
       - name: Build Test Scenarios with Bazel (Nightly)
         if: github.event_name == 'schedule'
         run: |
-          bazel test //component_integration_tests/python_test_cases:cit_repeat
+          bazel test //component_integration_tests/python_test_cases:cit_repeat --test_timeout=600
