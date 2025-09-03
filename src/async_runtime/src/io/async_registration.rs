@@ -24,7 +24,7 @@ use core::{
 use std::sync::{Arc, Mutex};
 
 use foundation::{
-    cell::{UnsafeCell, UnsafeCellExt},
+    cell::UnsafeCell,
     containers::intrusive_linked_list,
     not_recoverable_error,
     prelude::{debug, error, trace, CommonErrors, FoundationAtomicU32},
@@ -540,8 +540,14 @@ impl<S: IoSelector> Future for ReadinessFuture<'_, S> {
 
 impl<S: IoSelector> Drop for ReadinessFuture<'_, S> {
     fn drop(&mut self) {
-        let item = unsafe { core::ptr::NonNull::new_unchecked(self.list_item.get_access()) };
-        self.registration.inner.wakers.lock().unwrap().waiters.remove(item);
+        let item = self.list_item.get();
+        self.registration
+            .inner
+            .wakers
+            .lock()
+            .unwrap()
+            .waiters
+            .remove(unsafe { core::ptr::NonNull::from(item.deref()) });
     }
 }
 
