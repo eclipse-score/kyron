@@ -11,13 +11,14 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
+use crate::cell::UnsafeCell;
 use core::marker::PhantomPinned;
 use core::ptr;
 
 /// Every [`List`] item needs to have this as one of its fields.
 pub struct Link {
-    prev: *mut Link,
-    next: *mut Link,
+    prev: UnsafeCell<*const Link>,
+    next: UnsafeCell<*const Link>,
     _pin: PhantomPinned,
 }
 
@@ -25,10 +26,26 @@ impl Link {
     /// Create an unlinked link.
     pub fn new() -> Self {
         Self {
-            prev: ptr::null_mut(),
-            next: ptr::null_mut(),
+            prev: UnsafeCell::new(ptr::null_mut()),
+            next: UnsafeCell::new(ptr::null_mut()),
             _pin: PhantomPinned,
         }
+    }
+
+    unsafe fn prev(&self) -> *const Link {
+        unsafe { *self.prev.get().deref() }
+    }
+
+    unsafe fn next(&self) -> *const Link {
+        unsafe { *self.next.get().deref() }
+    }
+
+    unsafe fn set_prev(&self, value: *const Link) {
+        self.prev.with_mut(|next| *next = value);
+    }
+
+    unsafe fn set_next(&self, value: *const Link) {
+        self.next.with_mut(|next| *next = value);
     }
 }
 
@@ -40,7 +57,12 @@ impl Default for Link {
     }
 }
 
-/// This trait signifies that an object implementing it is safe to insert into a [`List`].
+unsafe fn to_nonnull(ptr: *const Link) -> ptr::NonNull<Link> {
+    debug_assert_ne!(ptr, ptr::null());
+    ptr::NonNull::new_unchecked(ptr as *mut Link)
+}
+
+/// Enables a type containing a [`Link`] to be inserted into a [`List`].
 ///
 /// # Safety
 ///
@@ -63,17 +85,23 @@ pub struct List<I: Item> {
 }
 
 impl<I: Item> List<I> {
-    /// Insert an item at the back of the list.
-    pub fn push_back(&mut self, item: ptr::NonNull<I>) {
+    /// Inserts an item at the back of the list.
+    ///
+    /// # Safety
+    ///
+    /// - The item must not be an element in *any* list, including this list.
+    /// - The inserted item must outlive its presence in this list.
+    ///   Specifically, if the item is never removed, it must outlive the lifetime of this list.
+    pub unsafe fn push_back(&mut self, item: &I) {
         unsafe {
-            let mut link = self.item_to_link(item);
+            let link = Self::item_to_link(item);
 
             if self.len == 0 {
                 // If this is the first item being inserted, set it up as a sentinel.
-                debug_assert_eq!(link.as_ref().prev, ptr::null_mut());
-                debug_assert_eq!(link.as_ref().next, ptr::null_mut());
-                link.as_mut().prev = link.as_ptr();
-                link.as_mut().next = link.as_ptr();
+                debug_assert_eq!(link.as_ref().prev(), ptr::null_mut());
+                debug_assert_eq!(link.as_ref().next(), ptr::null_mut());
+                link.as_ref().set_prev(link.as_ptr());
+                link.as_ref().set_next(link.as_ptr());
                 self.head = link;
             } else {
                 Self::insert_link_before(link, self.head);
@@ -92,10 +120,10 @@ impl<I: Item> List<I> {
                 let old_head = self.head;
                 // Since the head is set up as a sentinel, thus points to itself,
                 // these operations are safe, even if the head is the last element being removed.
-                self.head = ptr::NonNull::new_unchecked(old_head.as_ref().next);
-                Self::remove_link(old_head);
+                self.head = to_nonnull(old_head.as_ref().next());
+                Self::remove_link(old_head.as_ref());
 
-                Some(self.link_to_item(old_head))
+                Some(Self::link_to_item(old_head))
             }
         } else {
             None
@@ -111,29 +139,31 @@ impl<I: Item> List<I> {
             return;
         }
 
-        let mut curr = self.head.as_ptr();
+        let mut curr = self.head.as_ptr() as *const Link;
         let mut num_of_iteration = self.len;
 
         unsafe {
             while num_of_iteration > 0 {
-                let current_link = ptr::NonNull::new_unchecked(curr);
-                let next = (*curr).next;
+                let current_link = to_nonnull(curr);
+                let next = current_link.as_ref().next();
                 curr = next;
 
-                if f(self.link_to_item(current_link).as_ref()) {
-                    self.remove_internal(current_link);
+                if f(Self::link_to_item(current_link).as_ref()) {
+                    self.remove_internal(current_link.as_ref());
                 }
                 num_of_iteration -= 1; // whether removed or not, we just processed this elem
             }
         }
     }
 
-    /// Remove a specific item from the list. Returns true if the item was found and removed, false otherwise.
-    pub fn remove(&mut self, item: ptr::NonNull<I>) -> bool {
+    /// Removes a specific item from the list.
+    ///
+    /// Returns `true` if the item was found and removed, `false` otherwise.
+    pub fn remove(&mut self, item: &I) -> bool {
         match self.len {
             0 => false, // Nothing to remove.
             1 => {
-                let link = unsafe { self.item_to_link(item) };
+                let link = unsafe { Self::item_to_link(item) };
 
                 if link == self.head {
                     // If this is the last item, we can just reset the list.
@@ -146,18 +176,18 @@ impl<I: Item> List<I> {
             }
             _ => {
                 // If this is not the last item, we need to remove it from the list.
-                let mut curr = self.head.as_ptr();
+                let mut curr = self.head.as_ptr() as *const Link;
 
                 unsafe {
                     while !curr.is_null() {
-                        let link = ptr::NonNull::new_unchecked(curr);
+                        let link = to_nonnull(curr);
 
-                        if item == self.link_to_item(link) {
-                            self.remove_internal(link);
+                        if ptr::NonNull::from(item) == Self::link_to_item(link) {
+                            self.remove_internal(link.as_ref());
                             return true;
                         }
 
-                        curr = (*curr).next;
+                        curr = (*curr).next();
                     }
                 }
 
@@ -176,13 +206,13 @@ impl<I: Item> List<I> {
         self.len == 0
     }
 
-    unsafe fn remove_internal(&mut self, link: ptr::NonNull<Link>) {
-        if link == self.head {
+    unsafe fn remove_internal(&mut self, link: &Link) {
+        if ptr::NonNull::from(link) == self.head {
             if self.len == 1 {
                 // If this is the last item, we can just reset the list.
                 self.head = ptr::NonNull::dangling();
             } else {
-                self.head = unsafe { ptr::NonNull::new_unchecked(link.as_ref().next) };
+                self.head = unsafe { to_nonnull(link.next()) };
                 Self::remove_link(link);
             }
         } else {
@@ -192,30 +222,36 @@ impl<I: Item> List<I> {
         self.len -= 1;
     }
 
-    unsafe fn link_to_item(&self, link: ptr::NonNull<Link>) -> ptr::NonNull<I> {
+    unsafe fn link_to_item(link: ptr::NonNull<Link>) -> ptr::NonNull<I> {
         link.byte_sub(I::link_field_offset()).cast::<I>()
     }
 
-    unsafe fn item_to_link(&self, item: ptr::NonNull<I>) -> ptr::NonNull<Link> {
-        item.byte_add(I::link_field_offset()).cast::<Link>()
+    unsafe fn item_to_link(item: &I) -> ptr::NonNull<Link> {
+        ptr::NonNull::from(item).byte_add(I::link_field_offset()).cast::<Link>()
     }
 
-    unsafe fn insert_link_before(mut link: ptr::NonNull<Link>, mut before: ptr::NonNull<Link>) {
-        debug_assert_eq!(link.as_ref().prev, ptr::null_mut());
-        debug_assert_eq!(link.as_ref().next, ptr::null_mut());
+    unsafe fn insert_link_before(link_ptr: ptr::NonNull<Link>, before: ptr::NonNull<Link>) {
+        let link = link_ptr.as_ref();
+        debug_assert_eq!(link.prev(), ptr::null_mut());
+        debug_assert_eq!(link.next(), ptr::null_mut());
 
-        link.as_mut().prev = before.as_ref().prev;
-        link.as_mut().next = before.as_ptr();
-        (*before.as_mut().prev).next = link.as_ptr();
-        before.as_mut().prev = link.as_ptr();
+        let left = before.as_ref().prev();
+        link.set_prev(left);
+        (*left).set_next(link_ptr.as_ptr());
+
+        let right = before.as_ptr();
+        link.set_next(right);
+        (*right).set_prev(link_ptr.as_ptr());
     }
 
-    unsafe fn remove_link(mut link: ptr::NonNull<Link>) {
-        (*link.as_mut().prev).next = link.as_ref().next;
-        (*link.as_mut().next).prev = link.as_ref().prev;
+    unsafe fn remove_link(link: &Link) {
+        let left = link.prev();
+        let right = link.next();
+        (*left).set_next(right);
+        (*right).set_prev(left);
 
-        link.as_mut().prev = ptr::null_mut();
-        link.as_mut().next = ptr::null_mut();
+        link.set_prev(ptr::null_mut());
+        link.set_next(ptr::null_mut());
     }
 }
 
@@ -252,7 +288,7 @@ mod tests {
             fn drop(&mut self) {
                 println!(
                     "drop value1 {} value2 {} link.prev {:?} link.next {:?}",
-                    self.value1, self.value2, self.link.prev, self.link.next
+                    self.value1, self.value2, self.link.prev, self.link.next,
                 );
             }
         }
@@ -263,13 +299,13 @@ mod tests {
             }
         }
 
-        let mut item1 = TestItem {
+        let item1 = TestItem {
             value1: 1,
             link: Link::new(),
             value2: 2.0,
         };
 
-        let mut item2 = TestItem {
+        let item2 = TestItem {
             value1: 5,
             link: Link::new(),
             value2: 6.0,
@@ -279,10 +315,14 @@ mod tests {
 
         assert_eq!(list.len(), 0);
         assert!(list.is_empty());
-        list.push_back(ptr::NonNull::new(&mut item1 as *mut TestItem).unwrap());
+        unsafe {
+            list.push_back(&item1);
+        }
         assert_eq!(list.len(), 1);
         assert!(!list.is_empty());
-        list.push_back(ptr::NonNull::new(&mut item2 as *mut TestItem).unwrap());
+        unsafe {
+            list.push_back(&item2);
+        }
         assert_eq!(list.len(), 2);
         assert!(!list.is_empty());
 
@@ -323,25 +363,27 @@ mod tests {
         }
 
         {
-            let mut item1 = TestItem {
+            let item1 = TestItem {
                 drop_counter: Rc::clone(&drop_counter),
                 link: Link::new(),
             };
 
-            let mut item2 = TestItem {
+            let item2 = TestItem {
                 drop_counter: Rc::clone(&drop_counter),
                 link: Link::new(),
             };
 
-            let mut item3 = TestItem {
+            let item3 = TestItem {
                 drop_counter: Rc::clone(&drop_counter),
                 link: Link::new(),
             };
 
             let mut list: List<TestItem> = Default::default();
-            list.push_back(ptr::NonNull::new(&mut item1 as *mut TestItem).unwrap());
-            list.push_back(ptr::NonNull::new(&mut item2 as *mut TestItem).unwrap());
-            list.push_back(ptr::NonNull::new(&mut item3 as *mut TestItem).unwrap());
+            unsafe {
+                list.push_back(&item1);
+                list.push_back(&item2);
+                list.push_back(&item3);
+            }
             assert_eq!(list.len(), 3);
             let _ = list.pop_front();
             assert_eq!(list.len(), 2);
@@ -365,13 +407,15 @@ mod tests {
         }
 
         {
-            let mut item1 = TestItem { value: 1, link: Link::new() };
-            let mut item2 = TestItem { value: 2, link: Link::new() };
-            let mut item3 = TestItem { value: 3, link: Link::new() };
+            let item1 = TestItem { value: 1, link: Link::new() };
+            let item2 = TestItem { value: 2, link: Link::new() };
+            let item3 = TestItem { value: 3, link: Link::new() };
             let mut list: List<TestItem> = Default::default();
-            list.push_back(ptr::NonNull::new(&mut item1 as *mut TestItem).unwrap());
-            list.push_back(ptr::NonNull::new(&mut item2 as *mut TestItem).unwrap());
-            list.push_back(ptr::NonNull::new(&mut item3 as *mut TestItem).unwrap());
+            unsafe {
+                list.push_back(&item1);
+                list.push_back(&item2);
+                list.push_back(&item3);
+            }
             // Remove all even values
             list.remove_if(|item| item.value % 2 == 0);
 
@@ -382,9 +426,11 @@ mod tests {
         }
 
         {
-            let mut item1 = TestItem { value: 1, link: Link::new() };
+            let item1 = TestItem { value: 1, link: Link::new() };
             let mut list: List<TestItem> = Default::default();
-            list.push_back(ptr::NonNull::new(&mut item1 as *mut TestItem).unwrap());
+            unsafe {
+                list.push_back(&item1);
+            }
 
             // Remove all even values
             list.remove_if(|item| item.value % 1 == 0);
@@ -405,27 +451,26 @@ mod tests {
                 std::mem::offset_of!(TestItem, link)
             }
         }
-        let mut item1 = TestItem {
+        let item1 = TestItem {
             value: 10,
             link: Link::new(),
         };
-        let mut item2 = TestItem {
+        let item2 = TestItem {
             value: 20,
             link: Link::new(),
         };
-        let mut item3 = TestItem {
+        let item3 = TestItem {
             value: 30,
             link: Link::new(),
         };
         let mut list: List<TestItem> = Default::default();
-        let p1 = ptr::NonNull::new(&mut item1 as *mut TestItem).unwrap();
-        let p2 = ptr::NonNull::new(&mut item2 as *mut TestItem).unwrap();
-        let p3 = ptr::NonNull::new(&mut item3 as *mut TestItem).unwrap();
-        list.push_back(p1);
-        list.push_back(p2);
-        list.push_back(p3);
+        unsafe {
+            list.push_back(&item1);
+            list.push_back(&item2);
+            list.push_back(&item3);
+        }
         // Remove middle item
-        assert!(list.remove(p2));
+        assert!(list.remove(&item2));
         assert_eq!(list.len(), 2);
         let vals = [unsafe { list.pop_front().unwrap().as_ref().value }, unsafe {
             list.pop_front().unwrap().as_ref().value
@@ -433,11 +478,10 @@ mod tests {
         assert_eq!(vals.contains(&10), true);
         assert_eq!(vals.contains(&30), true);
         // Remove non-existent item
-        let mut item4 = TestItem {
+        let item4 = TestItem {
             value: 40,
             link: Link::new(),
         };
-        let p4 = ptr::NonNull::new(&mut item4 as *mut TestItem).unwrap();
-        assert!(!list.remove(p4));
+        assert!(!list.remove(&item4));
     }
 }

@@ -494,9 +494,10 @@ impl<S: IoSelector> Future for ReadinessFuture<'_, S> {
             FutureState::New => {
                 // It's first call so we are not in list yet, we can easilly take a reference to the list item
                 self.list_item.with_mut(|item| {
-                    let item_ref = unsafe { &mut *item };
+                    // This makes sure that there's only one reference to item:
+                    let item = unsafe { &mut *item };
 
-                    match self.registration.inner.is_ready(item_ref.interest) {
+                    match self.registration.inner.is_ready(item.interest) {
                         Some(readiness) => FutureInternalReturn::ready(readiness),
                         _ => {
                             // Now we need to register as it's not ready
@@ -504,12 +505,14 @@ impl<S: IoSelector> Future for ReadinessFuture<'_, S> {
                             let mut wakers = self.registration.inner.wakers.lock().unwrap();
 
                             // Recheck under lock
-                            if let Some(readiness) = self.registration.inner.is_ready(item_ref.interest) {
+                            if let Some(readiness) = self.registration.inner.is_ready(item.interest) {
                                 FutureInternalReturn::ready(readiness)
                             } else {
-                                item_ref.waker = Some(cx.waker().clone());
+                                item.waker = Some(cx.waker().clone());
 
-                                wakers.waiters.push_back(unsafe { core::ptr::NonNull::new_unchecked(item) });
+                                unsafe {
+                                    wakers.waiters.push_back(item);
+                                }
 
                                 FutureInternalReturn::polled()
                             }
@@ -521,8 +524,8 @@ impl<S: IoSelector> Future for ReadinessFuture<'_, S> {
                 Some(readiness) => {
                     let mut wakers = self.registration.inner.wakers.lock().unwrap();
 
-                    self.list_item.with_mut(|item| {
-                        wakers.waiters.remove(unsafe { core::ptr::NonNull::new_unchecked(item) });
+                    self.list_item.with(|item| {
+                        wakers.waiters.remove(unsafe { &*item });
                     });
 
                     FutureInternalReturn::ready(readiness)
@@ -540,14 +543,9 @@ impl<S: IoSelector> Future for ReadinessFuture<'_, S> {
 
 impl<S: IoSelector> Drop for ReadinessFuture<'_, S> {
     fn drop(&mut self) {
-        let item = self.list_item.get();
-        self.registration
-            .inner
-            .wakers
-            .lock()
-            .unwrap()
-            .waiters
-            .remove(unsafe { core::ptr::NonNull::from(item.deref()) });
+        self.list_item.with(|item| {
+            self.registration.inner.wakers.lock().unwrap().waiters.remove(unsafe { &*item });
+        });
     }
 }
 
@@ -713,7 +711,7 @@ mod tests {
 
     #[test]
     fn registration_info_async_wakes() {
-        let mut elem1_readable = WakerElems {
+        let elem1_readable = WakerElems {
             waker: Some(Waker::from(
                 MockWaker::new(build_with_location!(MockFnBuilder::new().times(1))).into_arc(),
             )),
@@ -721,7 +719,7 @@ mod tests {
             interest: IoEventInterest::READABLE,
         };
 
-        let mut elem2_readable = WakerElems {
+        let elem2_readable = WakerElems {
             waker: Some(Waker::from(
                 MockWaker::new(build_with_location!(MockFnBuilder::new().times(1))).into_arc(),
             )),
@@ -729,7 +727,7 @@ mod tests {
             interest: IoEventInterest::READABLE,
         };
 
-        let mut elem3_writable = WakerElems {
+        let elem3_writable = WakerElems {
             waker: Some(Waker::from(
                 MockWaker::new(build_with_location!(MockFnBuilder::new().times(1))).into_arc(),
             )),
@@ -737,7 +735,7 @@ mod tests {
             interest: IoEventInterest::WRITABLE,
         };
 
-        let mut elem4_writable = WakerElems {
+        let elem4_writable = WakerElems {
             waker: Some(Waker::from(
                 MockWaker::new(build_with_location!(MockFnBuilder::new().times(1))).into_arc(),
             )),
@@ -745,7 +743,7 @@ mod tests {
             interest: IoEventInterest::WRITABLE,
         };
 
-        let mut elem5_both = WakerElems {
+        let elem5_both = WakerElems {
             waker: Some(Waker::from(
                 MockWaker::new(build_with_location!(MockFnBuilder::new().times(1))).into_arc(),
             )),
@@ -755,35 +753,13 @@ mod tests {
 
         let info = Arc::new(RegistrationInfo::new(12));
 
-        info.wakers
-            .lock()
-            .unwrap()
-            .waiters
-            .push_back(unsafe { core::ptr::NonNull::new_unchecked(&mut elem1_readable) });
-
-        info.wakers
-            .lock()
-            .unwrap()
-            .waiters
-            .push_back(unsafe { core::ptr::NonNull::new_unchecked(&mut elem2_readable) });
-
-        info.wakers
-            .lock()
-            .unwrap()
-            .waiters
-            .push_back(unsafe { core::ptr::NonNull::new_unchecked(&mut elem3_writable) });
-
-        info.wakers
-            .lock()
-            .unwrap()
-            .waiters
-            .push_back(unsafe { core::ptr::NonNull::new_unchecked(&mut elem4_writable) });
-
-        info.wakers
-            .lock()
-            .unwrap()
-            .waiters
-            .push_back(unsafe { core::ptr::NonNull::new_unchecked(&mut elem5_both) });
+        unsafe {
+            info.wakers.lock().unwrap().waiters.push_back(&elem1_readable);
+            info.wakers.lock().unwrap().waiters.push_back(&elem2_readable);
+            info.wakers.lock().unwrap().waiters.push_back(&elem3_writable);
+            info.wakers.lock().unwrap().waiters.push_back(&elem4_writable);
+            info.wakers.lock().unwrap().waiters.push_back(&elem5_both);
+        }
 
         info.wake(ReadinessState::from_components(READINESS_STATE_READABLE as u16, 0));
 
