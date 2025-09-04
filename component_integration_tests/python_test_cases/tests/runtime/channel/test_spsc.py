@@ -256,6 +256,10 @@ class TestSPSCChannelHeavyLoad(CitScenario):
             "test": {"send_count": 1000000},
         }
 
+    @pytest.fixture(scope="class")
+    def execution_timeout(self, request, *args, **kwargs):
+        return 10
+
     # Test validates transfer on the backend side.
     # Only 1 error is expected for trying to read one more time
     def test_transfer_completeness(

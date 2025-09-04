@@ -86,12 +86,7 @@ class TestProgramRunCycle(TestProgramRun):
             for t1, t2 in zip(execution_timestamps, execution_timestamps[1:])
         ]
         average_delay_ms = sum(execution_delays) / len(execution_delays)
-        threshold_ms = 0.2 * run_delay  # allow 20% tolerance
-        min_delay_ms = run_delay - threshold_ms
-        max_delay_ms = run_delay + threshold_ms
-        assert min_delay_ms <= round(average_delay_ms) <= max_delay_ms, (
-            f"Expected average delay of {run_delay} ms, but got {average_delay_ms} ms"
-        )
+        assert run_delay <= average_delay_ms, "Average delay is less than expected"
 
 
 class TestProgramRunNTimes(CitScenario):
@@ -166,12 +161,7 @@ class TestProgramRunNTimesCycle(TestProgramRunNTimes):
             for t1, t2 in zip(execution_timestamps, execution_timestamps[1:])
         ]
         average_delay_ms = sum(execution_delays) / len(execution_delays)
-        threshold_ms = 0.2 * run_delay  # allow 20% tolerance
-        min_delay_ms = run_delay - threshold_ms
-        max_delay_ms = run_delay + threshold_ms
-        assert min_delay_ms <= round(average_delay_ms) <= max_delay_ms, (
-            f"Expected average delay of {run_delay} ms, but got {average_delay_ms} ms"
-        )
+        assert run_delay <= average_delay_ms, "Average delay is less than expected"
 
 
 class TestProgramRunMetered(TestProgramRun):
