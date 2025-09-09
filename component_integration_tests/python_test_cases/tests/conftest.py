@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -106,6 +107,12 @@ def pytest_runtest_makereport(item, call):
         else:
             command.append(token)
     report.command = " ".join(command)
+    # If bazel is used, modify command
+    if "BAZEL_VERSION" in os.environ:
+        report.command = report.command.replace(
+            "component_integration_tests/rust_test_scenarios/rust_test_scenarios",
+            "bazel run //component_integration_tests/rust_test_scenarios:rust_test_scenarios --",
+        )
 
     # Store failed command for printing in summary
     if report.failed:
