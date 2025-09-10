@@ -1,5 +1,6 @@
 use async_runtime::runtime::async_runtime::{AsyncRuntime, AsyncRuntimeBuilder};
 use async_runtime::scheduler::execution_engine::ExecutionEngineBuilder;
+use async_runtime::scheduler::SchedulerType;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tracing::debug;
@@ -12,6 +13,7 @@ pub struct ExecEngineConfig {
     pub thread_priority: Option<u8>,
     pub thread_affinity: Option<Vec<usize>>,
     pub thread_stack_size: Option<u64>,
+    pub thread_scheduler: Option<String>,
 }
 
 /// Runtime configuration.
@@ -65,6 +67,15 @@ impl Runtime {
             }
             if let Some(thread_stack_size) = exec_engine.thread_stack_size {
                 exec_engine_builder = exec_engine_builder.thread_stack_size(thread_stack_size);
+            }
+            if let Some(thread_scheduler) = &exec_engine.thread_scheduler {
+                let thread_scheduler_type = match thread_scheduler.as_str() {
+                    "fifo" => SchedulerType::Fifo,
+                    "round_robin" => SchedulerType::RoundRobin,
+                    "other" => SchedulerType::Other,
+                    _ => panic!("Unknown scheduler type"),
+                };
+                exec_engine_builder = exec_engine_builder.thread_scheduler(thread_scheduler_type);
             }
 
             let (builder, _) = async_rt_builder.with_engine(exec_engine_builder);

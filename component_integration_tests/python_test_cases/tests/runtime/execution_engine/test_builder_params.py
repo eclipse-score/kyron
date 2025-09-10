@@ -1,10 +1,11 @@
 import json
+from pathlib import Path
+import re
+from subprocess import DEVNULL, PIPE, Popen
 from typing import Any
-
 import psutil
 import pytest
 from testing_utils import LogContainer, ScenarioResult
-
 from component_integration_tests.python_test_cases.tests.cit_scenario import (
     CitScenario,
     ResultCode,
@@ -131,23 +132,155 @@ class TestWorkers_Invalid(TestWorkers):
 # region thread_priority
 
 
+@pytest.mark.root_required
 class TestThreadPriority(CitScenario):
+    SCHEDULER = "fifo"
+    NUM_WORKERS = 4
+
     @pytest.fixture(scope="class")
     def scenario_name(self) -> str:
-        return "basic.only_shutdown"
+        return "runtime.worker.thread_priority"
 
-    @pytest.fixture(scope="class", params=[0, 120, 255])
-    def test_config(self, request: pytest.FixtureRequest) -> dict[str, Any]:
+    @pytest.fixture(scope="class", params=[0, 128, 255])
+    def priority(self, request: pytest.FixtureRequest) -> int:
+        return request.param
+
+    @pytest.fixture(scope="class")
+    def test_config(self, priority: int) -> dict[str, Any]:
         return {
             "runtime": {
                 "task_queue_size": 256,
-                "workers": 1,
-                "thread_priority": request.param,
+                "workers": self.NUM_WORKERS,
+                "thread_priority": priority,
+                "thread_scheduler": self.SCHEDULER,
             }
         }
 
-    def test_valid(self, results: ScenarioResult) -> None:
+    def _get_caps(self, resolved_target_path: Path) -> dict[str, str]:
+        """
+        Check capabilities of the executable.
+
+        Parameters
+        ----------
+        resolved_target_path : Path
+            Resolved path to test scenarios executable.
+            "getcap" is unable to get caps from symlink.
+        """
+        # Run 'getcap' command.
+        command = ["getcap", "-v", resolved_target_path]
+        with Popen(command, stdout=PIPE, stderr=DEVNULL, text=True) as p:
+            stdout, _ = p.communicate()
+
+        # Split result to lines.
+        lines = stdout.strip().split("\n")
+        if len(lines) != 1:
+            raise RuntimeError("Invalid getcap result")
+
+        # Process line.
+        # 'getcap' returns caps grouped by permissions:
+        # `<EXECUTABLE_NAME> cap_chown=eip cap_sys_chroot,cap_sys_nice+ep`
+        entries = lines[0].split(" ")[1:]
+        result = {}
+        for entry in entries:
+            # Permissions might be after '=' or '+'.
+            names, perms = re.split(r"\+|=", entry, 1)
+
+            # Multiple cap names might have same permissions.
+            for name in names.split(","):
+                result[name] = perms
+
+        return result
+
+    def _set_caps(self, resolved_target_path: Path, caps: dict[str, str]) -> None:
+        """
+        Set capabilities of the executable.
+
+        Parameters
+        ----------
+        resolved_target_path : Path
+            Resolved path to test scenarios executable.
+            "setcap" is unable to grant caps to symlink.
+        caps : dict[str, str]
+            Capabilities to set.
+        """
+        caps_list = []
+        for name, perms in caps.items():
+            caps_list.append(f"{name}+{perms}")
+        caps_str = " ".join(caps_list)
+
+        # Run 'setcap' command.
+        command = [
+            "sudo",
+            "setcap",
+            caps_str,
+            str(resolved_target_path),
+        ]
+        with Popen(command) as p:
+            _, _ = p.communicate()
+            if p.returncode != 0:
+                raise RuntimeError(f'"setcap" failed with returncode: {p.returncode}')
+
+    def _resolve_target_path(self, path_to_resolve: Path) -> Path:
+        """
+        Provide resolved target path.
+
+        Parameters
+        ----------
+        path_to_resolve : Path
+            Path to resolve.
+        """
+        return path_to_resolve.resolve(strict=True)
+
+    @pytest.fixture(scope="class")
+    def results(
+        self,
+        command: list[str],
+        execution_timeout: float,
+        target_path: Path,
+        *args,
+        **kwargs,
+    ) -> ScenarioResult:
+        """
+        Execute test scenario executable and return results.
+        Extended with 'cap_sys_nice' setup.
+
+        Parameters
+        ----------
+        command : list[str]
+            Command to invoke.
+        execution_timeout : float
+            Test execution timeout in seconds.
+        target_path : Path
+            Path to test scenarios executable.
+        """
+        # Check and set 'cap_sys_nice'.
+        resolved_target_path = self._resolve_target_path(target_path)
+        caps = self._get_caps(resolved_target_path)
+        if not caps.get("cap_sys_nice", "") == "ep":
+            self._set_caps(resolved_target_path, {"cap_sys_nice": "ep"})
+
+        return self._run_command(command, execution_timeout, args, kwargs)
+
+    def test_valid(
+        self,
+        results: ScenarioResult,
+        logs_info_level: LogContainer,
+        priority: int,
+    ) -> None:
         assert results.return_code == ResultCode.SUCCESS
+
+        # Find logs with worker IDs.
+        worker_logs = logs_info_level.get_logs(field="id", pattern="worker_.*")
+        assert len(worker_logs) == self.NUM_WORKERS
+
+        # Check priority of each worker.
+        for worker_log in worker_logs:
+            act_priority = worker_log.priority
+
+            # Check priority as expected and in expected bounds.
+            assert priority == act_priority, (
+                f"Invalid priority, expected: {priority}, found: {act_priority}"
+            )
 
 
 # endregion

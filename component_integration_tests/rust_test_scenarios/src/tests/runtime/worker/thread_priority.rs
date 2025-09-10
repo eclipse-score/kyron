@@ -8,28 +8,47 @@ use std::time::Duration;
 use test_scenarios_rust::scenario::Scenario;
 use tracing::info;
 
-fn show_thread_affinity(id: usize) {
+/// Return policy name from given policy identifier.
+fn policy_to_string(policy: i32) -> String {
+    match policy {
+        0 => "other",
+        1 => "fifo",
+        2 => "round_robin",
+        _ => panic!("Unknown scheduler type"),
+    }
+    .to_string()
+}
+
+/// Recalculate native->`iceoryx2` priority value.
+/// `iceoryx2` uses <0;255> priority range.
+/// It is then recalculated into scheduler-specific value.
+fn priority_to_iceoryx2(native_prio: i32, native_min: i32, native_max: i32) -> i32 {
+    let iceoryx2_max = u8::MAX;
+    let range = native_max - native_min;
+    let priority_iceoryx2 = (iceoryx2_max as f64 * (native_prio - native_min) as f64) / range as f64;
+    priority_iceoryx2.round() as i32
+}
+
+fn show_thread_params(id: usize) {
     unsafe {
-        let current_thread = 0;
-        let mut cpu_set = MaybeUninit::<libc::cpu_set_t>::zeroed().assume_init();
-        let cpu_set_size = std::mem::size_of::<libc::cpu_set_t>();
-        let rc = libc::sched_getaffinity(current_thread, cpu_set_size, &mut cpu_set);
+        let thread = libc::pthread_self();
+        let mut policy: libc::c_int = -1;
+        let mut param = MaybeUninit::<libc::sched_param>::zeroed().assume_init();
+        let rc = libc::pthread_getschedparam(thread, &mut policy as *mut libc::c_int, &mut param as *mut libc::sched_param);
         if rc != 0 {
             let errno = *libc::__errno_location();
-            panic!("libc::sched_getaffinity failed, rc: {rc}, errno: {errno}");
+            panic!("libc::pthread_getschedparam failed, rc: {rc}, errno: {errno}");
         }
 
-        let mut affinity = Vec::new();
-        for i in 0..libc::CPU_SETSIZE as usize {
-            if libc::CPU_ISSET(i, &cpu_set) {
-                affinity.push(i);
-            }
-        }
+        let scheduler = policy_to_string(policy);
+        let priority_native = param.sched_priority;
+        let priority_min = libc::sched_get_priority_min(policy);
+        let priority_max = libc::sched_get_priority_max(policy);
 
+        // Recalculate native->`iceoryx2` priority value.
+        let priority = priority_to_iceoryx2(priority_native, priority_min, priority_max);
         let id = format!("worker_{id}");
-        let affinity = format!("{affinity:?}");
-
-        info!(id, affinity);
+        info!(id, scheduler, priority, priority_min, priority_max);
     }
 }
 
@@ -37,7 +56,7 @@ async fn blocking_task(id: usize, block_condition: Arc<(Condvar, Mutex<bool>)>, 
     let (cv, mtx) = &*block_condition;
     let mut block = mtx.lock().expect("Unable to lock mutex");
 
-    show_thread_affinity(id);
+    show_thread_params(id);
 
     // Notify task done.
     notifier.ready();
@@ -48,11 +67,11 @@ async fn blocking_task(id: usize, block_condition: Arc<(Condvar, Mutex<bool>)>, 
     }
 }
 
-pub struct ThreadAffinity;
+pub struct ThreadPriority;
 
-impl Scenario for ThreadAffinity {
-    fn name(&self) -> &str {
-        "thread_affinity"
+impl Scenario for ThreadPriority {
+    fn name(&self) -> &'static str {
+        "thread_priority"
     }
 
     fn run(&self, input: Option<String>) -> Result<(), String> {
@@ -70,7 +89,7 @@ impl Scenario for ThreadAffinity {
             let block_condition = Arc::new((Condvar::new(), Mutex::new(true)));
 
             // Show parameters of current thread.
-            show_thread_affinity(0);
+            show_thread_params(0);
 
             // Spawn tasks for other threads.
             for id in 1..num_workers {

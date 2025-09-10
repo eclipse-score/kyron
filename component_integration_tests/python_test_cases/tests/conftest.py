@@ -1,6 +1,7 @@
 import json
 import os
 from pathlib import Path
+from subprocess import DEVNULL, Popen
 
 import pytest
 from testing_utils import CargoTools
@@ -51,7 +52,7 @@ def pytest_addoption(parser):
 
 # Hooks
 @pytest.hookimpl(tryfirst=True)
-def pytest_sessionstart(session):
+def pytest_sessionstart(session: pytest.Session):
     try:
         # Build scenarios.
         if session.config.getoption("--build-scenarios"):
@@ -65,6 +66,65 @@ def pytest_sessionstart(session):
 
     except Exception as e:
         pytest.exit(str(e), returncode=1)
+
+
+def _inside_bazel_env() -> bool:
+    """
+    Return True if running within Bazel environment.
+    """
+    return os.environ.get("BAZEL_TEST", "") == "1"
+
+
+def _authenticate(*, interactive: bool) -> bool:
+    """
+    Authenticate user.
+    # Run "sudo -v" and return True if authenticated successfully.
+
+    Parameters
+    ----------
+    interactive : bool
+        Allow password prompt.
+    """
+    command = ["sudo", "id"] if interactive else ["sudo", "-n", "id"]
+    with Popen(command, stdout=DEVNULL, stderr=DEVNULL) as p:
+        _, _ = p.communicate()
+        return p.returncode == 0
+
+
+def pytest_collection_modifyitems(items: list[pytest.Item]):
+    # Certain tests require root permissions.
+    # Two modes of operation are supported:
+    # - `bazel` run - check sudo can be used, skip tests if can't.
+    # - `pytest` run - prompt for password once collected, run tests as usual.
+
+    # Collect tests requiring root permissions.
+    root_required_tests = []
+    for item in items:
+        if "root_required" in item.keywords:
+            root_required_tests.append(item)
+
+    # Nothing must be done if no root requiring tests are detected.
+    if not root_required_tests:
+        return
+
+    # Check for current environment.
+    if _inside_bazel_env():
+        # Prompt for password is not possible, but user might have root rights.
+        # On failure - skip root requiring tests.
+        authenticated = _authenticate(interactive=False)
+        if not authenticated:
+            skipper = pytest.mark.skip(
+                reason="Failed to grant root permissions in Bazel environment."
+            )
+            for item in root_required_tests:
+                item.add_marker(skipper)
+
+    else:
+        # Prompt for password and cache credentials.
+        # On failure - exit.
+        authenticated = _authenticate(interactive=True)
+        if not authenticated:
+            pytest.exit("Failed to authenticate", returncode=1)
 
 
 def pytest_html_report_title(report):

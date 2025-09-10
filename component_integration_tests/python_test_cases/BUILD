@@ -23,7 +23,7 @@ score_py_pytest(
     srcs = glob(["tests/**/*.py"]),
     args = [
         "--target-path",
-        "$(location //component_integration_tests/rust_test_scenarios)",
+        "$(rootpath //component_integration_tests/rust_test_scenarios)",
     ],
     data = [
         ":python_tc_venv",
@@ -46,7 +46,7 @@ score_py_pytest(
         "--count 5",
         "--repeat-scope=session",
         "--target-path",
-        "$(location //component_integration_tests/rust_test_scenarios)",
+        "$(rootpath //component_integration_tests/rust_test_scenarios)",
     ],
     data = [
         ":python_tc_venv",
