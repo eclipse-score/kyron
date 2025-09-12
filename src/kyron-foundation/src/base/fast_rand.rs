@@ -15,6 +15,7 @@
 /// Minimal, very fast basic random num gen, suitable when enough is to have something random (no crypto suitable etc)
 /// https://en.wikipedia.org/wiki/Permuted_congruential_generator
 ///
+#[derive(Clone, Copy)]
 pub struct FastRand {
     state: u64,
     increment: u64,
