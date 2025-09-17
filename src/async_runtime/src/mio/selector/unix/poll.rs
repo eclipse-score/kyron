@@ -506,13 +506,20 @@ impl Inner {
                     // If there's an event only for the internal poll waker,
                     // restart the loop to wait for the pending accesses to finish.
                     // The internal poll waker is cleared by the access operation.
-                    if poll_result == 1 && fds.pollfds[0].revents != 0 {
-                        continue;
-                    }
 
+                    let is_internal_waker_ready = fds.pollfds[0].revents != 0;
                     let mut events_processed = 0;
 
-                    for index in 0..fds.len() {
+                    if is_internal_waker_ready {
+                        events_processed += 1; // To keep it correct for later loop exit condition
+
+                        if poll_result == 1 {
+                            continue;
+                        }
+                    }
+
+                    // Iterate from one as the first fd is the internal waker.
+                    for index in 1..fds.len() {
                         if events_processed == poll_result as usize {
                             // No more events to process.
                             break;
@@ -698,6 +705,15 @@ mod tests {
     }
 
     #[test]
+    fn test_internal_waker_is_registered() {
+        let selector = Selector::new(8);
+
+        // When changing this, look into select implementation as it assumes the internal waker is at index 0.
+        assert_eq!(selector.inner.fds.lock().unwrap().pollfds.len(), 1);
+        assert_eq!(selector.inner.poll_waker.read_fd, selector.inner.fds.lock().unwrap().pollfds[0].fd);
+    }
+
+    #[test]
     fn test_register_readable_before_select() {
         let (read_fd, write_fd) = create_pipe();
         let id = 1;
@@ -749,6 +765,31 @@ mod tests {
         assert_eq!(events[0].id(), IoId::new(id));
         assert!(events[0].is_writable());
         assert!(!events[0].is_readable());
+    }
+
+    #[test]
+    fn test_internal_waker_does_not_leak_as_event() {
+        let (read_fd, write_fd) = create_pipe();
+        let id = 1;
+        let selector = Selector::new(8);
+        let selector_clone = selector.clone();
+
+        // Make the pipe readable.
+        selector.register(read_fd, IoId::new(id), IoEventInterest::READABLE).unwrap();
+        let data = 1_u8;
+        assert_eq!(unsafe { write(write_fd, &data as *const u8 as *const ffi::c_void, 1_usize) }, 1_isize);
+
+        // Emulate cross thread API call so waker is also woken up but since there is also other event, it will not be put into
+        // wait state again but will process all fds
+        assert_eq!(
+            unsafe { write(selector.inner.poll_waker.write_fd, &data as *const u8 as *const ffi::c_void, 1_usize) },
+            1_isize
+        );
+
+        let mut events = Vec::<IoEvent>::new(8);
+        assert!(selector_clone.select(&mut events, None).is_ok());
+
+        assert_eq!(events.len(), 1);
     }
 
     #[test]
