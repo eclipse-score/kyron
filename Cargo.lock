@@ -27,6 +27,7 @@ checksum = "b0674a1ddeecb70197781e945de4b3b8ffb61fa939a5597bcf48503737663100"
 name = "async_runtime"
 version = "0.1.0"
 dependencies = [
+ "async_runtime_macros",
  "foundation",
  "iceoryx2",
  "iceoryx2-bb-container",
@@ -40,6 +41,15 @@ dependencies = [
  "loom",
  "testing",
  "testing_macros",
+]
+
+[[package]]
+name = "async_runtime_macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -943,6 +953,7 @@ name = "orchestration"
 version = "0.1.0"
 dependencies = [
  "async_runtime",
+ "async_runtime_macros",
  "foundation",
  "iceoryx2",
  "iceoryx2-bb-container",

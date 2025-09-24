@@ -93,6 +93,7 @@ crate.from_cargo(
         "//component_integration_tests/rust_test_scenarios:Cargo.toml",
         "//src/orchestration/examples/camera_drv_object_det:Cargo.toml",
         "//src/orchestration_macros:Cargo.toml",
+        "//src/async_runtime_macros:Cargo.toml",
     ],
 )
 use_repo(crate, "score_orchestrator_crates")

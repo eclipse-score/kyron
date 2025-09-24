@@ -17,6 +17,7 @@ iceoryx2-bb-lock-free.workspace = true
 iceoryx2-bb-elementary.workspace = true
 iceoryx2-bb-elementary-traits.workspace = true
 libc.workspace = true
+async_runtime_macros.workspace = true
 
 [target.'cfg(loom)'.dependencies]
 loom = { version = "0.7", features = ["checkpoint"] }

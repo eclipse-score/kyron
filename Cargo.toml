@@ -23,6 +23,7 @@ members = [
     "component_integration_tests/rust_test_scenarios",
     "src/orchestration/examples/camera_drv_object_det",
     "src/orchestration_macros",
+    "src/async_runtime_macros",
 ]
 
 
@@ -39,6 +40,7 @@ testing = { path = "src/testing" }
 testing_macros = { path = "src/testing_macros" }
 xtask = { path = "src/xtask" }
 orchestration_macros = { path = "src/orchestration_macros" }
+async_runtime_macros = { path = "src/async_runtime_macros" }
 
 iceoryx2 = { git = "https://github.com/eclipse-iceoryx/iceoryx2.git", rev = "cfa8b10fe1e723b22dc5abd97a155b6a992fe8e6" }
 iceoryx2-cal = { git = "https://github.com/eclipse-iceoryx/iceoryx2.git", rev = "cfa8b10fe1e723b22dc5abd97a155b6a992fe8e6" }
