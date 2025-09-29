@@ -21,9 +21,8 @@ struct TestInput {
 }
 
 impl TestInput {
-    pub fn new(inputs: &Option<String>) -> Self {
-        let input_string = inputs.as_ref().expect("Test input is expected");
-        let v: Value = serde_json::from_str(input_string).expect("Failed to parse input string");
+    pub fn new(input: &str) -> Self {
+        let v: Value = serde_json::from_str(input).expect("Failed to parse input string");
         serde_json::from_value(v["test"].clone()).expect("Failed to parse \"test\" field")
     }
 }
@@ -60,9 +59,9 @@ impl Scenario for WorkerWithBlockingTasks {
     ///
     /// Spawns all blocking_tasks first, which will be unblocked once all nonblocking_tasks are executed.
     ///
-    fn run(&self, input: Option<String>) -> Result<(), String> {
-        let logic = TestInput::new(&input);
-        let mut rt = Runtime::new(&input).build();
+    fn run(&self, input: &str) -> Result<(), String> {
+        let logic = TestInput::new(input);
+        let mut rt = Runtime::from_json(input)?.build();
 
         let _ = rt.block_on(async move {
             let mut joiner = RuntimeJoiner::new();

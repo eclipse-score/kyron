@@ -39,9 +39,8 @@ struct DesignTypeTestInput {
 }
 
 impl DesignTypeTestInput {
-    pub fn new(inputs: &Option<String>) -> Self {
-        let input_string = inputs.as_ref().expect("Test input is expected");
-        let v: Value = serde_json::from_str(input_string).expect("Failed to parse input string");
+    pub fn new(input: &str) -> Self {
+        let v: Value = serde_json::from_str(input).expect("Failed to parse input string");
         serde_json::from_value(v["test"].clone()).expect("Failed to parse \"test\" field")
     }
 }
@@ -82,9 +81,9 @@ impl Scenario for ProgramRun {
         "program_run"
     }
 
-    fn run(&self, input: Option<String>) -> Result<(), String> {
-        let mut rt = Runtime::new(&input).build();
-        let logic = DesignTypeTestInput::new(&input);
+    fn run(&self, input: &str) -> Result<(), String> {
+        let mut rt = Runtime::from_json(input)?.build();
+        let logic = DesignTypeTestInput::new(input);
 
         let orch = Orchestration::new()
             .add_design(simple_run_design().expect("Failed to create simple design"))
@@ -140,9 +139,9 @@ impl Scenario for ProgramRunMetered {
         "program_run_metered"
     }
 
-    fn run(&self, input: Option<String>) -> Result<(), String> {
-        let mut rt = Runtime::new(&input).build();
-        let logic = DesignTypeTestInput::new(&input);
+    fn run(&self, input: &str) -> Result<(), String> {
+        let mut rt = Runtime::from_json(input)?.build();
+        let logic = DesignTypeTestInput::new(input);
 
         let orch = Orchestration::new()
             .add_design(simple_run_design().expect("Failed to create simple design"))

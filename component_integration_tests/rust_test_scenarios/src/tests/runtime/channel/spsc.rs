@@ -21,9 +21,8 @@ struct TestInput {
 }
 
 impl TestInput {
-    pub fn new(inputs: &Option<String>) -> Self {
-        let input_string = inputs.as_ref().expect("Test input is expected");
-        let v: Value = serde_json::from_str(input_string).expect("Failed to parse input string");
+    pub fn new(input: &str) -> Self {
+        let v: Value = serde_json::from_str(input).expect("Failed to parse input string");
         serde_json::from_value(v["test"].clone()).expect("Failed to parse \"test\" field")
     }
 }
@@ -64,9 +63,9 @@ impl Scenario for SPSCSendReceive {
     ///
     /// Runs sending and receiving tasks.
     ///
-    fn run(&self, input: Option<String>) -> Result<(), String> {
-        let logic = TestInput::new(&input);
-        let mut rt = Runtime::new(&input).build();
+    fn run(&self, input: &str) -> Result<(), String> {
+        let logic = TestInput::new(input);
+        let mut rt = Runtime::from_json(input)?.build();
 
         let (sender, receiver) = spsc::create_channel_default::<u64>();
 
@@ -91,10 +90,10 @@ impl Scenario for SPSCSendOnly {
     ///
     /// Runs only sending task, receiver remains valid.
     ///
-    fn run(&self, input: Option<String>) -> Result<(), String> {
+    fn run(&self, input: &str) -> Result<(), String> {
         const QUEUE_SIZE: usize = 5; // Must be compile constant
-        let logic = TestInput::new(&input);
-        let mut rt = Runtime::new(&input).build();
+        let logic = TestInput::new(input);
+        let mut rt = Runtime::from_json(input)?.build();
 
         let (sender, _receiver) = spsc::create_channel::<u64, QUEUE_SIZE>();
 
@@ -117,9 +116,9 @@ impl Scenario for SPSCDropReceiver {
     ///
     /// Drops the receiver before running sending task.
     ///
-    fn run(&self, input: Option<String>) -> Result<(), String> {
-        let logic = TestInput::new(&input);
-        let mut rt = Runtime::new(&input).build();
+    fn run(&self, input: &str) -> Result<(), String> {
+        let logic = TestInput::new(input);
+        let mut rt = Runtime::from_json(input)?.build();
 
         let (sender, receiver) = spsc::create_channel_default::<u64>();
         drop(receiver);
@@ -143,9 +142,9 @@ impl Scenario for SPSCDropSender {
     ///
     /// Drops the sender before running receiving task.
     ///
-    fn run(&self, input: Option<String>) -> Result<(), String> {
-        let logic = TestInput::new(&input);
-        let mut rt = Runtime::new(&input).build();
+    fn run(&self, input: &str) -> Result<(), String> {
+        let logic = TestInput::new(input);
+        let mut rt = Runtime::from_json(input)?.build();
 
         let (sender, receiver) = spsc::create_channel_default::<u64>();
         drop(sender);
@@ -168,9 +167,8 @@ struct DcSenderTestInput {
 }
 
 impl DcSenderTestInput {
-    pub fn new(inputs: &Option<String>) -> Self {
-        let input_string = inputs.as_ref().expect("Test input is expected");
-        let v: Value = serde_json::from_str(input_string).expect("Failed to parse input string");
+    pub fn new(input: &str) -> Self {
+        let v: Value = serde_json::from_str(input).expect("Failed to parse input string");
         serde_json::from_value(v["test"].clone()).expect("Failed to parse \"test\" field")
     }
 }
@@ -184,9 +182,9 @@ impl Scenario for SPSCDropSenderInTheMiddle {
     ///
     /// Drops the sender when running receiving task.
     ///
-    fn run(&self, input: Option<String>) -> Result<(), String> {
-        let logic = DcSenderTestInput::new(&input);
-        let mut rt = Runtime::new(&input).build();
+    fn run(&self, input: &str) -> Result<(), String> {
+        let logic = DcSenderTestInput::new(input);
+        let mut rt = Runtime::from_json(input)?.build();
 
         let (sender, receiver) = spsc::create_channel_default::<u64>();
 
@@ -208,9 +206,8 @@ struct DcReceiverTestInput {
 }
 
 impl DcReceiverTestInput {
-    pub fn new(inputs: &Option<String>) -> Self {
-        let input_string = inputs.as_ref().expect("Test input is expected");
-        let v: Value = serde_json::from_str(input_string).expect("Failed to parse input string");
+    pub fn new(input: &str) -> Self {
+        let v: Value = serde_json::from_str(input).expect("Failed to parse input string");
         serde_json::from_value(v["test"].clone()).expect("Failed to parse \"test\" field")
     }
 }
@@ -256,9 +253,9 @@ impl Scenario for SPSCDropReceiverInTheMiddle {
     ///
     /// Drops the receiver when running sending task.
     ///
-    fn run(&self, input: Option<String>) -> Result<(), String> {
-        let logic = DcReceiverTestInput::new(&input);
-        let mut rt = Runtime::new(&input).build();
+    fn run(&self, input: &str) -> Result<(), String> {
+        let logic = DcReceiverTestInput::new(input);
+        let mut rt = Runtime::from_json(input)?.build();
 
         let (sender, receiver) = spsc::create_channel_default::<u64>();
 
@@ -290,9 +287,8 @@ struct HeavyTestInput {
 }
 
 impl HeavyTestInput {
-    pub fn new(inputs: &Option<String>) -> Self {
-        let input_string = inputs.as_ref().expect("Test input is expected");
-        let v: Value = serde_json::from_str(input_string).expect("Failed to parse input string");
+    pub fn new(input: &str) -> Self {
+        let v: Value = serde_json::from_str(input).expect("Failed to parse input string");
         serde_json::from_value(v["test"].clone()).expect("Failed to parse \"test\" field")
     }
 }
@@ -354,10 +350,10 @@ impl Scenario for SPSCHeavyLoad {
     /// Runs sending and receiving tasks. Validates that all data is sent and received correctly.
     /// Reports any errors. One final error is expected for the over-read.
     ///
-    fn run(&self, input: Option<String>) -> Result<(), String> {
+    fn run(&self, input: &str) -> Result<(), String> {
         const QUEUE_SIZE: usize = 128;
-        let logic = HeavyTestInput::new(&input);
-        let mut rt = Runtime::new(&input).build();
+        let logic = HeavyTestInput::new(input);
+        let mut rt = Runtime::from_json(input)?.build();
 
         let (sender, receiver) = spsc::create_channel::<u64, QUEUE_SIZE>();
 

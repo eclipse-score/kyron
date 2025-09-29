@@ -23,9 +23,8 @@ struct TestInput {
 }
 
 impl TestInput {
-    pub fn new(inputs: &Option<String>) -> Self {
-        let input_str = inputs.as_deref().expect("Input string is None in TestInput::new");
-        let v: Value = serde_json::from_str(input_str).expect("Failed to parse input JSON string in TestInput::new");
+    pub fn new(input: &str) -> Self {
+        let v: Value = serde_json::from_str(input).expect("Failed to parse input JSON string in TestInput::new");
         serde_json::from_value(v["test"].clone()).expect("Failed to parse 'test' field from input JSON in TestInput::new")
     }
 }
@@ -90,9 +89,9 @@ impl Scenario for SPMCBroadcastSendReceive {
     ///
     /// Runs sending and receiving tasks.
     ///
-    fn run(&self, input: Option<String>) -> Result<(), String> {
-        let logic = TestInput::new(&input);
-        let mut rt = Runtime::new(&input).build();
+    fn run(&self, input: &str) -> Result<(), String> {
+        let logic = TestInput::new(input);
+        let mut rt = Runtime::from_json(input)?.build();
 
         let (sender, receiver) = spmc_broadcast::create_channel_default::<u64>(logic.max_receiver_count);
         let receivers = prepare_receivers(logic.receivers.len(), receiver);
@@ -120,9 +119,8 @@ struct OverflowTestInput {
 }
 
 impl OverflowTestInput {
-    pub fn new(inputs: &Option<String>) -> Self {
-        let input_str = inputs.as_deref().expect("Input string is None in OverflowTestInput::new");
-        let v: Value = serde_json::from_str(input_str).expect("Failed to parse input JSON string in OverflowTestInput::new");
+    pub fn new(input: &str) -> Self {
+        let v: Value = serde_json::from_str(input).expect("Failed to parse input JSON string in OverflowTestInput::new");
         serde_json::from_value(v["test"].clone()).expect("Failed to parse 'test' field from input JSON in OverflowTestInput::new")
     }
 }
@@ -182,8 +180,8 @@ impl Scenario for SPMCBroadcastCreateReceiversOnly {
     ///
     /// Reports error when trying to create more receivers than allowed.
     ///
-    fn run(&self, input: Option<String>) -> Result<(), String> {
-        let logic = OverflowTestInput::new(&input);
+    fn run(&self, input: &str) -> Result<(), String> {
+        let logic = OverflowTestInput::new(input);
 
         let (sender, receiver) = spmc_broadcast::create_channel_default::<u64>(logic.max_receiver_count);
 
@@ -260,8 +258,8 @@ impl Scenario for SPMCBroadcastNumOfSubscribers {
     ///
     /// Checks number of subscribers in different phases.
     ///
-    fn run(&self, input: Option<String>) -> Result<(), String> {
-        let logic = OverflowTestInput::new(&input);
+    fn run(&self, input: &str) -> Result<(), String> {
+        let logic = OverflowTestInput::new(input);
 
         let (sender, receiver) = spmc_broadcast::create_channel_default::<u64>(logic.max_receiver_count);
         Self::log_subscriber_count(&sender, "initial");
@@ -291,9 +289,9 @@ impl Scenario for SPMCBroadcastDropAddReceiver {
     ///
     /// Runs sending and receiving tasks, where one of the receivers is dropped and a new one is created.
     ///
-    fn run(&self, input: Option<String>) -> Result<(), String> {
-        let logic = TestInput::new(&input);
-        let mut rt = Runtime::new(&input).build();
+    fn run(&self, input: &str) -> Result<(), String> {
+        let logic = TestInput::new(input);
+        let mut rt = Runtime::from_json(input)?.build();
 
         if logic.receivers.len() < 2 {
             panic!("At least two receivers are required, otherwise channel will be closed");
@@ -370,10 +368,10 @@ impl Scenario for SPMCBroadcastSendReceiveOneLagging {
     ///
     /// Runs sending and receiving tasks where one receiver does not read.
     ///
-    fn run(&self, input: Option<String>) -> Result<(), String> {
+    fn run(&self, input: &str) -> Result<(), String> {
         const QUEUE_SIZE: usize = 4; // Must be compile constant
-        let logic = TestInput::new(&input);
-        let mut rt = Runtime::new(&input).build();
+        let logic = TestInput::new(input);
+        let mut rt = Runtime::from_json(input)?.build();
 
         let (sender, receiver) = spmc_broadcast::create_channel::<u64, { QUEUE_SIZE }>(logic.max_receiver_count);
         let mut receivers = prepare_receivers(logic.receivers.len(), receiver);
@@ -488,10 +486,10 @@ impl Scenario for SPMCBroadcastVariableReceivers {
     ///
     /// Runs sending and receiving tasks where receivers are removed during the test.
     ///
-    fn run(&self, input: Option<String>) -> Result<(), String> {
+    fn run(&self, input: &str) -> Result<(), String> {
         const QUEUE_SIZE: usize = 3; // Must be compile constant
-        let logic = TestInput::new(&input);
-        let mut rt = Runtime::new(&input).build();
+        let logic = TestInput::new(input);
+        let mut rt = Runtime::from_json(input)?.build();
 
         let (sender, receiver) = spmc_broadcast::create_channel::<u64, { QUEUE_SIZE }>(logic.max_receiver_count);
         let receivers = prepare_receivers(logic.receivers.len(), receiver);
@@ -536,9 +534,9 @@ impl Scenario for SPMCBroadcastDropSender {
     ///
     /// Runs sending and receiving tasks where sender is removed during the test.
     ///
-    fn run(&self, input: Option<String>) -> Result<(), String> {
-        let logic = TestInput::new(&input);
-        let mut rt = Runtime::new(&input).build();
+    fn run(&self, input: &str) -> Result<(), String> {
+        let logic = TestInput::new(input);
+        let mut rt = Runtime::from_json(input)?.build();
 
         let (sender, receiver) = spmc_broadcast::create_channel_default::<u64>(logic.max_receiver_count);
         let receivers = prepare_receivers(logic.receivers.len(), receiver);
@@ -567,9 +565,8 @@ struct HeavyTestInput {
 }
 
 impl HeavyTestInput {
-    pub fn new(inputs: &Option<String>) -> Self {
-        let input_str = inputs.as_deref().expect("Input string is None in HeavyTestInput::new");
-        let v: Value = serde_json::from_str(input_str).expect("Failed to parse input JSON string in HeavyTestInput::new");
+    pub fn new(input: &str) -> Self {
+        let v: Value = serde_json::from_str(input).expect("Failed to parse input JSON string in HeavyTestInput::new");
         serde_json::from_value(v["test"].clone()).expect("Failed to parse 'test' field from input JSON in HeavyTestInput::new")
     }
 }
@@ -628,10 +625,10 @@ impl Scenario for SPMCBroadcastHeavyLoad {
     /// Runs sending and receiving tasks. Validates that all data is sent and received by all consumers.
     /// Reports any errors. One final error is expected for the over-read.
     ///
-    fn run(&self, input: Option<String>) -> Result<(), String> {
+    fn run(&self, input: &str) -> Result<(), String> {
         const QUEUE_SIZE: usize = 128; // Must be compile constant
-        let logic = HeavyTestInput::new(&input);
-        let mut rt = Runtime::new(&input).build();
+        let logic = HeavyTestInput::new(input);
+        let mut rt = Runtime::from_json(input)?.build();
 
         let (sender, receiver) = spmc_broadcast::create_channel::<u64, { QUEUE_SIZE }>(logic.max_receiver_count);
         let receivers = prepare_receivers(logic.receivers.len(), receiver);

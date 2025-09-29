@@ -10,8 +10,8 @@ use std::task::{Context, Poll};
 use test_scenarios_rust::scenario::{Scenario, ScenarioGroup, ScenarioGroupImpl};
 use tracing::info;
 
-fn parse_message(input_string: &str) -> String {
-    let input_content: Value = serde_json::from_str(input_string).expect("Failed to parse input string");
+fn parse_message(input: &str) -> String {
+    let input_content: Value = serde_json::from_str(input).expect("Failed to parse input string");
     input_content["message"].as_str().expect("Failed to parse \"message\" field").to_string()
 }
 
@@ -82,12 +82,11 @@ impl Scenario for Smoke {
         "smoke"
     }
 
-    fn run(&self, input: Option<String>) -> Result<(), String> {
-        let input_string = input.clone().expect("Test input is expected");
-        let mut rt = Runtime::new(&Some(input_string.clone())).build();
-        let connection_parameters = ConnectionParameters::from_json(&input_string).expect("Failed to parse connection parameters");
+    fn run(&self, input: &str) -> Result<(), String> {
+        let mut rt = Runtime::from_json(input)?.build();
+        let connection_parameters = ConnectionParameters::from_json(input).expect("Failed to parse connection parameters");
 
-        let message = parse_message(&input_string);
+        let message = parse_message(input);
         let _ = rt.block_on(async move {
             let stream = create_tcp_stream(connection_parameters).await;
             let _ = spawn(write_and_read_task(stream, message)).await;
@@ -110,10 +109,9 @@ impl Scenario for SetGetTtl {
         "set_get_ttl"
     }
 
-    fn run(&self, input: Option<String>) -> Result<(), String> {
-        let input_string = input.clone().expect("Test input is expected");
-        let mut rt = Runtime::new(&Some(input_string.clone())).build();
-        let connection_parameters = ConnectionParameters::from_json(&input_string).expect("Failed to parse connection parameters");
+    fn run(&self, input: &str) -> Result<(), String> {
+        let mut rt = Runtime::from_json(input)?.build();
+        let connection_parameters = ConnectionParameters::from_json(input).expect("Failed to parse connection parameters");
 
         let _ = rt.block_on(async move {
             let stream = create_tcp_stream(connection_parameters).await;

@@ -21,9 +21,8 @@ pub struct DemoLogic {
 
 impl DemoLogic {
     /// Creates a new DemoLogic from the "test" field in the input JSON.
-    pub fn new(input: &Option<String>) -> Self {
-        let input_string = input.as_ref().expect("Test input is expected");
-        let v: Value = serde_json::from_str(input_string).expect("Failed to parse input string");
+    pub fn new(input: &str) -> Self {
+        let v: Value = serde_json::from_str(input).expect("Failed to parse input string");
         serde_json::from_value(v["test"].clone()).expect("Failed to parse \"test\" field")
     }
 }
@@ -142,9 +141,9 @@ impl Scenario for ProgramDemo {
         "demo"
     }
 
-    fn run(&self, input: Option<String>) -> Result<(), String> {
-        let mut runtime = Runtime::new(&input).build();
-        let logic = DemoLogic::new(&input);
+    fn run(&self, input: &str) -> Result<(), String> {
+        let mut runtime = Runtime::from_json(input)?.build();
+        let logic = DemoLogic::new(input);
 
         // Build Orchestration
         let mut orch = Orchestration::new()

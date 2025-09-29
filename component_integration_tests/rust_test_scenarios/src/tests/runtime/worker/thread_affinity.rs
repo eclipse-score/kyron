@@ -55,8 +55,8 @@ impl Scenario for ThreadAffinity {
         "thread_affinity"
     }
 
-    fn run(&self, input: Option<String>) -> Result<(), String> {
-        let builder = Runtime::new(&input);
+    fn run(&self, input: &str) -> Result<(), String> {
+        let builder = Runtime::from_json(input)?;
         let exec_engine = builder.exec_engines().first().expect("No execution engine configuration found");
         let num_workers = exec_engine.workers;
         let mut rt = builder.build();

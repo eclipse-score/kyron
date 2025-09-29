@@ -1,6 +1,5 @@
 use crate::internals::runtime_helper::Runtime;
 use test_scenarios_rust::scenario::Scenario;
-//use orchestration::{prelude::*, program::ProgramBuilder};
 use tracing::info;
 
 pub struct OnlyShutdownSequence;
@@ -11,10 +10,8 @@ impl Scenario for OnlyShutdownSequence {
         "only_shutdown"
     }
 
-    fn run(&self, input: Option<String>) -> Result<(), String> {
-        // let logic: TestInput = TestInput::new(&input);
-        // TODO: Read TestInput and make 2 shutdowns
-        let mut rt = Runtime::new(&input).build();
+    fn run(&self, input: &str) -> Result<(), String> {
+        let mut rt = Runtime::from_json(input)?.build();
 
         let _ = rt.block_on(async move {
             info!("Program entered engine");

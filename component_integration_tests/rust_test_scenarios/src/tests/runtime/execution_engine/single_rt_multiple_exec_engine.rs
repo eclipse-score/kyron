@@ -20,9 +20,8 @@ struct TestInput {
 }
 
 impl TestInput {
-    pub fn new(inputs: &Option<String>) -> Self {
-        let input_string = inputs.as_ref().expect("Test input is expected");
-        let v: Value = serde_json::from_str(input_string).expect("Failed to parse input string");
+    pub fn new(input: &str) -> Self {
+        let v: Value = serde_json::from_str(input).expect("Failed to parse input string");
         let tasks = serde_json::from_value(v["tasks"].clone()).expect("Failed to parse \"tasks\" field");
         Self { tasks }
     }
@@ -43,9 +42,9 @@ impl Scenario for SingleRtMultipleExecEngine {
         "single_rt_multiple_exec_engine"
     }
 
-    fn run(&self, input: Option<String>) -> Result<(), String> {
-        let logic = TestInput::new(&input);
-        let mut rt = Runtime::new(&input).build();
+    fn run(&self, input: &str) -> Result<(), String> {
+        let logic = TestInput::new(input);
+        let mut rt = Runtime::from_json(input)?.build();
 
         for tasks_data in logic.tasks.iter() {
             let engine_id = tasks_data.engine_id;

@@ -1,12 +1,12 @@
 use async_runtime::runtime::async_runtime::{AsyncRuntime, AsyncRuntimeBuilder};
 use async_runtime::scheduler::execution_engine::ExecutionEngineBuilder;
 use async_runtime::scheduler::SchedulerType;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer};
 use serde_json::Value;
 use tracing::debug;
 
 /// Execution engine configuration.
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 pub struct ExecEngineConfig {
     pub task_queue_size: u32,
     pub workers: usize,
@@ -16,33 +16,37 @@ pub struct ExecEngineConfig {
     pub thread_scheduler: Option<String>,
 }
 
-/// Runtime configuration.
-/// Used by serde for serialization.
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(untagged)]
-enum RuntimeConfig {
-    /// Single engine is defined.
-    Object(ExecEngineConfig),
-    /// List of engines is defined.
-    Array(Vec<ExecEngineConfig>),
+fn deserialize_exec_engines<'de, D>(deserializer: D) -> Result<Vec<ExecEngineConfig>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum RuntimeConfig {
+        Object(ExecEngineConfig),
+        Array(Vec<ExecEngineConfig>),
+    }
+
+    let exec_engines = match RuntimeConfig::deserialize(deserializer)? {
+        RuntimeConfig::Object(exec_engine_config) => vec![exec_engine_config],
+        RuntimeConfig::Array(exec_engine_configs) => exec_engine_configs,
+    };
+    Ok(exec_engines)
 }
 
-#[derive(Debug)]
+#[derive(Deserialize, Debug)]
+#[serde(transparent)]
 pub struct Runtime {
+    #[serde(deserialize_with = "deserialize_exec_engines")]
     exec_engines: Vec<ExecEngineConfig>,
 }
 
 impl Runtime {
-    pub fn new(inputs: &Option<String>) -> Self {
-        let input_string = inputs.as_ref().expect("Test input is expected");
-        let v: Value = serde_json::from_str(input_string).expect("Failed to parse input string");
-        let runtime_config: RuntimeConfig = serde_json::from_value(v["runtime"].clone()).expect("Failed to parse \"runtime\" field");
-        let exec_engines = match runtime_config {
-            RuntimeConfig::Object(cfg) => vec![cfg],
-            RuntimeConfig::Array(cfgs) => cfgs,
-        };
-
-        Self { exec_engines }
+    /// Parse `Runtime` from JSON string.
+    /// JSON is expected to contain `runtime` field.
+    pub fn from_json(json_str: &str) -> Result<Self, String> {
+        let v: Value = serde_json::from_str(json_str).map_err(|e| e.to_string())?;
+        serde_json::from_value(v["runtime"].clone()).map_err(|e| e.to_string())
     }
 
     pub fn exec_engines(&self) -> &Vec<ExecEngineConfig> {

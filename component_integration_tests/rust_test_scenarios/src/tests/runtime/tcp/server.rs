@@ -79,10 +79,9 @@ impl Scenario for TcpServer {
         "basic_server"
     }
 
-    fn run(&self, input: Option<String>) -> Result<(), String> {
-        let input_string = input.clone().expect("Test input is expected");
-        let mut rt = Runtime::new(&Some(input_string.clone())).build();
-        let connection_parameters = ConnectionParameters::from_json(&input_string).expect("Failed to parse connection parameters");
+    fn run(&self, input: &str) -> Result<(), String> {
+        let mut rt = Runtime::from_json(input)?.build();
+        let connection_parameters = ConnectionParameters::from_json(input).expect("Failed to parse connection parameters");
 
         let _ = rt.block_on(async move {
             info!("Program entered engine");
