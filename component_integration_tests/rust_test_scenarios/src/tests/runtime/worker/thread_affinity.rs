@@ -1,36 +1,18 @@
 use crate::internals::execution_barrier::MultiExecutionBarrier;
-use crate::internals::{execution_barrier::RuntimeJoiner, runtime_helper::Runtime};
+use crate::internals::execution_barrier::RuntimeJoiner;
+use crate::internals::runtime_helper::Runtime;
+use crate::internals::thread_params::current_thread_affinity;
 use async_runtime::spawn;
 use foundation::threading::thread_wait_barrier::ThreadReadyNotifier;
-use std::mem::MaybeUninit;
 use std::sync::{Arc, Condvar, Mutex};
 use std::time::Duration;
 use test_scenarios_rust::scenario::Scenario;
 use tracing::info;
 
 fn show_thread_affinity(id: usize) {
-    unsafe {
-        let current_thread = 0;
-        let mut cpu_set = MaybeUninit::<libc::cpu_set_t>::zeroed().assume_init();
-        let cpu_set_size = std::mem::size_of::<libc::cpu_set_t>();
-        let rc = libc::sched_getaffinity(current_thread, cpu_set_size, &mut cpu_set);
-        if rc != 0 {
-            let errno = *libc::__errno_location();
-            panic!("libc::sched_getaffinity failed, rc: {rc}, errno: {errno}");
-        }
-
-        let mut affinity = Vec::new();
-        for i in 0..libc::CPU_SETSIZE as usize {
-            if libc::CPU_ISSET(i, &cpu_set) {
-                affinity.push(i);
-            }
-        }
-
-        let id = format!("worker_{id}");
-        let affinity = format!("{affinity:?}");
-
-        info!(id, affinity);
-    }
+    let id = format!("worker_{id}");
+    let affinity = format!("{:?}", current_thread_affinity());
+    info!(id, affinity);
 }
 
 async fn blocking_task(id: usize, block_condition: Arc<(Condvar, Mutex<bool>)>, notifier: ThreadReadyNotifier) {

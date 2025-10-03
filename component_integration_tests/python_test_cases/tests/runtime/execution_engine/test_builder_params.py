@@ -1,7 +1,5 @@
 import json
-import re
 from pathlib import Path
-from subprocess import DEVNULL, PIPE, Popen
 from typing import Any
 
 import psutil
@@ -14,6 +12,7 @@ from component_integration_tests.python_test_cases.tests.cit_scenario import (
 from component_integration_tests.python_test_cases.tests.result_code import (
     ResultCode,
 )
+import component_integration_tests.python_test_cases.tests.cap_utils as cap_utils
 
 # region task_queue_size
 
@@ -160,70 +159,6 @@ class TestThreadPriority(CitScenario):
             }
         }
 
-    def _get_caps(self, resolved_target_path: Path) -> dict[str, str]:
-        """
-        Check capabilities of the executable.
-
-        Parameters
-        ----------
-        resolved_target_path : Path
-            Resolved path to test scenarios executable.
-            "getcap" is unable to get caps from symlink.
-        """
-        # Run 'getcap' command.
-        command = ["getcap", "-v", resolved_target_path]
-        with Popen(command, stdout=PIPE, stderr=DEVNULL, text=True) as p:
-            stdout, _ = p.communicate()
-
-        # Split result to lines.
-        lines = stdout.strip().split("\n")
-        if len(lines) != 1:
-            raise RuntimeError("Invalid getcap result")
-
-        # Process line.
-        # 'getcap' returns caps grouped by permissions:
-        # `<EXECUTABLE_NAME> cap_chown=eip cap_sys_chroot,cap_sys_nice+ep`
-        entries = lines[0].split(" ")[1:]
-        result = {}
-        for entry in entries:
-            # Permissions might be after '=' or '+'.
-            names, perms = re.split(r"\+|=", entry, 1)
-
-            # Multiple cap names might have same permissions.
-            for name in names.split(","):
-                result[name] = perms
-
-        return result
-
-    def _set_caps(self, resolved_target_path: Path, caps: dict[str, str]) -> None:
-        """
-        Set capabilities of the executable.
-
-        Parameters
-        ----------
-        resolved_target_path : Path
-            Resolved path to test scenarios executable.
-            "setcap" is unable to grant caps to symlink.
-        caps : dict[str, str]
-            Capabilities to set.
-        """
-        caps_list = []
-        for name, perms in caps.items():
-            caps_list.append(f"{name}+{perms}")
-        caps_str = " ".join(caps_list)
-
-        # Run 'setcap' command.
-        command = [
-            "sudo",
-            "setcap",
-            caps_str,
-            str(resolved_target_path),
-        ]
-        with Popen(command) as p:
-            _, _ = p.communicate()
-            if p.returncode != 0:
-                raise RuntimeError(f'"setcap" failed with returncode: {p.returncode}')
-
     def _resolve_target_path(self, path_to_resolve: Path) -> Path:
         """
         Provide resolved target path.
@@ -259,9 +194,9 @@ class TestThreadPriority(CitScenario):
         """
         # Check and set 'cap_sys_nice'.
         resolved_target_path = self._resolve_target_path(target_path)
-        caps = self._get_caps(resolved_target_path)
+        caps = cap_utils.get_caps(resolved_target_path)
         if not caps.get("cap_sys_nice", "") == "ep":
-            self._set_caps(resolved_target_path, {"cap_sys_nice": "ep"})
+            cap_utils.set_caps(resolved_target_path, {"cap_sys_nice": "ep"})
 
         return self._run_command(command, execution_timeout, args, kwargs)
 
@@ -348,7 +283,7 @@ class TestThreadAffinity_Valid(TestThreadAffinity):
                 check_num_cores(2)
                 return [num_cores - 1]
 
-            # Three cores cores - first, middle and last.
+            # Three cores - first, middle and last.
             case "multiple":
                 check_num_cores(4)
                 return [0, num_cores // 2, num_cores - 1]
