@@ -1,12 +1,15 @@
 import json
 from pathlib import Path
+from platform import platform
 from typing import Any
+
 import psutil
 import pytest
+from testing_utils import LogContainer, ScenarioResult
+
+import component_integration_tests.python_test_cases.tests.cap_utils as cap_utils
 from component_integration_tests.python_test_cases.tests.cit_scenario import CitScenario
 from component_integration_tests.python_test_cases.tests.result_code import ResultCode
-import component_integration_tests.python_test_cases.tests.cap_utils as cap_utils
-from testing_utils import ScenarioResult, LogContainer
 
 
 class TestOnlyDedicatedWorkers(CitScenario):
@@ -123,6 +126,7 @@ class TestReregisterDedicatedWorker(CitScenario):
 
 
 @pytest.mark.root_required
+@pytest.mark.skipif("WSL" in platform(), reason="Not supported on WSL")
 class TestDedicatedWorkerPriority(CitScenario):
     SCHEDULER = "fifo"
 

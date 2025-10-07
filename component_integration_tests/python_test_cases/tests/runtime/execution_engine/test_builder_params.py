@@ -1,18 +1,19 @@
 import json
 from pathlib import Path
+from platform import platform
 from typing import Any
 
 import psutil
 import pytest
 from testing_utils import LogContainer, ScenarioResult
 
+import component_integration_tests.python_test_cases.tests.cap_utils as cap_utils
 from component_integration_tests.python_test_cases.tests.cit_scenario import (
     CitScenario,
 )
 from component_integration_tests.python_test_cases.tests.result_code import (
     ResultCode,
 )
-import component_integration_tests.python_test_cases.tests.cap_utils as cap_utils
 
 # region task_queue_size
 
@@ -136,6 +137,7 @@ class TestWorkers_Invalid(TestWorkers):
 
 
 @pytest.mark.root_required
+@pytest.mark.skipif("WSL" in platform(), reason="Not supported on WSL")
 class TestThreadPriority(CitScenario):
     SCHEDULER = "fifo"
     NUM_WORKERS = 4
