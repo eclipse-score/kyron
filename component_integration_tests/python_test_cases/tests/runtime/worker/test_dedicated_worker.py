@@ -56,10 +56,11 @@ class TestOnlyDedicatedWorkers(CitScenario):
 
         # Check dedicated worker IDs.
         worker_logs = logs_info_level.get_logs("id", pattern="dedicated_worker_.*")
-        act_worker_ids = set(log.id for log in worker_logs)
-        exp_worker_ids = set(map(lambda x: x["id"], dedicated_workers))
-        ids_diff = act_worker_ids.symmetric_difference(exp_worker_ids)
-        assert not ids_diff, f"Mismatch between worker IDs expected ({exp_worker_ids}) and actual ({act_worker_ids})"
+        act_worker_ids = {log.id for log in worker_logs}
+        exp_worker_ids = {dw["id"] for dw in dedicated_workers}
+        assert act_worker_ids == exp_worker_ids, (
+            f"Mismatch between worker IDs expected ({exp_worker_ids}) and actual ({act_worker_ids})"
+        )
 
 
 class TestSpawnToUnregisteredWorker(CitScenario):
@@ -84,7 +85,7 @@ class TestSpawnToUnregisteredWorker(CitScenario):
 
     def test_invalid(self, results: ScenarioResult) -> None:
         # Panic inside async causes 'SIGABRT'.
-        # TODO: determine this should be panic, and not an error.
+        # TODO: determine this should be panic, and not an error.  # noqa: FIX002
         assert results.return_code == ResultCode.SIGABRT
 
         assert results.stderr
@@ -118,6 +119,86 @@ class TestReregisterDedicatedWorker(CitScenario):
 
         assert results.stderr
         assert "Cannot register same unique worker multiple times!" in results.stderr
+
+
+class BlockOneUseOther(CitScenario):
+    @pytest.fixture(scope="class")
+    def num_workers(self) -> int:
+        return 4
+
+    @pytest.fixture(scope="class", params=[1, 10])
+    def num_dedicated(self, request: pytest.FixtureRequest) -> int:
+        # Dedicated workers don't belong to regular workers pool.
+        # - Run only one dedicated worker.
+        # - Run more dedicated workers than regular workers available.
+        return request.param
+
+    @pytest.fixture(scope="class")
+    def dedicated_workers(self, num_dedicated: int) -> list[dict[str, Any]]:
+        result = []
+        for i in range(num_dedicated):
+            result.append({"id": f"dedicated_worker_{i}"})
+        return result
+
+    @pytest.fixture(scope="class")
+    def test_config(self, num_workers: int, dedicated_workers: list[dict[str, Any]]) -> dict[str, Any]:
+        return {
+            "runtime": {
+                "task_queue_size": 256,
+                "workers": num_workers,
+                "dedicated_workers": dedicated_workers,
+            }
+        }
+
+    def test_valid(
+        self,
+        logs_info_level: LogContainer,
+        num_workers: int,
+        dedicated_workers: list[dict[str, Any]],
+    ) -> None:
+        num_dedicated_workers = len(dedicated_workers)
+        # Check for barrier wait results.
+        assert logs_info_level.find_log("ded_wait_result", value="ok")
+        assert logs_info_level.find_log("reg_wait_result", value="ok")
+
+        # Get logs containing worker IDs.
+        worker_logs = logs_info_level.get_logs("id")
+
+        # Check regular worker IDs.
+        reg_worker_logs = worker_logs.get_logs("id", pattern=r"^worker_\d*")
+        assert len(reg_worker_logs) == num_workers
+
+        act_reg_worker_ids = {log.id for log in reg_worker_logs}
+        exp_reg_worker_ids = {f"worker_{i}" for i in range(num_workers)}
+        assert act_reg_worker_ids == exp_reg_worker_ids, (
+            f"Mismatch between worker IDs expected ({exp_reg_worker_ids}) and actual ({act_reg_worker_ids})"
+        )
+
+        # Check dedicated worker IDs.
+        ded_worker_logs = worker_logs.get_logs("id", pattern=r"^dedicated_worker_\d*")
+        assert len(ded_worker_logs) == num_dedicated_workers
+
+        act_ded_worker_ids = {log.id for log in ded_worker_logs}
+        exp_ded_worker_ids = {dw["id"] for dw in dedicated_workers}
+        assert act_ded_worker_ids == exp_ded_worker_ids, (
+            f"Mismatch between worker IDs expected ({exp_ded_worker_ids}) and actual ({act_ded_worker_ids})"
+        )
+
+        # Check all worker thread IDs are unique.
+        thread_ids = {log.thread_id for log in worker_logs}
+        assert len(thread_ids) == (num_workers + num_dedicated_workers)
+
+
+class TestBlockAllRegularWorkOnDedicated(BlockOneUseOther):
+    @pytest.fixture(scope="class")
+    def scenario_name(self) -> str:
+        return "runtime.worker.dedicated_worker.block_all_regular_work_on_dedicated"
+
+
+class TestBlockDedicatedWorkOnRegular(BlockOneUseOther):
+    @pytest.fixture(scope="class")
+    def scenario_name(self) -> str:
+        return "runtime.worker.dedicated_worker.block_dedicated_work_on_regular"
 
 
 # region thread parameters tests
