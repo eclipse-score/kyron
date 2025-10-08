@@ -93,7 +93,10 @@ class TestWorkers_Valid(TestWorkers):
         return 15.0
 
     def test_valid(
-        self, results: ScenarioResult, logs_info_level: LogContainer, workers: int
+        self,
+        results: ScenarioResult,
+        logs_info_level: LogContainer,
+        workers: int,
     ) -> None:
         assert results.return_code == ResultCode.SUCCESS
 
@@ -125,10 +128,7 @@ class TestWorkers_Invalid(TestWorkers):
     def test_invalid(self, results: ScenarioResult, workers: int) -> None:
         assert results.return_code == ResultCode.PANIC
         assert results.stderr is not None
-        assert (
-            f"Cannot create engine with {workers} workers. Min is 1 and max is 128"
-            in results.stderr
-        )
+        assert f"Cannot create engine with {workers} workers. Min is 1 and max is 128" in results.stderr
 
 
 # endregion
@@ -219,9 +219,7 @@ class TestThreadPriority(CitScenario):
             act_priority = worker_log.priority
 
             # Check priority as expected and in expected bounds.
-            assert priority == act_priority, (
-                f"Invalid priority, expected: {priority}, found: {act_priority}"
-            )
+            assert priority == act_priority, f"Invalid priority, expected: {priority}, found: {act_priority}"
 
 
 # endregion
@@ -264,11 +262,7 @@ class TestThreadAffinity_Valid(TestThreadAffinity):
 
         def check_num_cores(num_required: int):
             if num_cores < num_required:
-                pytest.skip(
-                    reason="Test requires more CPU cores, "
-                    f"required: {num_required}, "
-                    f"available: {num_cores}"
-                )
+                pytest.skip(reason=f"Test requires more CPU cores, required: {num_required}, available: {num_cores}")
 
         match mode:
             # First available core.
@@ -316,9 +310,7 @@ class TestThreadAffinity_Valid(TestThreadAffinity):
             act_affinity = json.loads(worker_log.affinity)
 
             # Check affinity as expected.
-            assert affinity == act_affinity, (
-                f"Invalid affinity, expected: {affinity}, found: {act_affinity}"
-            )
+            assert affinity == act_affinity, f"Invalid affinity, expected: {affinity}, found: {act_affinity}"
 
 
 class TestThreadAffinity_OffByOne(TestThreadAffinity):
@@ -434,10 +426,7 @@ class TestThreadStackSize_TooSmall(TestThreadStackSize):
     def test_invalid(self, results: ScenarioResult) -> None:
         assert results.return_code == ResultCode.PANIC
         assert results.stderr is not None
-        assert (
-            "called `Result::unwrap()` on an `Err` value: StackSizeTooSmall"
-            in results.stderr
-        )
+        assert "called `Result::unwrap()` on an `Err` value: StackSizeTooSmall" in results.stderr
 
 
 # endregion

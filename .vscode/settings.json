@@ -28,14 +28,13 @@
         "_build",
     ],
     "[python]": {
-        // In python using 80 characters per line is the standard.
         "editor.rulers": [
-            79
+            120
         ],
-        // Opinionated option for the future:
-        // "editor.formatOnSave": true,
+        "editor.formatOnSave": true,
         "editor.codeActionsOnSave": {
-            "source.sortImports": "explicit"
+            "source.organizeImports": "explicit",
+            "source.sortImports": "explicit",
         },
         "editor.defaultFormatter": "charliermarsh.ruff",
     },

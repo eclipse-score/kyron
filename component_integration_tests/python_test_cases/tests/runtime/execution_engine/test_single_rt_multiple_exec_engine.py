@@ -4,7 +4,9 @@ from typing import Any
 import pytest
 from testing_utils import LogContainer
 
-from component_integration_tests.python_test_cases.tests.cit_scenario import CitScenario
+from component_integration_tests.python_test_cases.tests.cit_scenario import (
+    CitScenario,
+)
 
 
 class TestSingleRuntimeMultipleExecEngine(CitScenario):
@@ -41,13 +43,9 @@ class TestSingleRuntimeMultipleExecEngine(CitScenario):
         exp_tasks = set(self._tasks)
 
         tasks_diff = act_tasks.symmetric_difference(exp_tasks)
-        assert not tasks_diff, (
-            f"Mismatch between tasks assigned ({exp_tasks}) and executed ({act_tasks})"
-        )
+        assert not tasks_diff, f"Mismatch between tasks assigned ({exp_tasks}) and executed ({act_tasks})"
 
-    def test_tasks_assigned_to_exec_engine(
-        self, test_config: dict[str, Any], logs_info_level: LogContainer
-    ) -> None:
+    def test_tasks_assigned_to_exec_engine(self, test_config: dict[str, Any], logs_info_level: LogContainer) -> None:
         for tasks_data in test_config["tasks"]:
             engine_id = tasks_data["engine_id"]
             task_ids = tasks_data["task_ids"]

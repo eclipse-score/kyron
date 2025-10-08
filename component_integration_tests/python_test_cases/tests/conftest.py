@@ -60,9 +60,7 @@ def pytest_sessionstart(session: pytest.Session):
             print("Building test scenarios executable...")
             build_timeout = session.config.getoption("--build-scenarios-timeout")
             tools = CargoTools(build_timeout=build_timeout)
-            target_name = tools.select_target_path(
-                session.config, expect_exists=False
-            ).name
+            target_name = tools.select_target_path(session.config, expect_exists=False).name
             tools.build(target_name)
 
     except Exception as e:
@@ -89,9 +87,7 @@ def global_startup(request: pytest.FixtureRequest):
         # On failure - skip root requiring tests.
         authenticated = _authenticate(interactive=False)
         if not authenticated:
-            skipper = pytest.mark.skip(
-                reason="Failed to grant root permissions in Bazel environment."
-            )
+            skipper = pytest.mark.skip(reason="Failed to grant root permissions in Bazel environment.")
             for item in root_required_tests:
                 item.add_marker(skipper)
 
@@ -160,9 +156,7 @@ def skip_do_not_repeat(test_items: list[pytest.Item], repeat_count: int):
             item.add_marker(pytest.mark.skip(reason="Marked as do_not_repeat"))
 
 
-def pytest_collection_modifyitems(
-    session: pytest.Session, config: pytest.Config, items: list[pytest.Item]
-):
+def pytest_collection_modifyitems(session: pytest.Session, config: pytest.Config, items: list[pytest.Item]):
     # Skip tests marked with 'only_nightly' if NIGHTLY env var is not set to TRUE
     if os.getenv("NIGHTLY", "").lower() not in ("true", "1"):
         skip_only_nightly(items)
@@ -244,11 +238,7 @@ def pytest_terminal_summary(terminalreporter):
         return
     # Print failed scenarios info
     terminalreporter.write_sep("=", "Failed tests reproduction info")
-    terminalreporter.write_line(
-        "Run failed scenarios from the repo root working directory\n"
-    )
+    terminalreporter.write_line("Run failed scenarios from the repo root working directory\n")
 
     for entry in FAILED_CONFIGS:
-        terminalreporter.write_line(
-            f"{entry['nodeid']} | Run command:\n{entry['command']}\n"
-        )
+        terminalreporter.write_line(f"{entry['nodeid']} | Run command:\n{entry['command']}\n")

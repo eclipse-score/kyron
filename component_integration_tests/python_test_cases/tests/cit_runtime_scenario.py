@@ -13,7 +13,13 @@ from threading import Thread
 from typing import Generator
 
 import pytest
-from testing_utils import BuildTools, CargoTools, LogContainer, ResultEntry, Scenario
+from testing_utils import (
+    BuildTools,
+    CargoTools,
+    LogContainer,
+    ResultEntry,
+    Scenario,
+)
 
 from component_integration_tests.python_test_cases.tests.result_code import (
     ResultCode,
@@ -22,13 +28,12 @@ from component_integration_tests.python_test_cases.tests.result_code import (
 
 class Executable:
     def __init__(self, command: list[str]) -> None:
-        self._proc: Popen[str] = Popen(
-            command, stdout=PIPE, stderr=PIPE, text=True, bufsize=1
-        )
+        self._proc: Popen[str] = Popen(command, stdout=PIPE, stderr=PIPE, text=True, bufsize=1)
         self._stdout: LogContainer = LogContainer()
         self._queue: Queue[ResultEntry] = Queue()
         self._stdout_reader: Thread = Thread(
-            target=Executable.process_output, args=(self._proc.stdout, self._queue)
+            target=Executable.process_output,
+            args=(self._proc.stdout, self._queue),
         )
         self._stdout_reader.start()
 
@@ -41,9 +46,7 @@ class Executable:
         for line in iter(stream.readline, ""):
             try:
                 json_line = json.loads(line.strip())
-                json_line["timestamp"] = timedelta(
-                    microseconds=int(json_line["timestamp"])
-                )
+                json_line["timestamp"] = timedelta(microseconds=int(json_line["timestamp"]))
                 queue.put(ResultEntry(json_line))
             except json.decoder.JSONDecodeError:
                 print(
@@ -107,10 +110,14 @@ class Executable:
         try:
             ret_code = self._proc.wait(timeout)
             print(
-                f"Executable: Process finished with return code {ret_code}", file=stderr
+                f"Executable: Process finished with return code {ret_code}",
+                file=stderr,
             )
         except TimeoutError:
-            print(f"Process did not terminate in {timeout}s, killing it", file=stderr)
+            print(
+                f"Process did not terminate in {timeout}s, killing it",
+                file=stderr,
+            )
             ret_code = self._kill(timeout)
         self._update_stdout()
         self._stdout_reader.join()
@@ -124,7 +131,9 @@ class Executable:
         return self._stdout
 
     def wait_for_log(
-        self, found_predicate: Callable[[LogContainer], bool], timeout: float = 5.0
+        self,
+        found_predicate: Callable[[LogContainer], bool],
+        timeout: float = 5.0,
     ):
         """
         Wait for a specific message in stdout until timeout.
@@ -189,9 +198,7 @@ class CitRuntimeScenario(Scenario):
         return False
 
     @pytest.fixture(scope="function")
-    def executable(
-        self, command: list[str], *args, **kwargs
-    ) -> Generator[Executable, None, None]:
+    def executable(self, command: list[str], *args, **kwargs) -> Generator[Executable, None, None]:
         """
         Start the executable process and terminate it after tests.
         """
@@ -200,9 +207,7 @@ class CitRuntimeScenario(Scenario):
 
         ret_code = exec.terminate()
         if not self.expect_command_failure() and ret_code != ResultCode.SIGTERM:
-            raise RuntimeError(
-                f"Executable terminated with unexpected return code: {ret_code}"
-            )
+            raise RuntimeError(f"Executable terminated with unexpected return code: {ret_code}")
 
     @pytest.fixture(autouse=True)
     def print_to_report(

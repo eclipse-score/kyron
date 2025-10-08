@@ -32,7 +32,10 @@ class VEnv:
         self._pip = venv_path / "bin" / "pip3"
 
         if not self._venv_path.is_dir():
-            print("Virtual environment does not exist, creating...", file=sys.stderr)
+            print(
+                "Virtual environment does not exist, creating...",
+                file=sys.stderr,
+            )
             self._create()
 
     @property
@@ -42,7 +45,8 @@ class VEnv:
     def _create(self):
         try:
             subprocess.run(
-                [sys.executable, "-m", "venv", self._venv_path.resolve()], check=True
+                [sys.executable, "-m", "venv", self._venv_path.resolve()],
+                check=True,
             )
         except subprocess.CalledProcessError as e:
             print(f"Failed to create virtual environment: {e}", file=sys.stderr)
@@ -121,7 +125,14 @@ def main():
 
     args_no_script_name = sys.argv[1:]
     subprocess.run(
-        [venv.python_path, "-m", "pytest", "-vv", "--build-scenarios", "--traces=all"]
+        [
+            venv.python_path,
+            "-m",
+            "pytest",
+            "-vv",
+            "--build-scenarios",
+            "--traces=all",
+        ]
         + args_no_script_name
     )
 

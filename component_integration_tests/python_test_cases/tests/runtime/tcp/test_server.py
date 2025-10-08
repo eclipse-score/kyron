@@ -32,9 +32,7 @@ class TestTcpServer(CitRuntimeScenario):
         data = client_connection.recv(1024)
         assert message == data
 
-    def test_multiple_connections(
-        self, connection_params: dict[str, Any], executable: Executable
-    ) -> None:
+    def test_multiple_connections(self, connection_params: dict[str, Any], executable: Executable) -> None:
         executable.wait_for_log(
             lambda log_container: log_container.find_log(
                 "message",

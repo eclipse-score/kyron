@@ -18,7 +18,9 @@ from testing_utils.net import Address, IPAddress
 from component_integration_tests.python_test_cases.tests.cit_scenario import (
     CitScenario,
 )
-from component_integration_tests.python_test_cases.tests.result_code import ResultCode
+from component_integration_tests.python_test_cases.tests.result_code import (
+    ResultCode,
+)
 from component_integration_tests.python_test_cases.tests.runtime.tcp.ttl_helper import (
     get_default_ttl,
 )
@@ -64,13 +66,12 @@ class EchoServer:
             except OSError:
                 # Allow 'accept' to be interrupted.
                 print(
-                    "Socket accept interrupted, socket being shutdown", file=sys.stderr
+                    "Socket accept interrupted, socket being shutdown",
+                    file=sys.stderr,
                 )
                 break
 
-            client_thread = Thread(
-                target=self._handle_client, args=(conn, addr), daemon=True
-            )
+            client_thread = Thread(target=self._handle_client, args=(conn, addr), daemon=True)
             client_thread.start()
 
     def start(self) -> None:
@@ -158,9 +159,7 @@ class TestSmoke(CitScenario):
         assert log is not None
         assert log.message_read == message
 
-    def test_addrs_ok(
-        self, echo_server: EchoServer, logs_info_level: LogContainer
-    ) -> None:
+    def test_addrs_ok(self, echo_server: EchoServer, logs_info_level: LogContainer) -> None:
         log = logs_info_level.find_log("peer_addr")
         assert log is not None
         # Compare local (from server PoV) to peer (from client PoV).

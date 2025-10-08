@@ -36,24 +36,18 @@ class TestProgramRun(CitScenario):
         return True
 
     def test_program_run(self, logs_info_level: LogContainer):
-        assert logs_info_level.contains_log(field="id", value="start"), (
-            "Program did not start as expected"
-        )
+        assert logs_info_level.contains_log(field="id", value="start"), "Program did not start as expected"
         task_logs = logs_info_level.get_logs(field="id", value="basic_task")
         assert len(task_logs) > 1, "Program did not execute tasks as expected"
 
-    def test_program_run_until_timeout(
-        self, logs_info_level: LogContainer, results: ScenarioResult
-    ):
+    def test_program_run_until_timeout(self, logs_info_level: LogContainer, results: ScenarioResult):
         assert not logs_info_level.contains_log(field="id", value="stop"), (
             "Program execution was finished, where it should run indefinitely"
         )
 
         assert results.hang, "Program execution was not running infinitely as expected"
         # The program should run infinitely, so we kill it after a execution_timeout
-        assert results.return_code == ResultCode.SIGKILL, (
-            "Program execution was not killed as expected"
-        )
+        assert results.return_code == ResultCode.SIGKILL, "Program execution was not killed as expected"
 
 
 class TestProgramRunCycle(TestProgramRun):
@@ -112,26 +106,18 @@ class TestProgramRunNTimes(CitScenario):
         }
 
     def test_program_start_and_finish(self, logs_info_level: LogContainer):
-        assert logs_info_level.contains_log(field="id", value="start"), (
-            "Program did not start as expected"
-        )
-        assert logs_info_level.contains_log(field="id", value="stop"), (
-            "Program did not stop as expected"
-        )
+        assert logs_info_level.contains_log(field="id", value="start"), "Program did not start as expected"
+        assert logs_info_level.contains_log(field="id", value="stop"), "Program did not stop as expected"
 
     @pytest.mark.skip(
         reason="Flaky test, needs investigation: https://github.com/qorix-group/inc_orchestrator_internal/issues/278"
     )
-    def test_program_run_given_times(
-        self, logs_info_level: LogContainer, test_config: dict[str, Any]
-    ):
+    def test_program_run_given_times(self, logs_info_level: LogContainer, test_config: dict[str, Any]):
         expected_run_count = test_config["test"]["run_count"]
 
         run_logs = logs_info_level.get_logs(field="id", value="basic_task")
 
-        assert len(run_logs) == expected_run_count, (
-            f"Expected {expected_run_count} runs, but got {len(run_logs)}"
-        )
+        assert len(run_logs) == expected_run_count, f"Expected {expected_run_count} runs, but got {len(run_logs)}"
 
 
 class TestProgramRunNTimesCycle(TestProgramRunNTimes):
@@ -195,9 +181,9 @@ class TestProgramRunMetered(TestProgramRun):
     def test_program_meter_output(self, logs_info_level: LogContainer):
         # Meter is a debug utility and accuracy is not checked
         # We don't know how many iterations were executed, so we just check if there were any meter outputs
-        assert logs_info_level.contains_log(
-            field="meter_id", pattern=r"simple_run_program"
-        ), "Expected meter output not found"
+        assert logs_info_level.contains_log(field="meter_id", pattern=r"simple_run_program"), (
+            "Expected meter output not found"
+        )
 
 
 class TestProgramRunCycleMetered(TestProgramRunCycle):
@@ -227,9 +213,9 @@ class TestProgramRunCycleMetered(TestProgramRunCycle):
     def test_program_meter_output(self, logs_info_level: LogContainer):
         # Meter is a debug utility and accuracy is not checked
         # We don't know how many iterations were executed, so we just check if there were any meter outputs
-        assert logs_info_level.contains_log(
-            field="meter_id", pattern=r"simple_run_program"
-        ), "Expected meter output not found"
+        assert logs_info_level.contains_log(field="meter_id", pattern=r"simple_run_program"), (
+            "Expected meter output not found"
+        )
 
 
 class TestProgramRunNTimesMetered(TestProgramRunNTimes):
@@ -252,14 +238,10 @@ class TestProgramRunNTimesMetered(TestProgramRunNTimes):
             },
         }
 
-    def test_program_meter_output(
-        self, test_config: dict[str, Any], logs_info_level: LogContainer
-    ):
+    def test_program_meter_output(self, test_config: dict[str, Any], logs_info_level: LogContainer):
         # Meter is a debug utility and accuracy is not checked
         expected_meter_outputs = test_config["test"]["run_count"]
-        meter_outputs = logs_info_level.get_logs(
-            field="meter_id", pattern=r"simple_run_program"
-        )
+        meter_outputs = logs_info_level.get_logs(field="meter_id", pattern=r"simple_run_program")
 
         assert expected_meter_outputs == len(meter_outputs), (
             f"Expected {expected_meter_outputs} meter outputs, but got {len(meter_outputs)}"
@@ -290,14 +272,10 @@ class TestProgramRunNTimesCycleMetered(TestProgramRunNTimesCycle):
             },
         }
 
-    def test_program_meter_output(
-        self, test_config: dict[str, Any], logs_info_level: LogContainer
-    ):
+    def test_program_meter_output(self, test_config: dict[str, Any], logs_info_level: LogContainer):
         # Meter is a debug utility and accuracy is not checked
         expected_meter_outputs = test_config["test"]["run_count"]
-        meter_outputs = logs_info_level.get_logs(
-            field="meter_id", pattern=r"simple_run_program"
-        )
+        meter_outputs = logs_info_level.get_logs(field="meter_id", pattern=r"simple_run_program")
 
         assert expected_meter_outputs == len(meter_outputs), (
             f"Expected {expected_meter_outputs} meter outputs, but got {len(meter_outputs)}"

@@ -1,15 +1,21 @@
 from ipaddress import IPv4Address, IPv6Address
 from socket import socket
 from typing import Any
+
 import pytest
+from testing_utils import LogContainer, ScenarioResult
+from testing_utils.net import Address, IPAddress, create_connection
+
 from component_integration_tests.python_test_cases.tests.cit_runtime_scenario import (
     CitRuntimeScenario,
     Executable,
 )
-from testing_utils import LogContainer, ScenarioResult
-from testing_utils.net import Address, create_connection, IPAddress
-from component_integration_tests.python_test_cases.tests.cit_scenario import CitScenario
-from component_integration_tests.python_test_cases.tests.result_code import ResultCode
+from component_integration_tests.python_test_cases.tests.cit_scenario import (
+    CitScenario,
+)
+from component_integration_tests.python_test_cases.tests.result_code import (
+    ResultCode,
+)
 from component_integration_tests.python_test_cases.tests.runtime.tcp.ttl_helper import (
     get_default_ttl,
 )
@@ -39,10 +45,7 @@ class TestSmoke(CitRuntimeScenario):
     @staticmethod
     def _wait_for_listen(address: Address, executable: Executable) -> None:
         executable.wait_for_log(
-            lambda lc: lc.find_log(
-                "message", value=f"TCP server listening on {address}"
-            )
-            is not None
+            lambda lc: lc.find_log("message", value=f"TCP server listening on {address}") is not None
         )
 
     @staticmethod
@@ -56,9 +59,7 @@ class TestSmoke(CitRuntimeScenario):
             "connection": {"ip": str(address.ip), "port": address.port},
         }
 
-    def test_connect_parallel_ok(
-        self, address: Address, executable: Executable
-    ) -> None:
+    def test_connect_parallel_ok(self, address: Address, executable: Executable) -> None:
         self._wait_for_listen(address, executable)
 
         conn1 = create_connection(address)
@@ -82,9 +83,7 @@ class TestSmoke(CitRuntimeScenario):
             assert msg2.decode() == self._decode(data2)
             assert msg3.decode() == self._decode(data3)
 
-    def test_connect_serially_ok(
-        self, address: Address, executable: Executable
-    ) -> None:
+    def test_connect_serially_ok(self, address: Address, executable: Executable) -> None:
         self._wait_for_listen(address, executable)
 
         for i in range(3):
@@ -111,11 +110,7 @@ class TestSmoke(CitRuntimeScenario):
                     # Not an error - just use latest matching.
                     logs = lc.get_logs("peer_addr", value=str(server_peer_addr))
                     log = logs[-1] if logs else None
-                    return (
-                        log is not None
-                        and log.peer_addr == server_peer_addr
-                        and log.local_addr == server_local_addr
-                    )
+                    return log is not None and log.peer_addr == server_peer_addr and log.local_addr == server_local_addr
 
                 executable.wait_for_log(_check_logs)
 
@@ -151,7 +146,11 @@ class TestTTL(CitScenario):
     def test_config(self, address: Address, ttl: int | None) -> dict[str, Any]:
         return {
             "runtime": {"task_queue_size": 256, "workers": 4},
-            "connection": {"ip": str(address.ip), "port": address.port, "ttl": ttl},
+            "connection": {
+                "ip": str(address.ip),
+                "port": address.port,
+                "ttl": ttl,
+            },
         }
 
 
@@ -161,9 +160,7 @@ class TestTTL_Valid(TestTTL):
         # 'None' represents 'not set'.
         return request.param
 
-    def test_ttl_ok(
-        self, address: Address, logs_info_level: LogContainer, ttl: int | None
-    ) -> None:
+    def test_ttl_ok(self, address: Address, logs_info_level: LogContainer, ttl: int | None) -> None:
         expected_ttl = ttl or get_default_ttl(address.family())
         log = logs_info_level.find_log("ttl")
         assert log is not None

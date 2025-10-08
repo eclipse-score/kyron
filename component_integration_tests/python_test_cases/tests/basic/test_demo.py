@@ -38,9 +38,7 @@ class TestOnlyShutdown1W2Q(CitScenario):
 
     def test_demo_program_stable(self, results: ScenarioResult):
         assert results.hang, "Demo program did not run until timeout"
-        assert results.return_code == ResultCode.SIGKILL, (
-            "Demo program did not return error code as expected"
-        )
+        assert results.return_code == ResultCode.SIGKILL, "Demo program did not return error code as expected"
 
     @pytest.mark.parametrize("program", ["ACC", "S2M", "M2S"])
     def test_program(
@@ -53,31 +51,29 @@ class TestOnlyShutdown1W2Q(CitScenario):
         expected_iterations = int(execution_timeout * 1000 / cycle_duration_ms)
         allowed_iteration_deviation = 2
 
-        logs = logs_info_level.get_logs(
-            field="message", value=f"Run{program} was executed"
+        logs = logs_info_level.get_logs(field="message", value=f"Run{program} was executed")
+        assert len(logs) == pytest.approx(expected_iterations, abs=allowed_iteration_deviation), (
+            f"Program {program} was executed unexpected number of times"
         )
-        assert len(logs) == pytest.approx(
-            expected_iterations, abs=allowed_iteration_deviation
-        ), f"Program {program} was executed unexpected number of times"
 
     def test_all_programs_started(self, logs_info_level: LogContainer):
-        assert logs_info_level.contains_log(
-            field="message", value="StartACC was executed"
-        ), "Program ACC did not start as expected"
-        assert logs_info_level.contains_log(
-            field="message", value="StartM2S was executed"
-        ), "Program M2S did not start as expected"
-        assert logs_info_level.contains_log(
-            field="message", value="StartS2M was executed"
-        ), "Program S2M did not start as expected"
+        assert logs_info_level.contains_log(field="message", value="StartACC was executed"), (
+            "Program ACC did not start as expected"
+        )
+        assert logs_info_level.contains_log(field="message", value="StartM2S was executed"), (
+            "Program M2S did not start as expected"
+        )
+        assert logs_info_level.contains_log(field="message", value="StartS2M was executed"), (
+            "Program S2M did not start as expected"
+        )
 
     def test_all_programs_not_stopped(self, logs_info_level: LogContainer):
-        assert not logs_info_level.contains_log(
-            field="message", value="StopACC was executed"
-        ), "Program ACC was stopped unexpectedly"
-        assert not logs_info_level.contains_log(
-            field="message", value="StopM2S was executed"
-        ), "Program M2S was stopped unexpectedly"
-        assert not logs_info_level.contains_log(
-            field="message", value="StopS2M was executed"
-        ), "Program S2M was stopped unexpectedly"
+        assert not logs_info_level.contains_log(field="message", value="StopACC was executed"), (
+            "Program ACC was stopped unexpectedly"
+        )
+        assert not logs_info_level.contains_log(field="message", value="StopM2S was executed"), (
+            "Program M2S was stopped unexpectedly"
+        )
+        assert not logs_info_level.contains_log(field="message", value="StopS2M was executed"), (
+            "Program S2M was stopped unexpectedly"
+        )

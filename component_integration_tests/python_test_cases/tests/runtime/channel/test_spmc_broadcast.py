@@ -31,19 +31,13 @@ class TestSPMCBroadcastChannelSendReceive(CitScenario):
             },
         }
 
-    def test_if_sends_succeeded(
-        self, test_config: dict[str, Any], logs_info_level: LogContainer
-    ):
+    def test_if_sends_succeeded(self, test_config: dict[str, Any], logs_info_level: LogContainer):
         send_logs = logs_info_level.get_logs("id", value="send_task")
         send_data = [log.data for log in send_logs]
 
-        assert send_data == test_config["test"]["data_to_send"], (
-            "Not all data was sent successfully."
-        )
+        assert send_data == test_config["test"]["data_to_send"], "Not all data was sent successfully."
 
-    def test_if_receives_succeeded(
-        self, test_config: dict[str, Any], logs_info_level: LogContainer
-    ):
+    def test_if_receives_succeeded(self, test_config: dict[str, Any], logs_info_level: LogContainer):
         for receiver in test_config["test"]["receivers"]:
             receive_logs = logs_info_level.get_logs("id", value=receiver)
             receive_data = [log.data for log in receive_logs]
@@ -81,9 +75,7 @@ class TestSPMCBroadcastChannelOverflow(CitScenario):
         assert len(logs_info_level) == error_count, f"Expected {error_count} errors."
 
         for log in logs_info_level:
-            assert log.id == "receivers_handle_overflow", (
-                "Expected 'receivers_handle_overflow' message."
-            )
+            assert log.id == "receivers_handle_overflow", "Expected 'receivers_handle_overflow' message."
 
 
 class TestSPMCBroadcastChannelZeroMaxReceivers(CitScenario):
@@ -165,13 +157,9 @@ class TestSPMCBroadcastChannelNumOfSubscribers(CitScenario):
         initial_value_logs = logs_info_level.get_logs("op_type", value="initial")
         assert len(initial_value_logs) == 1, "Expected exactly one initial value log."
 
-        assert initial_value_logs[0].value == 1, (
-            "Expected initial number of subscribers to be 1."
-        )
+        assert initial_value_logs[0].value == 1, "Expected initial number of subscribers to be 1."
 
-    def test_additional_receivers_with_overflow(
-        self, test_config: dict[str, Any], logs_info_level: LogContainer
-    ):
+    def test_additional_receivers_with_overflow(self, test_config: dict[str, Any], logs_info_level: LogContainer):
         requested_receiver_count = test_config["test"]["receiver_count"]
         max_receiver_count = test_config["test"]["max_receiver_count"]
 
@@ -182,15 +170,10 @@ class TestSPMCBroadcastChannelNumOfSubscribers(CitScenario):
         expected_overflows = [max_receiver_count] * overflow_count
 
         expected_values = expected_adds + expected_overflows
-        received_values = [
-            entry.value
-            for entry in logs_info_level.get_logs("op_type", value="add_receiver")
-        ]
+        received_values = [entry.value for entry in logs_info_level.get_logs("op_type", value="add_receiver")]
         assert expected_values == received_values
 
-    def test_remove_receivers(
-        self, test_config: dict[str, Any], logs_info_level: LogContainer
-    ):
+    def test_remove_receivers(self, test_config: dict[str, Any], logs_info_level: LogContainer):
         requested_receiver_count = test_config["test"]["receiver_count"]
         max_receiver_count = test_config["test"]["max_receiver_count"]
 
@@ -236,47 +219,27 @@ class TestSPMCBroadcastChannelOneLaggingReceiver(CitScenario):
             },
         }
 
-    def test_valid_send_tasks(
-        self, test_config: dict[str, Any], logs_info_level: LogContainer
-    ):
-        valid_send_logs = logs_info_level.get_logs("id", value="send_task").get_logs(
-            "data"
-        )
+    def test_valid_send_tasks(self, test_config: dict[str, Any], logs_info_level: LogContainer):
+        valid_send_logs = logs_info_level.get_logs("id", value="send_task").get_logs("data")
 
         expected_send_values = test_config["test"]["data_to_send"]
         send_values = [log.data for log in valid_send_logs]
         assert expected_send_values == send_values
 
-    def test_overflow_send_tasks(
-        self, test_config: dict[str, Any], logs_info_level: LogContainer
-    ):
+    def test_overflow_send_tasks(self, test_config: dict[str, Any], logs_info_level: LogContainer):
         overflow_error = "NoSpaceLeft"
         send_count = len(test_config["test"]["data_to_send"])
 
-        overflow_send_logs = logs_info_level.get_logs("id", value="send_task").get_logs(
-            "error", value=overflow_error
-        )
-        assert len(overflow_send_logs) == send_count, (
-            "Expected overflow messages for the second batch of the values."
-        )
+        overflow_send_logs = logs_info_level.get_logs("id", value="send_task").get_logs("error", value=overflow_error)
+        assert len(overflow_send_logs) == send_count, "Expected overflow messages for the second batch of the values."
 
-    def test_receiver_lagging_task(
-        self, test_config: dict[str, Any], logs_info_level: LogContainer
-    ):
+    def test_receiver_lagging_task(self, test_config: dict[str, Any], logs_info_level: LogContainer):
         unresponsive_receiver = test_config["test"]["receivers"].pop()
-        unresponsive_log = logs_info_level.find_log(
-            field="id", value=unresponsive_receiver
-        )
-        assert unresponsive_log is None, (
-            "Unresponsive receiver should not have any logs."
-        )
+        unresponsive_log = logs_info_level.find_log(field="id", value=unresponsive_receiver)
+        assert unresponsive_log is None, "Unresponsive receiver should not have any logs."
 
-    @pytest.mark.xfail(
-        reason="https://github.com/qorix-group/inc_orchestrator_internal/issues/280"
-    )
-    def test_receiver_valid_tasks(
-        self, test_config: dict[str, Any], logs_info_level: LogContainer
-    ):
+    @pytest.mark.xfail(reason="https://github.com/qorix-group/inc_orchestrator_internal/issues/280")
+    def test_receiver_valid_tasks(self, test_config: dict[str, Any], logs_info_level: LogContainer):
         receivers = test_config["test"]["receivers"]
         _unresponsive_receiver = receivers.pop()
 
@@ -305,43 +268,31 @@ class TestSPMCBroadcastChannelWithDroppingReceivers(CitScenario):
             },
         }
 
-    def test_valid_send_task(
-        self, test_config: dict[str, Any], logs_info_level: LogContainer
-    ):
-        valid_send_logs = logs_info_level.get_logs("id", value="send_task").get_logs(
-            "data"
-        )
+    def test_valid_send_task(self, test_config: dict[str, Any], logs_info_level: LogContainer):
+        valid_send_logs = logs_info_level.get_logs("id", value="send_task").get_logs("data")
         valid_send_values = [log.data for log in valid_send_logs]
 
         repetition_count = len(test_config["test"]["receivers"])
         expected_send_values = test_config["test"]["data_to_send"] * repetition_count
         assert expected_send_values == valid_send_values
 
-    def test_no_receivers_send_task(
-        self, test_config: dict[str, Any], logs_info_level: LogContainer
-    ):
+    def test_no_receivers_send_task(self, test_config: dict[str, Any], logs_info_level: LogContainer):
         no_receivers_error = "GenericError"
         send_count = len(test_config["test"]["data_to_send"])
 
         overflow_send_logs = logs_info_level.get_logs("id", value="send_task").get_logs(
             "error", value=no_receivers_error
         )
-        assert len(overflow_send_logs) == send_count, (
-            "Expected overflow messages for the last batch of the values."
-        )
+        assert len(overflow_send_logs) == send_count, "Expected overflow messages for the last batch of the values."
 
-    def test_receiving_tasks(
-        self, test_config: dict[str, Any], logs_info_level: LogContainer
-    ):
+    def test_receiving_tasks(self, test_config: dict[str, Any], logs_info_level: LogContainer):
         base_expected_values = test_config["test"]["data_to_send"]
 
         receivers = test_config["test"]["receivers"]
         for ndx, receiver in enumerate(receivers):
             receiver_logs = logs_info_level.get_logs("id", value=receiver)
             received_values = [log.data for log in receiver_logs]
-            expected_values = base_expected_values * (
-                ndx + 1
-            )  # After each send one receiver drops
+            expected_values = base_expected_values * (ndx + 1)  # After each send one receiver drops
             assert expected_values == received_values
 
 
@@ -361,29 +312,21 @@ class TestSPMCBroadcastChannelWithDroppingSender(CitScenario):
             },
         }
 
-    def test_send_task(
-        self, test_config: dict[str, Any], logs_info_level: LogContainer
-    ):
+    def test_send_task(self, test_config: dict[str, Any], logs_info_level: LogContainer):
         send_logs = logs_info_level.get_logs("id", value="send_task")
         valid_send_values = [log.data for log in send_logs]
         expected_send_values = test_config["test"]["data_to_send"]
         assert expected_send_values == valid_send_values
 
-    def test_receiving_tasks(
-        self, test_config: dict[str, Any], logs_info_level: LogContainer
-    ):
+    def test_receiving_tasks(self, test_config: dict[str, Any], logs_info_level: LogContainer):
         base_expected_values = test_config["test"]["data_to_send"]
-        expected_values = base_expected_values + [
-            "Provider dropped"
-        ]  # Last read should end with error
+        expected_values = base_expected_values + ["Provider dropped"]  # Last read should end with error
 
         receivers = test_config["test"]["receivers"]
         for receiver in receivers:
             receiver_logs = logs_info_level.get_logs("id", value=receiver)
 
-            received_values = [
-                log.data if hasattr(log, "data") else log.error for log in receiver_logs
-            ]
+            received_values = [log.data if hasattr(log, "data") else log.error for log in receiver_logs]
             assert expected_values == received_values
 
 
@@ -407,12 +350,8 @@ class TestSPMCBroadcastChannelHeavyLoad(CitScenario):
     def execution_timeout(self, request, *args, **kwargs):
         return 10.0
 
-    @pytest.mark.xfail(
-        reason="https://github.com/qorix-group/inc_orchestrator_internal/issues/280"
-    )
-    def test_message_completeness(
-        self, test_config: dict[str, Any], logs_info_level: LogContainer
-    ):
+    @pytest.mark.xfail(reason="https://github.com/qorix-group/inc_orchestrator_internal/issues/280")
+    def test_message_completeness(self, test_config: dict[str, Any], logs_info_level: LogContainer):
         receivers = test_config["test"]["receivers"]
         iteration_count = test_config["test"]["send_count"]
         for receiver in receivers:

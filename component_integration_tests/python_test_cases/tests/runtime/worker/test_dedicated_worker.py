@@ -8,8 +8,12 @@ import pytest
 from testing_utils import LogContainer, ScenarioResult
 
 import component_integration_tests.python_test_cases.tests.cap_utils as cap_utils
-from component_integration_tests.python_test_cases.tests.cit_scenario import CitScenario
-from component_integration_tests.python_test_cases.tests.result_code import ResultCode
+from component_integration_tests.python_test_cases.tests.cit_scenario import (
+    CitScenario,
+)
+from component_integration_tests.python_test_cases.tests.result_code import (
+    ResultCode,
+)
 
 
 class TestOnlyDedicatedWorkers(CitScenario):
@@ -56,9 +60,7 @@ class TestOnlyDedicatedWorkers(CitScenario):
         act_worker_ids = set(log.id for log in worker_logs)
         exp_worker_ids = set(map(lambda x: x["id"], dedicated_workers))
         ids_diff = act_worker_ids.symmetric_difference(exp_worker_ids)
-        assert not ids_diff, (
-            f"Mismatch between worker IDs expected ({exp_worker_ids}) and actual ({act_worker_ids})"
-        )
+        assert not ids_diff, f"Mismatch between worker IDs expected ({exp_worker_ids}) and actual ({act_worker_ids})"
 
 
 class TestSpawnToUnregisteredWorker(CitScenario):
@@ -87,10 +89,7 @@ class TestSpawnToUnregisteredWorker(CitScenario):
         assert results.return_code == ResultCode.SIGABRT
 
         assert results.stderr
-        assert (
-            "Tried to spawn on not registered dedicated worker UniqueWorkerId"
-            in results.stderr
-        )
+        assert "Tried to spawn on not registered dedicated worker UniqueWorkerId" in results.stderr
 
 
 class TestReregisterDedicatedWorker(CitScenario):
@@ -146,9 +145,7 @@ class TestDedicatedWorkerPriority(CitScenario):
         return request.param
 
     @pytest.fixture(scope="class")
-    def dedicated_workers(
-        self, num_dedicated: int, priority: int
-    ) -> list[dict[str, Any]]:
+    def dedicated_workers(self, num_dedicated: int, priority: int) -> list[dict[str, Any]]:
         result = []
         for i in range(num_dedicated):
             result.append(
@@ -218,9 +215,7 @@ class TestDedicatedWorkerPriority(CitScenario):
         num_dedicated: int,
     ) -> None:
         # Find logs with worker IDs.
-        worker_logs = logs_info_level.get_logs(
-            field="id", pattern="dedicated_worker_.*"
-        )
+        worker_logs = logs_info_level.get_logs(field="id", pattern="dedicated_worker_.*")
         assert len(worker_logs) == num_dedicated
 
         # Check priority of each worker.
@@ -228,9 +223,7 @@ class TestDedicatedWorkerPriority(CitScenario):
             act_priority = worker_log.priority
 
             # Check priority as expected and in expected bounds.
-            assert priority == act_priority, (
-                f"Invalid priority, expected: {priority}, found: {act_priority}"
-            )
+            assert priority == act_priority, f"Invalid priority, expected: {priority}, found: {act_priority}"
 
 
 class TestDedicatedWorkerAffinity(CitScenario):
@@ -253,9 +246,7 @@ class TestDedicatedWorkerAffinity(CitScenario):
         return request.param
 
     @pytest.fixture(scope="class")
-    def dedicated_workers(
-        self, num_dedicated: int, affinity: list[int]
-    ) -> list[dict[str, Any]]:
+    def dedicated_workers(self, num_dedicated: int, affinity: list[int]) -> list[dict[str, Any]]:
         result = []
         for i in range(num_dedicated):
             result.append({"id": f"dedicated_worker_{i}", "affinity": affinity})
@@ -286,11 +277,7 @@ class TestDedicatedWorkerAffinity_Valid(TestDedicatedWorkerAffinity):
 
         def check_num_cores(num_required: int):
             if num_cores < num_required:
-                pytest.skip(
-                    reason="Test requires more CPU cores, "
-                    f"required: {num_required}, "
-                    f"available: {num_cores}"
-                )
+                pytest.skip(reason=f"Test requires more CPU cores, required: {num_required}, available: {num_cores}")
 
         if mode != "all":
             pytest.xfail(
@@ -326,12 +313,13 @@ class TestDedicatedWorkerAffinity_Valid(TestDedicatedWorkerAffinity):
                 raise RuntimeError(f"Invalid test mode: {mode}")
 
     def test_valid(
-        self, logs_info_level: LogContainer, affinity: list[int], num_dedicated: int
+        self,
+        logs_info_level: LogContainer,
+        affinity: list[int],
+        num_dedicated: int,
     ) -> None:
         # Find logs with worker IDs.
-        worker_logs = logs_info_level.get_logs(
-            field="id", pattern="dedicated_worker_.*"
-        )
+        worker_logs = logs_info_level.get_logs(field="id", pattern="dedicated_worker_.*")
         assert len(worker_logs) == num_dedicated
 
         # Check affinity of each worker.
@@ -340,14 +328,10 @@ class TestDedicatedWorkerAffinity_Valid(TestDedicatedWorkerAffinity):
             act_affinity = json.loads(worker_log.affinity)
 
             # Check affinity as expected.
-            assert affinity == act_affinity, (
-                f"Invalid affinity, expected: {affinity}, found: {act_affinity}"
-            )
+            assert affinity == act_affinity, f"Invalid affinity, expected: {affinity}, found: {act_affinity}"
 
 
-@pytest.mark.xfail(
-    reason="Affinity not set - https://github.com/qorix-group/inc_orchestrator_internal/issues/331"
-)
+@pytest.mark.xfail(reason="Affinity not set - https://github.com/qorix-group/inc_orchestrator_internal/issues/331")
 class TestDedicatedWorkerAffinity_OffByOne(TestDedicatedWorkerAffinity):
     @pytest.fixture(scope="class")
     def affinity(self, num_cores: int) -> list[int]:
@@ -371,9 +355,7 @@ class TestDedicatedWorkerAffinity_OffByOne(TestDedicatedWorkerAffinity):
         )
 
 
-@pytest.mark.xfail(
-    reason="Affinity not set - https://github.com/qorix-group/inc_orchestrator_internal/issues/331"
-)
+@pytest.mark.xfail(reason="Affinity not set - https://github.com/qorix-group/inc_orchestrator_internal/issues/331")
 class TestDedicatedWorkerAffinity_LargeCoreId(TestDedicatedWorkerAffinity):
     @pytest.fixture(scope="class")
     def affinity(self) -> list[int]:
@@ -394,9 +376,7 @@ class TestDedicatedWorkerAffinity_LargeCoreId(TestDedicatedWorkerAffinity):
         )
 
 
-@pytest.mark.xfail(
-    reason="Affinity not set - https://github.com/qorix-group/inc_orchestrator_internal/issues/331"
-)
+@pytest.mark.xfail(reason="Affinity not set - https://github.com/qorix-group/inc_orchestrator_internal/issues/331")
 class TestDedicatedWorkerAffinity_AffinityMaskTooLarge(TestDedicatedWorkerAffinity):
     @pytest.fixture(scope="class")
     def affinity(self) -> list[int]:
@@ -429,7 +409,10 @@ class TestDedicatedWorkerStackSize(CitScenario):
                 "task_queue_size": 256,
                 "workers": 1,
                 "dedicated_workers": [
-                    {"id": "dedicated_worker_0", "thread_stack_size": thread_stack_size}
+                    {
+                        "id": "dedicated_worker_0",
+                        "thread_stack_size": thread_stack_size,
+                    }
                 ],
             }
         }
@@ -464,10 +447,7 @@ class TestDedicatedWorkerStackSize_TooSmall(TestDedicatedWorkerStackSize):
     def test_invalid(self, results: ScenarioResult) -> None:
         assert results.return_code == ResultCode.PANIC
         assert results.stderr is not None
-        assert (
-            "called `Result::unwrap()` on an `Err` value: StackSizeTooSmall"
-            in results.stderr
-        )
+        assert "called `Result::unwrap()` on an `Err` value: StackSizeTooSmall" in results.stderr
 
 
 # endregion

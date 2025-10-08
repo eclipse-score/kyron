@@ -4,8 +4,8 @@ Module for executable capabilities handling.
 
 __all__ = ["get_caps", "set_caps"]
 
-from pathlib import Path
 import re
+from pathlib import Path
 from subprocess import DEVNULL, PIPE, Popen
 
 

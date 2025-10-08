@@ -5,7 +5,13 @@ Test scenario runner for component integration tests.
 from pathlib import Path
 
 import pytest
-from testing_utils import BuildTools, CargoTools, LogContainer, Scenario, ScenarioResult
+from testing_utils import (
+    BuildTools,
+    CargoTools,
+    LogContainer,
+    Scenario,
+    ScenarioResult,
+)
 
 
 class CitScenario(Scenario):
