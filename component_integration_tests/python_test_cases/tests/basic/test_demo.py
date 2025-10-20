@@ -12,7 +12,7 @@ from component_integration_tests.python_test_cases.tests.result_code import (
 )
 
 
-class TestOnlyShutdown1W2Q(CitScenario):
+class TestDemo(CitScenario):
     @pytest.fixture(scope="class")
     def scenario_name(self) -> str:
         return "basic.demo"
@@ -28,9 +28,17 @@ class TestOnlyShutdown1W2Q(CitScenario):
             "test": {"cycle_duration_ms": cycle_duration_ms},
         }
 
-    @pytest.fixture(scope="class")
-    def execution_timeout(self) -> float:
-        return 2.0
+    @pytest.fixture(
+        scope="class",
+        params=[
+            pytest.param(2.0),
+            pytest.param(
+                60.0, marks=(pytest.mark.only_nightly, pytest.mark.do_not_repeat)
+            ),  # should be stable for at least 60s
+        ],
+    )
+    def execution_timeout(self, request: pytest.FixtureRequest) -> float:
+        return request.param
 
     def expect_command_failure(self) -> bool:
         # Program is executed continuously until timeout and then killed
