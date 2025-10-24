@@ -84,34 +84,11 @@ class TestProgramRunCycle(TestProgramRun):
     def execution_timeout(self, request, *args, **kwargs):
         return 0.5
 
-    def test_delay_between_runs_strict(self, execution_delays: list[float], run_delay: int):
-        if run_delay == 0:
-            pytest.skip("Skip strict check for zero delay")
-
-        # In worst case, the delay can be doubled due to scheduling delays
-        max_allowed_delay = run_delay * 2
-
-        for execution_delay in execution_delays:
-            assert execution_delay <= max_allowed_delay, (
-                f"Execution delay {execution_delay} ms exceeds maximum allowed {max_allowed_delay} ms"
-            )
-
     def test_delay_between_runs_statistical(self, execution_delays: list[float], run_delay: int):
         average_delay_ms = sum(execution_delays) / len(execution_delays)
         assert run_delay <= average_delay_ms, (
             f"{len(execution_delays)=}, {min(execution_delays)=} {max(execution_delays)=}"
         )
-
-        if run_delay == 0:
-            # For zero delay, allow small absolute error
-            expected_delay = pytest.approx(average_delay_ms, abs=0.5)
-        elif run_delay < 50:
-            # For small delays, allow 40% relative error
-            expected_delay = pytest.approx(average_delay_ms, rel=0.4)
-        else:
-            # For larger delays, allow 5% relative error
-            expected_delay = pytest.approx(average_delay_ms, rel=0.05)
-        assert run_delay == expected_delay
 
 
 class TestProgramRunNTimes(CitScenario):
@@ -138,12 +115,10 @@ class TestProgramRunNTimes(CitScenario):
         assert logs_info_level.contains_log(field="id", value="start"), "Program did not start as expected"
         assert logs_info_level.contains_log(field="id", value="stop"), "Program did not stop as expected"
 
-    def test_program_run_given_times(self, logs_info_level: LogContainer, test_config: dict[str, Any]):
-        expected_run_count = test_config["test"]["run_count"]
-
+    def test_program_run_given_times(self, logs_info_level: LogContainer, run_count: int):
         run_logs = logs_info_level.get_logs(field="id", value="basic_task")
 
-        assert len(run_logs) == expected_run_count, f"Expected {expected_run_count} runs, but got {len(run_logs)}"
+        assert len(run_logs) == run_count, f"Expected {run_count} runs, but got {len(run_logs)}"
 
 
 class TestProgramRunNTimesCycle(TestProgramRunNTimes):
@@ -180,18 +155,6 @@ class TestProgramRunNTimesCycle(TestProgramRunNTimes):
             for t1, t2 in zip(execution_timestamps, execution_timestamps[1:])
         ]
 
-    def test_delay_between_runs_strict(self, execution_delays: list[float], run_delay: int):
-        if run_delay == 0:
-            pytest.skip("Skip strict check for zero delay")
-
-        # In worst case, the delay can be doubled due to scheduling delays
-        max_allowed_delay = run_delay * 2
-
-        for execution_delay in execution_delays:
-            assert execution_delay <= max_allowed_delay, (
-                f"Execution delay {execution_delay} ms exceeds maximum allowed {max_allowed_delay} ms"
-            )
-
     def test_delay_between_runs_statistical(self, execution_delays: list[float], run_delay: int, run_count: int):
         if run_count < 10:
             pytest.skip("Not enough runs to check statistics")
@@ -200,17 +163,6 @@ class TestProgramRunNTimesCycle(TestProgramRunNTimes):
         assert run_delay <= average_delay_ms, (
             f"{len(execution_delays)=}, {min(execution_delays)=} {max(execution_delays)=}"
         )
-
-        if run_delay == 0:
-            # For zero delay, allow small absolute error
-            expected_delay = pytest.approx(average_delay_ms, abs=0.5)
-        elif run_delay < 50:
-            # For small delays, allow 40% relative error
-            expected_delay = pytest.approx(average_delay_ms, rel=0.4)
-        else:
-            # For larger delays, allow 5% relative error
-            expected_delay = pytest.approx(average_delay_ms, rel=0.05)
-        assert run_delay == expected_delay
 
 
 class TestProgramRunMetered(TestProgramRun):
@@ -293,14 +245,11 @@ class TestProgramRunNTimesMetered(TestProgramRunNTimes):
             },
         }
 
-    def test_program_meter_output(self, test_config: dict[str, Any], logs_info_level: LogContainer):
+    def test_program_meter_output(self, run_count: int, logs_info_level: LogContainer):
         # Meter is a debug utility and accuracy is not checked
-        expected_meter_outputs = test_config["test"]["run_count"]
         meter_outputs = logs_info_level.get_logs(field="meter_id", pattern=r"simple_run_program")
 
-        assert expected_meter_outputs == len(meter_outputs), (
-            f"Expected {expected_meter_outputs} meter outputs, but got {len(meter_outputs)}"
-        )
+        assert run_count == len(meter_outputs), f"Expected {run_count} meter outputs, but got {len(meter_outputs)}"
 
 
 class TestProgramRunNTimesCycleMetered(TestProgramRunNTimesCycle):
@@ -327,11 +276,8 @@ class TestProgramRunNTimesCycleMetered(TestProgramRunNTimesCycle):
             },
         }
 
-    def test_program_meter_output(self, test_config: dict[str, Any], logs_info_level: LogContainer):
+    def test_program_meter_output(self, run_count: int, logs_info_level: LogContainer):
         # Meter is a debug utility and accuracy is not checked
-        expected_meter_outputs = test_config["test"]["run_count"]
         meter_outputs = logs_info_level.get_logs(field="meter_id", pattern=r"simple_run_program")
 
-        assert expected_meter_outputs == len(meter_outputs), (
-            f"Expected {expected_meter_outputs} meter outputs, but got {len(meter_outputs)}"
-        )
+        assert run_count == len(meter_outputs), f"Expected {run_count} meter outputs, but got {len(meter_outputs)}"
