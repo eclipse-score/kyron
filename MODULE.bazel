@@ -169,3 +169,9 @@ use_repo(crate, "score_orchestrator_crates")
 
 bazel_dep(name = "platforms", version = "1.0.0")
 bazel_dep(name = "score_bazel_platforms", version = "0.0.2")
+bazel_dep(name = "score_virtualization", version = "0.0.1")
+git_override(
+    module_name = "score_virtualization",
+    commit = "31966b7ad85a03efe5b2cfc8884d9812a6a82a88",
+    remote = "https://github.com/qorix-group/score_virtualization.git",
+)

@@ -70,6 +70,3 @@ component_integration_tests/python_test_cases/*.xml
 #vscode
 .vscode*
 *.orig
-
-
-virtualization/BUILD
