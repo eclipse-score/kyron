@@ -2,6 +2,9 @@
 name = "kyron-foundation"
 version.workspace = true
 edition.workspace = true
+authors.workspace = true
+license-file.workspace = true
+
 
 [dependencies]
 iceoryx2-bb-container.workspace = true

@@ -2,6 +2,9 @@
 name = "kyron-testing"
 version.workspace = true
 edition.workspace = true
+authors.workspace = true
+license-file.workspace = true
+
 
 [dependencies]
 kyron-foundation.workspace = true

@@ -69,7 +69,7 @@ checksum = "d71b6127be86fdcfddb610f7182ac57211d4b18a3e9c82eb2d17662f2227ad6a"
 
 [[package]]
 name = "camera_drv_object_det"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "cc",
  "kyron",
@@ -775,7 +775,7 @@ dependencies = [
 
 [[package]]
 name = "kyron"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "iceoryx2",
  "iceoryx2-bb-container",
@@ -795,7 +795,7 @@ dependencies = [
 
 [[package]]
 name = "kyron-foundation"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "iceoryx2-bb-container",
  "iceoryx2-bb-derive-macros",
@@ -816,7 +816,7 @@ dependencies = [
 
 [[package]]
 name = "kyron-macros"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -825,14 +825,14 @@ dependencies = [
 
 [[package]]
 name = "kyron-testing"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "kyron-foundation",
 ]
 
 [[package]]
 name = "kyron-testing-macros"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "quote",
  "syn",
@@ -893,7 +893,7 @@ checksum = "13dc2df351e3202783a1fe0d44375f7295ffb4049267b0f3018346dc122a1d94"
 
 [[package]]
 name = "logging_tracing"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "tracing",
  "tracing-appender",
@@ -989,7 +989,7 @@ checksum = "42f5e15c9953c5e4ccceeb2e7382a716482c34515315f7b03532b8b4e8393d2d"
 
 [[package]]
 name = "orchestration"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "iceoryx2",
  "iceoryx2-bb-container",
@@ -1007,7 +1007,7 @@ dependencies = [
 
 [[package]]
 name = "orchestration_macros"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "quote",
  "syn",
@@ -1192,7 +1192,7 @@ checksum = "caf4aa5b0f434c91fe5c7f1ecb6a5ece2130b02ad2a590589dda5146df959001"
 
 [[package]]
 name = "rust_test_scenarios"
-version = "0.1.0"
+version = "0.0.1"
 dependencies = [
  "futures",
  "kyron",
@@ -2028,4 +2028,4 @@ checksum = "052283831dbae3d879dc7f51f3d92703a316ca49f91540417d38591826127814"
 
 [[package]]
 name = "xtask"
-version = "0.1.0"
+version = "0.0.1"

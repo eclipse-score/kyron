@@ -11,45 +11,77 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 module(
-    name = "inc_orchestrator",
-    version = "1.0",
+    name = "score_orchestrator",
+    version = "0.0.1",
+    compatibility_level = 0,
 )
 
+# Bazel global rules
 bazel_dep(name = "rules_python", version = "1.0.0")
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
-
-PYTHON_VERSION = "3.12"
-
-python = use_extension("@rules_python//python/extensions:python.bzl", "python")
-python.toolchain(
-    is_default = True,
-    python_version = PYTHON_VERSION,
-)
-use_repo(python)
-
-pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
-pip.parse(
-    hub_name = "pip_score_venv_test",
-    python_version = PYTHON_VERSION,
-    requirements_lock = "//component_integration_tests/python_test_cases:requirements.txt",
-)
-use_repo(pip, "pip_score_venv_test")
-
-# Add GoogleTest dependency
-bazel_dep(name = "googletest", version = "1.14.0")
-
-# Rust rules for Bazel
 bazel_dep(name = "rules_rust", version = "0.61.0")
+bazel_dep(name = "rules_cc", version = "0.1.1")
+bazel_dep(name = "aspect_rules_lint", version = "1.0.3")
+bazel_dep(name = "buildifier_prebuilt", version = "7.3.1")
+bazel_dep(name = "platforms", version = "1.0.0")
 
-# Checker rule for CopyRight checks/fixs
+# S-CORE process rules
 bazel_dep(name = "score_cr_checker", version = "0.2.2")
 bazel_dep(name = "score_python_basics", version = "0.3.4")
 bazel_dep(name = "score_starpls_lsp", version = "0.1.0")
+bazel_dep(name = "score_dash_license_checker", version = "0.1.2")
+bazel_dep(name = "score_format_checker", version = "0.1.1")
+bazel_dep(name = "score_bazel_platforms", version = "0.0.2")
+bazel_dep(name = "score_virtualization", version = "0.0.1")
 
-# C/C++ rules for Bazel
-bazel_dep(name = "rules_cc", version = "0.1.1")
-
+# Toolchains and extensions
 bazel_dep(name = "score_toolchains_gcc", version = "0.4", dev_dependency = True)
+bazel_dep(name = "score_toolchains_qnx", version = "0.0.2", dev_dependency = True)
+bazel_dep(name = "rust_qnx8_toolchain", version = "1.2.0", dev_dependency = True)
+bazel_dep(name = "score_toolchains_rust", version = "0.1.1", dev_dependency = True)
+
+# Others
+bazel_dep(name = "custom_qemu", version = "1.0.0", dev_dependency = True)
+
+bazel_dep(name = "googletest", version = "1.14.0")
+
+# Overrides
+git_override(
+    module_name = "score_toolchains_rust",
+    commit = "6651945b4ba8e7c342d9740e9cb2d37842f56261",
+    remote = "https://github.com/eclipse-score/toolchains_rust.git",
+)
+
+git_override(
+    module_name = "score_toolchains_qnx",
+    commit = "3477ac13a8015a4e2016588fba573c2f9519237d",
+    remote = "https://github.com/eclipse-score/toolchains_qnx.git",
+)
+
+git_override(
+    module_name = "score_virtualization",
+    commit = "31966b7ad85a03efe5b2cfc8884d9812a6a82a88",
+    remote = "https://github.com/qorix-group/score_virtualization.git",
+)
+
+archive_override(
+    module_name = "rust_qnx8_toolchain",
+    strip_prefix = "qnx8",
+    urls = [
+        "https://github.com/qorix-group/rust-lang-qnx8/releases/download/1.2.0/qnx8_rust_toolchain.tar.gz",
+    ],
+)
+
+archive_override(
+    module_name = "custom_qemu",
+    integrity = "sha256-3V2d+p7nP0tsbrVWOPYUSJogLNal43CIAHEto6Vjdfg=",
+    strip_prefix = "third_party",  # matches top-level dir in the tar
+    urls = [
+        "https://github.com/qorix-group/custom-qemu/releases/download/1.0.0/custom_qemu.tar.gz",
+    ],
+)
+
+# Extensions
 
 gcc = use_extension("@score_toolchains_gcc//extentions:gcc.bzl", "gcc", dev_dependency = True)
 gcc.toolchain(
@@ -59,43 +91,32 @@ gcc.toolchain(
 )
 use_repo(gcc, "gcc_toolchain", "gcc_toolchain_gcc")
 
-# Dash license checker
-bazel_dep(name = "score_dash_license_checker", version = "0.1.2")
-
-# Format checker
-bazel_dep(name = "score_format_checker", version = "0.1.1")
-bazel_dep(name = "aspect_rules_lint", version = "1.0.3")
-bazel_dep(name = "buildifier_prebuilt", version = "7.3.1")
-
-bazel_dep(name = "rust_qnx8_toolchain", version = "1.2.0", dev_dependency = True)
-archive_override(
-    module_name = "rust_qnx8_toolchain",
-    strip_prefix = "qnx8",
-    urls = [
-        "https://github.com/qorix-group/rust-lang-qnx8/releases/download/1.2.0/qnx8_rust_toolchain.tar.gz",
-    ],
-)
-
-bazel_dep(name = "score_toolchains_rust", version = "0.1.1", dev_dependency = True)
-git_override(
-    module_name = "score_toolchains_rust",
-    commit = "6651945b4ba8e7c342d9740e9cb2d37842f56261",
-    remote = "https://github.com/eclipse-score/toolchains_rust.git",
-)
-
-bazel_dep(name = "score_toolchains_qnx", version = "0.0.2", dev_dependency = True)
-git_override(
-    module_name = "score_toolchains_qnx",
-    commit = "3477ac13a8015a4e2016588fba573c2f9519237d",
-    remote = "https://github.com/eclipse-score/toolchains_qnx.git",
-)
-
 toolchains_qnx = use_extension("@score_toolchains_qnx//:extensions.bzl", "toolchains_qnx", dev_dependency = True)
 toolchains_qnx.sdp(
     sha256 = "f2e0cb21c6baddbcb65f6a70610ce498e7685de8ea2e0f1648f01b327f6bac63",
     strip_prefix = "installation",
     url = "https://www.qnx.com/download/download/79858/installation.tgz",
 )
+
+PYTHON_VERSION = "3.12"
+
+python = use_extension("@rules_python//python/extensions:python.bzl", "python", dev_dependency = True)
+python.toolchain(
+    is_default = True,
+    python_version = PYTHON_VERSION,
+)
+
+pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip", dev_dependency = True)
+pip.parse(
+    hub_name = "pip_score_venv_test",
+    python_version = PYTHON_VERSION,
+    requirements_lock = "//component_integration_tests/python_test_cases:requirements.txt",
+)
+
+use_repo(python)
+
+use_repo(pip, "pip_score_venv_test")
+
 use_repo(toolchains_qnx, "toolchains_qnx_sdp")
 use_repo(toolchains_qnx, "toolchains_qnx_qcc")
 use_repo(toolchains_qnx, "toolchains_qnx_ifs")
@@ -114,18 +135,9 @@ register_toolchains(
     dev_dependency = True,
 )
 
-bazel_dep(name = "custom_qemu", version = "1.0.0", dev_dependency = True)
-archive_override(
-    module_name = "custom_qemu",
-    integrity = "sha256-3V2d+p7nP0tsbrVWOPYUSJogLNal43CIAHEto6Vjdfg=",
-    strip_prefix = "third_party",  # matches top-level dir in the tar
-    urls = [
-        "https://github.com/qorix-group/custom-qemu/releases/download/1.0.0/custom_qemu.tar.gz",
-    ],
-)
-
 # Module deps
 
+# Crate configs
 crate = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
 crate.from_cargo(
     name = "score_orchestrator_crates",
@@ -166,12 +178,3 @@ crate.annotation(
     repositories = ["score_orchestrator_crates"],
 )
 use_repo(crate, "score_orchestrator_crates")
-
-bazel_dep(name = "platforms", version = "1.0.0")
-bazel_dep(name = "score_bazel_platforms", version = "0.0.2")
-bazel_dep(name = "score_virtualization", version = "0.0.1")
-git_override(
-    module_name = "score_virtualization",
-    commit = "31966b7ad85a03efe5b2cfc8884d9812a6a82a88",
-    remote = "https://github.com/qorix-group/score_virtualization.git",
-)

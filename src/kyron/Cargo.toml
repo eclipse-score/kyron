@@ -1,7 +1,13 @@
 [package]
 name = "kyron"
+repository = "https://github.com/eclipse-score/orchestrator/src/kyron"
+categories = ["asynchronous", "network-programming"]
+keywords = ["io", "async", "non-blocking", "futures"]
+readme = "README.md"
 version.workspace = true
 edition.workspace = true
+authors.workspace = true
+license-file.workspace = true
 
 [dependencies]
 kyron-foundation.workspace = true

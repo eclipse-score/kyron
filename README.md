@@ -1,6 +1,6 @@
-# `inc_orchestrator`
+# `score_orchestrator`
 
-Incubation repo for orchestration
+Repository for Orchestration framework and safe async runtime called **kyron** for Rust
 
 [![Nightly CIT](../../actions/workflows/component_integration_tests.yml/badge.svg)](../../actions/workflows/component_integration_tests.yml)
 [![Nightly CIT (Bazel)](../../actions/workflows/component_integration_tests_bazel.yml/badge.svg)](../../actions/workflows/component_integration_tests_bazel.yml)
