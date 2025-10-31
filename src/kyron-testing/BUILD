@@ -15,11 +15,11 @@ load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
 rust_library(
     name = "test_utils",
     srcs = glob(["src/**/*.rs"]),
-    crate_name = "testing",
+    crate_name = "kyron_testing",
     edition = "2021",
     visibility = ["//visibility:public"],
     deps = [
-        "//src/kyron_foundation:libkyron_foundation",
+        "//src/kyron-foundation:libkyron_foundation",
     ],
 )
 

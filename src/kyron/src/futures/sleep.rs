@@ -100,7 +100,7 @@ mod tests {
 
     use super::*;
 
-    use testing::{
+    use kyron_testing::{
         assert_poll_ready,
         poller::TestingFuturePoller,
         prelude::{CallableTrait, MockFn, MockFnBuilder},

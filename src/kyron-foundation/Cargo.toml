@@ -1,5 +1,5 @@
 [package]
-name = "kyron_foundation"
+name = "kyron-foundation"
 version.workspace = true
 edition.workspace = true
 
@@ -25,4 +25,4 @@ loom = "0.7"
 workspace = true
 
 [dev-dependencies]
-testing.workspace = true
+kyron-testing.workspace = true

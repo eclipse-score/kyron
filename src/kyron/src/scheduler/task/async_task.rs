@@ -851,7 +851,7 @@ mod tests {
 
     use super::*;
     use crate::testing::*;
-    use testing::prelude::*;
+    use kyron_testing::prelude::*;
 
     use loom::model::Builder;
 

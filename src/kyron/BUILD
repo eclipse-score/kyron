@@ -14,7 +14,7 @@ load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
 load("@score_orchestrator_crates//:defs.bzl", "all_crate_deps")
 
 _COMMON_DEPS = [
-    "//src/kyron_foundation:libkyron_foundation",
+    "//src/kyron-foundation:libkyron_foundation",
 ] + all_crate_deps(
     normal = True,
 )
@@ -28,7 +28,7 @@ rust_library(
     }),
     crate_name = "kyron",
     proc_macro_deps = [
-        "//src/kyron_macros:runtime_macros",
+        "//src/kyron-macros:runtime_macros",
     ],
     visibility = ["//visibility:public"],
     deps = _COMMON_DEPS,
@@ -41,7 +41,7 @@ rust_library(
     crate_features = ["runtime-api-mock"],
     crate_name = "kyron",
     proc_macro_deps = [
-        "//src/kyron_macros:runtime_macros",
+        "//src/kyron-macros:runtime_macros",
     ],
     visibility = ["//visibility:public"],
     deps = _COMMON_DEPS,
@@ -54,6 +54,6 @@ rust_test(
         normal = True,
     ) + [
         "//src/kyron:libkyron",
-        "//src/testing:test_utils",
+        "//src/kyron-testing:test_utils",
     ],
 )

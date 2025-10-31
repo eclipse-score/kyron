@@ -16,7 +16,7 @@ load("@score_orchestrator_crates//:defs.bzl", "all_crate_deps")
 rust_proc_macro(
     name = "test_macro_utils",
     srcs = glob(["src/**/*.rs"]),
-    crate_name = "testing_macros",
+    crate_name = "kyron_testing_macros",
     edition = "2021",
     visibility = ["//visibility:public"],
     deps =

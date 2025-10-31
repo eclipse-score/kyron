@@ -73,7 +73,7 @@ version = "0.1.0"
 dependencies = [
  "cc",
  "kyron",
- "kyron_foundation",
+ "kyron-foundation",
  "logging_tracing",
  "orchestration",
  "orchestration_macros",
@@ -785,16 +785,16 @@ dependencies = [
  "iceoryx2-bb-posix",
  "iceoryx2-cal",
  "iceoryx2-pal-concurrency-sync",
- "kyron_foundation",
- "kyron_macros",
+ "kyron-foundation",
+ "kyron-macros",
+ "kyron-testing",
+ "kyron-testing-macros",
  "libc",
  "loom",
- "testing",
- "testing_macros",
 ]
 
 [[package]]
-name = "kyron_foundation"
+name = "kyron-foundation"
 version = "0.1.0"
 dependencies = [
  "iceoryx2-bb-container",
@@ -808,17 +808,32 @@ dependencies = [
  "iceoryx2-bb-testing",
  "iceoryx2-bb-threadsafe",
  "iceoryx2-pal-concurrency-sync",
+ "kyron-testing",
  "loom",
- "testing",
  "tracing",
  "tracing-subscriber",
 ]
 
 [[package]]
-name = "kyron_macros"
+name = "kyron-macros"
 version = "0.1.0"
 dependencies = [
  "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "kyron-testing"
+version = "0.1.0"
+dependencies = [
+ "kyron-foundation",
+]
+
+[[package]]
+name = "kyron-testing-macros"
+version = "0.1.0"
+dependencies = [
  "quote",
  "syn",
 ]
@@ -979,13 +994,13 @@ dependencies = [
  "iceoryx2",
  "iceoryx2-bb-container",
  "kyron",
- "kyron_foundation",
- "kyron_macros",
+ "kyron-foundation",
+ "kyron-macros",
+ "kyron-testing",
+ "kyron-testing-macros",
  "libc",
  "logging_tracing",
  "loom",
- "testing",
- "testing_macros",
  "tracing",
  "tracing-subscriber",
 ]
@@ -1181,7 +1196,7 @@ version = "0.1.0"
 dependencies = [
  "futures",
  "kyron",
- "kyron_foundation",
+ "kyron-foundation",
  "libc",
  "orchestration",
  "serde",
@@ -1360,21 +1375,6 @@ source = "git+https://github.com/qorix-group/testing_tools.git?tag=v0.2.9#72bdab
 dependencies = [
  "tracing",
  "tracing-subscriber",
-]
-
-[[package]]
-name = "testing"
-version = "0.1.0"
-dependencies = [
- "kyron_foundation",
-]
-
-[[package]]
-name = "testing_macros"
-version = "0.1.0"
-dependencies = [
- "quote",
- "syn",
 ]
 
 [[package]]

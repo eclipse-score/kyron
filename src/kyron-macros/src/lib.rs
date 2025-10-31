@@ -232,7 +232,7 @@ fn expr_to_usize(expr: &Expr) -> Result<usize> {
 /// configure and run function body in runtime waiting for it to finish
 ///
 /// # Usage
-///```
+///```ignore
 /// #[kyron::main(
 ///     task_queue_size = 128,                // Optional, must be power of two, default: 256
 ///     worker_threads = 4,                   // Optional, range: 1..=128, default: 2

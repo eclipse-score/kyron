@@ -355,7 +355,7 @@ mod tests {
     use std::task::Wake;
     use std::time::{SystemTime, UNIX_EPOCH};
 
-    use testing::prelude::{CallableTrait, *};
+    use kyron_testing::prelude::{CallableTrait, *};
 
     use super::*;
 

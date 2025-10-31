@@ -311,7 +311,7 @@ impl<T: Copy, const SIZE: usize> Future for ReceiverFuture<'_, T, SIZE> {
 mod tests {
     use super::*;
     use crate::testing::*;
-    use testing::prelude::*;
+    use kyron_testing::prelude::*;
 
     #[test]
     fn test_channel_ordered_send_receive_works() {
@@ -614,7 +614,7 @@ mod tests {
 
     use super::*;
     use crate::testing::*;
-    use testing::prelude::*;
+    use kyron_testing::prelude::*;
 
     use loom::model::Builder;
 

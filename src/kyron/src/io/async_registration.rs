@@ -555,7 +555,7 @@ mod tests {
     use core::time::Duration;
     use std::os::fd::AsRawFd;
 
-    use testing::{build_with_location, prelude::MockFnBuilder};
+    use kyron_testing::{build_with_location, prelude::MockFnBuilder};
 
     use crate::{
         io::driver::Registrations,

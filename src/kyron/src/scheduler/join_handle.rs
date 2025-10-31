@@ -127,7 +127,7 @@ mod tests {
     use super::*;
     use crate::testing::*;
 
-    use testing::prelude::*;
+    use kyron_testing::prelude::*;
 
     #[test]
     fn test_join_handler_ready_task_get_correct_result_to_handle() {
@@ -271,7 +271,7 @@ mod tests {
     use super::*;
     use crate::testing::*;
 
-    use testing::prelude::*;
+    use kyron_testing::prelude::*;
 
     use loom::model::Builder;
 

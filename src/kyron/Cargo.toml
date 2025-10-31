@@ -4,12 +4,11 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
-kyron_foundation.workspace = true
+kyron-foundation.workspace = true
+kyron-macros.workspace = true
 
-iceoryx2 = {workspace = true, optional = true}
-iceoryx2-cal = {workspace = true, optional = true}
-
-
+iceoryx2 = { workspace = true, optional = true }
+iceoryx2-cal = { workspace = true, optional = true }
 iceoryx2-pal-concurrency-sync.workspace = true
 iceoryx2-bb-container.workspace = true
 iceoryx2-bb-posix.workspace = true
@@ -17,15 +16,15 @@ iceoryx2-bb-lock-free.workspace = true
 iceoryx2-bb-elementary.workspace = true
 iceoryx2-bb-elementary-traits.workspace = true
 libc.workspace = true
-kyron_macros.workspace = true
+
 
 [target.'cfg(loom)'.dependencies]
 loom = { version = "0.7", features = ["checkpoint"] }
 
 
 [dev-dependencies]
-testing.workspace = true
-testing_macros.workspace = true
+kyron-testing.workspace = true
+kyron-testing-macros.workspace = true
 
 [features]
 default = ["iceoryx2_ipc"]

@@ -19,7 +19,7 @@ use std::sync::Arc;
 use kyron_foundation::prelude::FoundationAtomicU16;
 
 #[cfg(test)]
-use testing::prelude::{CallableTrait, MockFn};
+use kyron_testing::prelude::{CallableTrait, MockFn};
 
 use crate::{
     core::types::{box_future, ArcInternal},

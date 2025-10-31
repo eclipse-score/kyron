@@ -3,27 +3,28 @@ resolver = "2"
 # Split to default members without component integration tests.
 # Used when executing cargo from project root.
 default-members = [
-    "src/kyron_foundation",
+    "src/kyron-foundation",
     "src/kyron",
+    "src/kyron-testing",
+    "src/kyron-testing-macros",
+    "src/kyron-macros",
     "src/orchestration",
     "src/logging_tracing",
     "src/xtask",
-    "src/testing",
-    "src/testing_macros",
 ]
 # Include component integration tests as a member for IDE support and Bazel builds.
 members = [
-    "src/kyron_foundation",
+    "src/kyron-foundation",
     "src/kyron",
+    "src/kyron-testing",
+    "src/kyron-testing-macros",
+    "src/kyron-macros",
     "src/orchestration",
     "src/logging_tracing",
     "src/xtask",
-    "src/testing",
-    "src/testing_macros",
     "component_integration_tests/rust_test_scenarios",
     "src/orchestration/examples/camera_drv_object_det",
     "src/orchestration_macros",
-    "src/kyron_macros",
 ]
 
 
@@ -33,14 +34,16 @@ edition = "2021"
 
 [workspace.dependencies]
 kyron = { path = "src/kyron" }
-kyron_foundation = { path = "src/kyron_foundation" }
+kyron-foundation = { path = "src/kyron-foundation" }
+kyron-testing-macros = { path = "src/kyron-testing-macros" }
+kyron-macros = { path = "src/kyron-macros" }
+kyron-testing = { path = "src/kyron-testing" }
+
 logging_tracing = { path = "src/logging_tracing" }
 orchestration = { path = "src/orchestration" }
-testing = { path = "src/testing" }
-testing_macros = { path = "src/testing_macros" }
 xtask = { path = "src/xtask" }
 orchestration_macros = { path = "src/orchestration_macros" }
-kyron_macros = { path = "src/kyron_macros" }
+
 
 iceoryx2 = { git = "https://github.com/eclipse-iceoryx/iceoryx2.git", rev = "d3d1c9a727d3dc405733081923be5dba8213d6d8" }
 iceoryx2-cal = { git = "https://github.com/eclipse-iceoryx/iceoryx2.git", rev = "d3d1c9a727d3dc405733081923be5dba8213d6d8" }
