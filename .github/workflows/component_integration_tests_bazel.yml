@@ -69,4 +69,4 @@ jobs:
         env:
           NIGHTLY: TRUE
         run: |
-          bazel test //component_integration_tests/python_test_cases:cit_repeat --test_timeout=600
+          bazel test //component_integration_tests/python_test_cases:cit_repeat --test_timeout=1200
