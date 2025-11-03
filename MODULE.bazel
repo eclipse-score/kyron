@@ -17,7 +17,7 @@ module(
 )
 
 # Bazel global rules
-bazel_dep(name = "rules_python", version = "1.0.0")
+bazel_dep(name = "rules_python", version = "1.4.1")
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
 bazel_dep(name = "rules_rust", version = "0.61.0")
 bazel_dep(name = "rules_cc", version = "0.1.1")
@@ -33,6 +33,10 @@ bazel_dep(name = "score_dash_license_checker", version = "0.1.2")
 bazel_dep(name = "score_format_checker", version = "0.1.1")
 bazel_dep(name = "score_bazel_platforms", version = "0.0.2")
 bazel_dep(name = "score_virtualization", version = "0.0.1")
+bazel_dep(name = "score_docs_as_code", version = "1.4.0")
+bazel_dep(name = "score_tooling", version = "1.0.2")
+bazel_dep(name = "score_process", version = "1.2.1")
+bazel_dep(name = "score_platform", version = "0.3.0")  # This is main score repo
 
 # Toolchains and extensions
 bazel_dep(name = "score_toolchains_gcc", version = "0.4", dev_dependency = True)
@@ -46,6 +50,12 @@ bazel_dep(name = "custom_qemu", version = "1.0.0", dev_dependency = True)
 bazel_dep(name = "googletest", version = "1.14.0")
 
 # Overrides
+git_override(
+    module_name = "score_platform",
+    commit = "bcab25561cdce7bd4eeebdb20b0ba4e2a4becc12",
+    remote = "https://github.com/eclipse-score/score.git",
+)
+
 git_override(
     module_name = "score_toolchains_rust",
     commit = "6651945b4ba8e7c342d9740e9cb2d37842f56261",

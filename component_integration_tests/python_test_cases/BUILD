@@ -2,6 +2,7 @@ load("@pip_score_venv_test//:requirements.bzl", "all_requirements")
 load("@rules_python//python:pip.bzl", "compile_pip_requirements")
 load("@score_python_basics//:defs.bzl", "score_py_pytest", "score_virtualenv")
 
+
 # Additional requirements for the tests
 compile_pip_requirements(
     name = "requirements",

@@ -1,9 +1,13 @@
-# `score_orchestrator`
+# score_orchestrator
 
-Repository for Orchestration framework and safe async runtime called **kyron** for Rust
+Repository for **Orchestration framework** and **safe async runtime** called **kyron** for Rust
 
 [![Nightly CIT](../../actions/workflows/component_integration_tests.yml/badge.svg)](../../actions/workflows/component_integration_tests.yml)
 [![Nightly CIT (Bazel)](../../actions/workflows/component_integration_tests_bazel.yml/badge.svg)](../../actions/workflows/component_integration_tests_bazel.yml)
+[![Orchestrator Examples](https://img.shields.io/badge/Orchestrator-examples-blue?style=flat&link=https%3A%2F%2Fgithub.com%2Feclipse-score%2Forchestrator%2Ftree%2Fmain%2Fsrc%2Forchestration%2Fexamples)](src/orchestration/examples)
+[![Kyron Examples](https://img.shields.io/badge/Kyron-examples-red?style=flat&link=https%3A%2F%2Fgithub.com%2Feclipse-score%2Forchestrator%2Ftree%2Fmain%2Fsrc%2Fkyron)](src/kyron/README.md)
+
+
 
 ## Feature status and roadmap
 
@@ -83,9 +87,7 @@ bazel build //...
 
 ### Preparations
 
-Please follow [Where to obtain the QNX 8.0 SDP](https://github.com/eclipse-score/toolchains_qnx?tab=readme-ov-file#where-to-obtain-the-qnx-80-sdp) to
-get access to QNX8 and how to setup QNX8 for `S-CORE`.
-
+Please follow [Where to obtain the QNX 8.0 SDP](https://github.com/eclipse-score/toolchains_qnx?tab=readme-ov-file#where-to-obtain-the-qnx-80-sdp) to get access to QNX8 and how to setup QNX8 for `S-CORE`.
 In above link You will also find an instructions how to replace SDP in case You need to use other one (ie HW specific).
 
 
@@ -138,12 +140,14 @@ bazel test <TARGET_NAME>
 
 ## Cargo-based operations
 
-Please use Bazel whenever possible.
+Please use **Bazel** whenever possible.
+However for easy development we provide a build based on **Cargo**
 
 ### Build with Cargo
 
-It's recommended to use `cargo xtask`.
-It has the advantage of using separate build directories for each task.
+It's recommended to use `cargo xtask`. It has the advantage of using separate
+build directories for each task causing no need to rebuild from scratch for
+different types of checks
 
 Build using `xtask` - debug and release:
 
