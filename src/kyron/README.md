@@ -1,9 +1,10 @@
 # Kyron
 
 **Kyron** is a customizable, high-performance `async/await` runtime designed for
-advanced concurrent programming with focus on **safety**. It allows fine-grained
-control over scheduling, thread management, and workload isolation through
-configurable execution engines.
+advanced concurrent programming with focus on **funcional safety**
+(https://en.wikipedia.org/wiki/ISO_26262). It allows fine-grained control over
+scheduling, thread management, and workload isolation through configurable
+execution engines.
 
 
 ## 🚀 Key Features
@@ -37,7 +38,7 @@ configurable execution engines.
 - **Net layer**
    Allows writing networking aplpications seamlessly
 
-- **Linux/QNX7/QNX support**
+- **linux/qnx7.1/qnx8 support**
 
 
 # 🛠️ Example

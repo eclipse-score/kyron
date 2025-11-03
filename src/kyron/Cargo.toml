@@ -2,7 +2,7 @@
 name = "kyron"
 repository = "https://github.com/eclipse-score/orchestrator/src/kyron"
 categories = ["asynchronous", "network-programming"]
-keywords = ["io", "async", "non-blocking", "futures"]
+keywords = ["io", "async", "non-blocking", "futures", "automotive"]
 readme = "README.md"
 version.workspace = true
 edition.workspace = true
