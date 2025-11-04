@@ -355,16 +355,16 @@ mod tests {
     use std::task::Wake;
     use std::time::{SystemTime, UNIX_EPOCH};
 
-    use kyron_testing::prelude::{CallableTrait, *};
+    use kyron_testing::prelude::*;
 
     use super::*;
 
     pub struct MockWaker {
-        pub mock: Mutex<MockFn<()>>,
+        pub mock: Mutex<MockFn<(), ()>>,
     }
 
     impl MockWaker {
-        pub fn new(mock: MockFn<()>) -> Self {
+        pub fn new(mock: MockFn<(), ()>) -> Self {
             MockWaker { mock: Mutex::new(mock) }
         }
 
@@ -379,11 +379,11 @@ mod tests {
 
     impl Wake for MockWaker {
         fn wake(self: std::sync::Arc<Self>) {
-            self.mock.lock().unwrap().call();
+            self.mock.lock().unwrap().call(());
         }
 
         fn wake_by_ref(self: &std::sync::Arc<Self>) {
-            self.mock.lock().unwrap().call();
+            self.mock.lock().unwrap().call(());
         }
     }
 

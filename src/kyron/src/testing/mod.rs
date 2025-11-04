@@ -19,7 +19,7 @@ use std::sync::Arc;
 use kyron_foundation::prelude::FoundationAtomicU16;
 
 #[cfg(test)]
-use kyron_testing::prelude::{CallableTrait, MockFn};
+use kyron_testing::prelude::MockFn;
 
 use crate::{
     core::types::{box_future, ArcInternal},
@@ -134,12 +134,12 @@ pub fn get_dummy_sync_task_waker(sched: Arc<SchedulerSyncMock>) -> Waker {
 
 #[cfg(test)]
 pub struct MockWaker {
-    pub mock: std::sync::Mutex<MockFn<()>>,
+    pub mock: std::sync::Mutex<MockFn<(), ()>>,
 }
 
 #[cfg(test)]
 impl MockWaker {
-    pub fn new(mock: MockFn<()>) -> Self {
+    pub fn new(mock: MockFn<(), ()>) -> Self {
         MockWaker {
             mock: std::sync::Mutex::new(mock),
         }
@@ -157,10 +157,10 @@ impl MockWaker {
 #[cfg(test)]
 impl std::task::Wake for MockWaker {
     fn wake(self: std::sync::Arc<Self>) {
-        self.mock.lock().unwrap().call();
+        self.mock.lock().unwrap().call(());
     }
 
     fn wake_by_ref(self: &std::sync::Arc<Self>) {
-        self.mock.lock().unwrap().call();
+        self.mock.lock().unwrap().call(());
     }
 }

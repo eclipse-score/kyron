@@ -103,23 +103,23 @@ mod tests {
     use kyron_testing::{
         assert_poll_ready,
         poller::TestingFuturePoller,
-        prelude::{CallableTrait, MockFn, MockFnBuilder},
+        prelude::{MockFn, MockFnBuilder},
     };
 
     pub struct TimeDriverMock {
-        mock: RefCell<MockFn<Result<(), CommonErrors>>>,
+        mock: RefCell<MockFn<(), Result<(), CommonErrors>>>,
     }
 
     impl TimerAccessor for TimeDriverMock {
         fn register(&self, _expire_at: Instant, _waker: Waker) -> Result<(), CommonErrors> {
-            self.mock.borrow_mut().call()
+            self.mock.borrow_mut().call(())
         }
     }
 
     #[test]
     fn when_sleep_is_awaited_on_already_timeouted_time_its_ready_right_away() {
         let drv = TimeDriverMock {
-            mock: RefCell::new(MockFnBuilder::new_in_global(Err(CommonErrors::AlreadyDone)).times(1).build()),
+            mock: RefCell::new(MockFnBuilder::new_in_global(|_| Err(CommonErrors::AlreadyDone)).times(1).build()),
         };
         let sleep_future = Sleep::new(Duration::from_millis(20), Clock::now(), drv);
 
@@ -131,7 +131,7 @@ mod tests {
     #[test]
     fn when_sleep_is_registered_ok_wait_should_be_ready_after_time() {
         let drv = TimeDriverMock {
-            mock: RefCell::new(MockFnBuilder::new_in_global(Ok(())).times(1).build()),
+            mock: RefCell::new(MockFnBuilder::new_in_global(|_| Ok(())).times(1).build()),
         };
         let sleep_future = Sleep::new(Duration::from_millis(20), Clock::now(), drv);
 
@@ -147,7 +147,7 @@ mod tests {
     #[test]
     fn when_polling_not_ready_shall_be_pending() {
         let drv = TimeDriverMock {
-            mock: RefCell::new(MockFnBuilder::new_in_global(Ok(())).times(1).build()),
+            mock: RefCell::new(MockFnBuilder::new_in_global(|_| Ok(())).times(1).build()),
         };
         let sleep_future = Sleep::new(Duration::from_millis(100), Clock::now(), drv);
 
@@ -162,7 +162,7 @@ mod tests {
     #[should_panic(expected = "Cannot be here, future is already finished")]
     fn polling_ready_panics() {
         let drv = TimeDriverMock {
-            mock: RefCell::new(MockFnBuilder::new_in_global(Ok(())).times(1).build()),
+            mock: RefCell::new(MockFnBuilder::new_in_global(|_| Ok(())).times(1).build()),
         };
         let sleep_future = Sleep::new(Duration::from_millis(20), Clock::now(), drv);
 

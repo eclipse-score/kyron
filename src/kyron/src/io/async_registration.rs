@@ -653,7 +653,7 @@ mod tests {
 
     #[test]
     fn registration_info_poll_wakes() {
-        let non_call_waker = MockWaker::new(build_with_location!(MockFnBuilder::new().times(0))).into_arc();
+        let non_call_waker = MockWaker::new(build_with_location!(MockFnBuilder::<(), ()>::new().times(0))).into_arc();
 
         {
             let info = Arc::new(RegistrationInfo::new(12));
