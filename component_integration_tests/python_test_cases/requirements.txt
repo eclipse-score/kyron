@@ -1,14 +1,5 @@
 # Fully resolved list of dependencies is required by Bazel.
-iniconfig==2.1.0
-Jinja2==3.1.6
-MarkupSafe==3.0.2
-packaging==24.2
-pluggy==1.5.0
-psutil==7.0.0
-Pygments==2.19.2
-pytest==8.4.1
-pytest-html==4.1.1
-pytest-metadata==3.1.1
-pytest-repeat==0.9.4
-pytest-env==1.1.5
-testing-utils @ git+https://github.com/qorix-group/testing_tools.git@v0.2.9
+pytest-metadata
+pytest-env
+psutil
+testing-utils @ git+https://github.com/eclipse-score/testing_tools.git@v0.3.0

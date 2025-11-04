@@ -1,12 +1,19 @@
 load("@pip_score_venv_test//:requirements.bzl", "all_requirements")
 load("@rules_python//python:pip.bzl", "compile_pip_requirements")
-load("@score_python_basics//:defs.bzl", "score_py_pytest", "score_virtualenv")
+load("@score_tooling//python_basics:defs.bzl", "score_py_pytest", "score_virtualenv")
 
-
-# Additional requirements for the tests
+# In order to update the requirements, change the `requirements.in` file and run:
+# `bazel run //component_integration_tests/python_test_cases:requirements.update`.
+# This will update the `requirements.txt` file.
+# To upgrade all dependencies to their latest versions, run:
+# `bazel run //component_integration_tests/python_test_cases:requirements.update -- --upgrade`.
 compile_pip_requirements(
     name = "requirements",
-    requirements_txt = "requirements.txt",
+    srcs = [
+        "requirements.txt",
+        "@score_tooling//python_basics:requirements.txt",
+    ],
+    requirements_txt = "requirements.txt.lock",
     tags = [
         "manual",
     ],
@@ -24,8 +31,7 @@ score_py_pytest(
     srcs = glob(["tests/**/*.py"]),
     args = [
         "--traces=all",
-        "--target-path",
-        "$(rootpath //component_integration_tests/rust_test_scenarios)",
+        "--target-path=$(rootpath //component_integration_tests/rust_test_scenarios)",
     ],
     data = [
         ":python_tc_venv",
@@ -34,7 +40,7 @@ score_py_pytest(
     env = {
         "RUST_BACKTRACE": "1",
     },
-    pytest_ini = "//component_integration_tests/python_test_cases:pytest.ini",
+    pytest_ini = ":pytest.ini",
     tags = [
         "manual",
     ],
@@ -48,8 +54,7 @@ score_py_pytest(
         "--traces=all",
         "--count=5",
         "--repeat-scope=session",
-        "--target-path",
-        "$(rootpath //component_integration_tests/rust_test_scenarios)",
+        "--target-path=$(rootpath //component_integration_tests/rust_test_scenarios)",
     ],
     data = [
         ":python_tc_venv",
@@ -58,7 +63,7 @@ score_py_pytest(
     env = {
         "RUST_BACKTRACE": "1",
     },
-    pytest_ini = "//component_integration_tests/python_test_cases:pytest.ini",
+    pytest_ini = ":pytest.ini",
     tags = [
         "manual",
     ],
