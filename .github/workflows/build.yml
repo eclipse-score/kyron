@@ -49,9 +49,9 @@ jobs:
             ${{ env.BAZEL_OUTPUT_BASE }}/bazel-out
             ${{ env.BAZEL_OUTPUT_BASE }}/external
             ${{ env.BAZEL_OUTPUT_BASE }}/execroot
-          key: bazel-ob-${{ runner.os }}-${{ hashFiles('MODULE.bazel', 'MODULE.bazel.lock', '**/*.bzl', 'Cargo.lock') }}
+          key: bazel-ob-v2-${{ runner.os }}-${{ hashFiles('.bazelversion', 'MODULE.bazel', 'MODULE.bazel.lock', '**/*.bzl', 'Cargo.lock') }}
           restore-keys: |
-            bazel-ob-${{ runner.os }}-
+            bazel-ob-v2-${{ runner.os }}-
 
       - name: Build with Bazel
         run: |
