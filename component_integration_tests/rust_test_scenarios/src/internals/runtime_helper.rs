@@ -50,6 +50,7 @@ pub struct ExecEngineConfig {
     #[serde(flatten)]
     pub thread_parameters: ThreadParameters,
     pub dedicated_workers: Option<Vec<DedicatedWorkerConfig>>,
+    pub safety_worker: Option<ThreadParameters>,
 }
 
 fn deserialize_exec_engines<'de, D>(deserializer: D) -> Result<Vec<ExecEngineConfig>, D::Error>
@@ -121,19 +122,7 @@ impl Runtime {
             if let Some(dedicated_workers) = &exec_engine.dedicated_workers {
                 for dedicated_worker in dedicated_workers {
                     // Create thread parameters object.
-                    let mut async_rt_thread_params = AsyncRtThreadParameters::default();
-                    if let Some(thread_priority) = dedicated_worker.thread_parameters.thread_priority {
-                        async_rt_thread_params = async_rt_thread_params.priority(thread_priority);
-                    }
-                    if let Some(thread_affinity) = &dedicated_worker.thread_parameters.thread_affinity {
-                        async_rt_thread_params = async_rt_thread_params.affinity(thread_affinity);
-                    }
-                    if let Some(thread_stack_size) = dedicated_worker.thread_parameters.thread_stack_size {
-                        async_rt_thread_params = async_rt_thread_params.stack_size(thread_stack_size);
-                    }
-                    if let Some(thread_scheduler) = dedicated_worker.thread_parameters.thread_scheduler {
-                        async_rt_thread_params = async_rt_thread_params.scheduler_type(thread_scheduler);
-                    }
+                    let async_rt_thread_params = self.set_thread_params(&dedicated_worker.thread_parameters);
 
                     // Create `UniqueWorkerId`.
                     let unique_worker_id = UniqueWorkerId::from(&dedicated_worker.id);
@@ -142,10 +131,34 @@ impl Runtime {
                 }
             }
 
+            // Set safety worker.
+            if let Some(safety_worker) = &exec_engine.safety_worker {
+                let safety_worker_thread_params = self.set_thread_params(safety_worker);
+                exec_engine_builder = exec_engine_builder.enable_safety_worker(safety_worker_thread_params);
+            }
+
             let (builder, _) = async_rt_builder.with_engine(exec_engine_builder);
             async_rt_builder = builder;
         }
 
         async_rt_builder.build().expect("Failed to build async runtime")
+    }
+
+    fn set_thread_params(&self, src_thread_params: &ThreadParameters) -> AsyncRtThreadParameters {
+        let mut dst_thread_params = AsyncRtThreadParameters::default();
+        if let Some(thread_priority) = src_thread_params.thread_priority {
+            dst_thread_params = dst_thread_params.priority(thread_priority);
+        }
+        if let Some(thread_affinity) = &src_thread_params.thread_affinity {
+            dst_thread_params = dst_thread_params.affinity(thread_affinity);
+        }
+        if let Some(thread_stack_size) = src_thread_params.thread_stack_size {
+            dst_thread_params = dst_thread_params.stack_size(thread_stack_size);
+        }
+        if let Some(thread_scheduler) = src_thread_params.thread_scheduler {
+            dst_thread_params = dst_thread_params.scheduler_type(thread_scheduler);
+        }
+
+        dst_thread_params
     }
 }

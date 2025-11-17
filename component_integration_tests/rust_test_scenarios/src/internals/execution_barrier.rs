@@ -6,16 +6,22 @@ use std::sync::Arc;
 use std::time::Duration;
 use tracing::trace;
 
-pub struct RuntimeJoiner {
-    handles: Vec<JoinHandle<()>>,
+pub struct RuntimeJoiner<T>
+where
+    T: Send + 'static,
+{
+    handles: Vec<JoinHandle<T>>,
 }
 
-impl RuntimeJoiner {
+impl<T> RuntimeJoiner<T>
+where
+    T: Send + 'static,
+{
     pub fn new() -> Self {
         RuntimeJoiner { handles: Vec::new() }
     }
 
-    pub fn add_handle(&mut self, handle: JoinHandle<()>) {
+    pub fn add_handle(&mut self, handle: JoinHandle<T>) {
         self.handles.push(handle);
     }
 
