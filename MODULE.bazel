@@ -11,7 +11,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 module(
-    name = "score_orchestrator",
+    name = "score_kyron",
     version = "0.0.3",
     compatibility_level = 0,
 )
@@ -152,7 +152,7 @@ register_toolchains(
 # Crate configs
 crate = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
 crate.from_cargo(
-    name = "score_orchestrator_crates",
+    name = "score_kyron_crates",
     cargo_lockfile = "//:Cargo.lock",
     manifests = [
         "//:Cargo.toml",
@@ -162,11 +162,8 @@ crate.from_cargo(
         "//:src/kyron-testing/Cargo.toml",
         "//src/kyron-testing-macros:Cargo.toml",
         "//:src/logging_tracing/Cargo.toml",
-        "//:src/orchestration/Cargo.toml",
         "//:src/xtask/Cargo.toml",
         "//component_integration_tests/rust_test_scenarios:Cargo.toml",
-        "//src/orchestration/examples/camera_drv_object_det:Cargo.toml",
-        "//src/orchestration_macros:Cargo.toml",
     ],
 
     # This shall not be here but rules_rust 0.61.0 or even 0.67.0 does not correct finds out that when we use out platform it shall append
@@ -180,13 +177,13 @@ crate.from_cargo(
 crate.annotation(
     crate = "iceoryx2-bb-derive-macros",
     patches = ["//patches:iceoryx2_bb_derive_macros_readme.patch"],
-    repositories = ["score_orchestrator_crates"],
+    repositories = ["score_kyron_crates"],
 )
 
 #iceoryx2 does not yet support QNX8 correctly
 crate.annotation(
     crate = "iceoryx2-pal-posix",
     patches = ["//patches:qnx8_iceoryx2.patch"],
-    repositories = ["score_orchestrator_crates"],
+    repositories = ["score_kyron_crates"],
 )
-use_repo(crate, "score_orchestrator_crates")
+use_repo(crate, "score_kyron_crates")

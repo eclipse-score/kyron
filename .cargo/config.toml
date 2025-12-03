@@ -4,4 +4,4 @@ rustflags = ["-D", "warnings"] # treat compiler warnings as errors
 
 [alias]
 xtask = "run -p xtask --"
-build_with_log = "build -p orchestration --no-default-features --features log"
+build_with_log = "build -p kyron --no-default-features --features log"

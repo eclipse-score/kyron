@@ -11,7 +11,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 load("@rules_rust//rust:defs.bzl", "rust_proc_macro")
-load("@score_orchestrator_crates//:defs.bzl", "all_crate_deps")
+load("@score_kyron_crates//:defs.bzl", "all_crate_deps")
 
 rust_proc_macro(
     name = "runtime_macros",
