@@ -20,9 +20,9 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = "Orchestrator"
-project_url = "https://github.com/eclipse-score/orchestrator"
-project_prefix = "ORCH_"
+project = "Kyron"
+project_url = "https://github.com/eclipse-score/kyron"
+project_prefix = "KYRON_"
 author = "S-CORE"
 version = "0.0.1"
 

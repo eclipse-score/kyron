@@ -1,6 +1,6 @@
 [package]
 name = "kyron"
-repository = "https://github.com/eclipse-score/orchestrator/src/kyron"
+repository = "https://github.com/eclipse-score/kyron"
 categories = ["asynchronous", "network-programming"]
 keywords = ["io", "async", "non-blocking", "futures", "automotive"]
 readme = "README.md"
