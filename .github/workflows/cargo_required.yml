@@ -34,7 +34,7 @@ jobs:
     timeout-minutes: 45 # minutes is the maximum allowed for a cold run
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
 
       - name: Setup Rust Build Environment
         uses: ./.github/actions/setup-rust-build
@@ -47,13 +47,15 @@ jobs:
 
       # ---------- TARPAULIN(TEST + COVERAGE) ----------
       - name: Run tests under coverage
-        run: cargo +nightly tarpaulin --version 0.32.7 --skip-clean --out Html --verbose --no-dead-code --engine llvm --all-features
+        run: cargo +nightly tarpaulin --skip-clean --out html --verbose --no-dead-code --engine llvm
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-report
-          path: tarpaulin-report.html
+          name: ${{ github.event.repository.name }}_coverage_report
+          path: |
+            tarpaulin-report.html
+            cobertura.xml
 
       # ---------- MIRI ----------
       - name: Install nightly + miri (minimal profile)

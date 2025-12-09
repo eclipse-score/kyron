@@ -17,29 +17,40 @@ on:
     types: [opened, reopened, synchronize]
   merge_group:
     types: [checks_requested]
-env:
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   setup-and-run-tests:
-    runs-on: ${{ vars.REPO_RUNNER_LABELS && fromJSON(vars.REPO_RUNNER_LABELS) || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
 
-      - name: Install protoc 26.1
-        uses: arduino/setup-protoc@v3
-        with:
-          version: 26.1
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Setup Bazel with shared caching
         uses: bazel-contrib/setup-bazel@0.15.0
         with:
-          bazelisk-version: 1.26.0
           disk-cache: true
           repository-cache: true
           bazelisk-cache: true
+
+      - name: Bazel info (discover paths)
+        id: bazel-info
+        run: |
+          echo "BAZEL_OUTPUT_BASE=$(bazel info output_base)" >> $GITHUB_ENV
+          echo "BAZEL_USER_ROOT=$(bazel info output_user_root)" >> $GITHUB_ENV
+          echo "BAZEL_REPO_CACHE=$(bazel info repository_cache)" >> $GITHUB_ENV
+          bazel info
+
+      - name: Cache Bazel output base
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.BAZEL_OUTPUT_BASE }}/action_cache
+            ${{ env.BAZEL_OUTPUT_BASE }}/bazel-out
+            ${{ env.BAZEL_OUTPUT_BASE }}/external
+            ${{ env.BAZEL_OUTPUT_BASE }}/execroot
+          key: bazel-ob-v2-${{ runner.os }}-${{ hashFiles('.bazelversion', 'MODULE.bazel', 'MODULE.bazel.lock', '**/*.bzl', 'Cargo.lock') }}
+          restore-keys: |
+            bazel-ob-v2-${{ runner.os }}-
 
       - name: Run Tests via Bazel
         run: |

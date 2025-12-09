@@ -23,7 +23,7 @@ runs:
   using: "composite"
   steps:
     - name: Checkout Repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v4.2.2
 
     - name: Install protoc 26.1
       uses: arduino/setup-protoc@v3
@@ -32,7 +32,7 @@ runs:
         repo-token: ${{ inputs.repo-token }}
 
     - name: Cache cargo & target
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.cargo/registry

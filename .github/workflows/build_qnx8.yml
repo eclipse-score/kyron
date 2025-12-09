@@ -26,7 +26,7 @@ jobs:
     with:
       bazel-target: '//src/...'
       bazel-config: 'build_qnx8'
-      credential-helper: '.github/tools/qnx_credential_helper.py'
+      credential-helper: 'scripts/internal/qnx_creds.py'
       environment-name: 'workflow-approval'
     secrets:
       score-qnx-license: ${{ secrets.SCORE_QNX_LICENSE }}

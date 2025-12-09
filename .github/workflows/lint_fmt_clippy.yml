@@ -19,23 +19,18 @@ on:
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 jobs:
   lint-fmt-clippy:
     timeout-minutes: 6 # 6 minutes is the maximum allowed for a cold run
-    runs-on: ${{ vars.REPO_RUNNER_LABELS && fromJSON(vars.REPO_RUNNER_LABELS) || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4.2.2
         with:
           fetch-depth: 0
 
-      - name: Install protoc 26.1
-        uses: arduino/setup-protoc@v3
-        with:
-          version: 26.1
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Cache Cargo registry, git deps & target
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry
