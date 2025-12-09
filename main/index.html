@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Module Template Documentation &#8212; Module Template Project  documentation</title>
+    <title>Kyron &#8212; Kyron  documentation</title>
   
   
   
@@ -32,7 +32,7 @@
 
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
-    <link rel="stylesheet" type="text/css" href="_static/css/score.css?v=940e959b" />
+    <link rel="stylesheet" type="text/css" href="_static/css/score.css?v=6e51530f" />
     <link rel="stylesheet" type="text/css" href="_static/css/score_needs.css?v=e97392eb" />
     <link rel="stylesheet" type="text/css" href="_static/css/score_design.css?v=d9fd870c" />
     <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
@@ -74,7 +74,7 @@
     <link rel="search" title="Search" href="search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1" />
+  <meta name="docsearch:version" content="0.0.1" />
   </head>
   
   
@@ -347,17 +347,15 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="module-template-documentation">
-<h1>Module Template Documentation<a class="headerlink" href="#module-template-documentation" title="Link to this heading">#</a></h1>
-<p>This documentation describes the structure, usage and configuration of the Bazel-based C++/Rust module template.</p>
+  <section id="kyron">
+<h1>Kyron<a class="headerlink" href="#kyron" title="Link to this heading">#</a></h1>
+<p>This documentation describes the <strong>Kyron</strong> - the functional safety async runtime for Rust</p>
 <nav class="contents local" id="table-of-contents">
 <p class="topic-title">Table of Contents</p>
 <ul class="simple">
 <li><p><a class="reference internal" href="#overview" id="id1">Overview</a></p></li>
 <li><p><a class="reference internal" href="#requirements" id="id2">Requirements</a></p></li>
-<li><p><a class="reference internal" href="#project-layout" id="id3">Project Layout</a></p></li>
-<li><p><a class="reference internal" href="#quick-start" id="id4">Quick Start</a></p></li>
-<li><p><a class="reference internal" href="#configuration" id="id5">Configuration</a></p></li>
+<li><p><a class="reference internal" href="#quick-start" id="id3">Quick Start</a></p></li>
 </ul>
 </nav>
 <section id="overview">
@@ -367,83 +365,24 @@ It integrates best practices for build, test, CI/CD and documentation.</p>
 </section>
 <section id="requirements">
 <h2><a class="toc-backref" href="#id2" role="doc-backlink">Requirements</a><a class="headerlink" href="#requirements" title="Link to this heading">#</a></h2>
-<div class="need_container docutils container" id="SNCB-55011769">
-<div class="pst-scrollable-table-container"><table class="need needs_grid_complex needs_layout_score needs_style_none needs_type_stkh_req table" id="stkh_req__docgen_enabled__example">
-<tbody>
-<tr class="head row-odd"><td class="head_left" colspan="2"><div class="needs_head_left line-block">
-<div class="line"><span><span class="needs_title"><span class="needs_data">Example Functional Requirement</span></span></span></div>
-</div>
-</td>
-<td class="head_center" colspan="2"><div class="needs_head line-block">
-<div class="line"><span><span class="needs_status"><span class="needs_label">status: </span><span class="needs_data">valid</span></span></span></div>
-<div class="line"><span><span class="needs_security"><span class="needs_label">security: </span><span class="needs_data">YES</span></span></span></div>
-<div class="line"><span><span class="needs_safety"><span class="needs_label">safety: </span><span class="needs_data">QM</span></span></span></div>
-</div>
-</td>
-<td class="head_right" colspan="2"><div class="needs_head_right line-block">
-<div class="line"><span><span class="needs needs_collapse" id="target__show__meta"><span class="needs collapsed"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-down-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="8 12 12 16 16 12"></polyline><line x1="12" y1="8" x2="12" y2="16"></line></svg></span><span class="needs visible collapse_is_hidden"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="12 16 16 12 12 8"></polyline><line x1="8" y1="12" x2="16" y2="12"></line></svg></span></span></span></div>
-</div>
-</td>
-</tr>
-<tr class="meta row-even"><td class="meta" colspan="3"><div class="needs_meta_left line-block">
-<div class="line"><span><span><div class="line"><span class="needs_rationale"><span class="needs_label">rationale: </span><span class="needs_data">Ensure documentation builds are possible for all modules</span></span></div>
-<div class="line"><span class="needs_reqtype"><span class="needs_label">reqtype: </span><span class="needs_data">Functional</span></span></div>
-</span></span></div>
-<div class="line"><span></span></div>
-</div>
-</td>
-<td class="meta" colspan="3"></td>
-</tr>
-<tr class="content row-odd"><td class="content" colspan="6"></td>
-</tr>
-<tr class="footer row-even"><td class="footer_left" colspan="2"><div class="needs_footer_left line-block">
-<div class="line"><span><span class="needs-id"><a class="reference internal" href="#stkh_req__docgen_enabled__example" title="stkh_req__docgen_enabled__example">stkh_req__docgen_enabled__example</a></span></span></div>
-</div>
-</td>
-<td class="footer" colspan="2"><div class="needs_footer line-block">
-<div class="line"><span><span class="needs_type_name"><span class="needs_data">Stakeholder Requirement</span></span></span></div>
-</div>
-</td>
-<td class="footer_right" colspan="2"></td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-</section>
-<section id="project-layout">
-<h2><a class="toc-backref" href="#id3" role="doc-backlink">Project Layout</a><a class="headerlink" href="#project-layout" title="Link to this heading">#</a></h2>
-<p>The module template includes the following top-level structure:</p>
 <ul class="simple">
-<li><p><cite>src/</cite>: Main C++/Rust sources</p></li>
-<li><p><cite>tests/</cite>: Unit and integration tests</p></li>
-<li><p><cite>examples/</cite>: Usage examples</p></li>
-<li><p><cite>docs/</cite>: Documentation using <cite>docs-as-code</cite></p></li>
-<li><p><cite>.github/workflows/</cite>: CI/CD pipelines</p></li>
+<li><p>TODO add linkage once it works</p></li>
 </ul>
 </section>
 <section id="quick-start">
-<h2><a class="toc-backref" href="#id4" role="doc-backlink">Quick Start</a><a class="headerlink" href="#quick-start" title="Link to this heading">#</a></h2>
-<p>To build the module:</p>
+<h2><a class="toc-backref" href="#id3" role="doc-backlink">Quick Start</a><a class="headerlink" href="#quick-start" title="Link to this heading">#</a></h2>
+<p>To build the module for host platform:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bazel<span class="w"> </span>build<span class="w"> </span>//src/...
 </pre></div>
 </div>
-<p>To run tests:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bazel<span class="w"> </span><span class="nb">test</span><span class="w"> </span>//tests/...
+<p>To build the module for QNX8:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./scripts/build_qnx8.sh
 </pre></div>
 </div>
-</section>
-<section id="configuration">
-<h2><a class="toc-backref" href="#id5" role="doc-backlink">Configuration</a><a class="headerlink" href="#configuration" title="Link to this heading">#</a></h2>
-<p>The <cite>project_config.bzl</cite> file defines metadata used by Bazel macros.</p>
-<p>Example:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">PROJECT_CONFIG</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;asil_level&quot;</span><span class="p">:</span> <span class="s2">&quot;QM&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;source_code&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;cpp&quot;</span><span class="p">,</span> <span class="s2">&quot;rust&quot;</span><span class="p">]</span>
-<span class="p">}</span>
+<p>To run component tests:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./scripts/run_component_tests.sh
 </pre></div>
 </div>
-<p>This enables conditional behavior (e.g., choosing <cite>clang-tidy</cite> for C++ or <cite>clippy</cite> for Rust).</p>
 </section>
 </section>
 
@@ -478,9 +417,7 @@ It integrates best practices for build, test, CI/CD and documentation.</p>
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#requirements">Requirements</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#project-layout">Project Layout</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#quick-start">Quick Start</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configuration">Configuration</a></li>
 </ul>
   </nav></div>
 
