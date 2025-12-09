@@ -12,12 +12,10 @@
    # SPDX-License-Identifier: Apache-2.0
    # *******************************************************************************
 
-Orchestration Framework
+Kyron
 =============================
 
-This documentation describes the orchestration module which implements:
-   * **Orchestration** as declarative model to define cause-effect chains of actions
-   * **Kyron** the functional safety async runtime for Rust
+This documentation describes the **Kyron** - the functional safety async runtime for Rust
 
 .. contents:: Table of Contents
    :depth: 2
