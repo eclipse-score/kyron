@@ -14,6 +14,10 @@
 use kyron_foundation::prelude::FoundationAtomicPtr;
 
 use super::task::async_task::*;
+#[cfg(not(any(test, feature = "runtime-api-mock")))]
+use crate::scheduler::context::ctx_check_task_safety_error_and_clear;
+#[cfg(any(test, feature = "runtime-api-mock"))]
+use crate::testing::mock::ctx_check_task_safety_error_and_clear;
 use core::task::{RawWaker, RawWakerVTable, Waker};
 
 fn clone_waker(data: *const ()) -> RawWaker {
@@ -32,8 +36,11 @@ fn wake(data: *const ()) {
     let task_header_ptr = data as *const TaskHeader;
     let task_ref = unsafe { TaskRef::from_raw(task_header_ptr) };
 
-    task_ref.schedule();
-
+    if ctx_check_task_safety_error_and_clear() {
+        task_ref.schedule_safety();
+    } else {
+        task_ref.schedule();
+    }
     drop(task_ref); // wake uses move semantic, so we are owner of data now, so we need to cleanup
 }
 
@@ -41,7 +48,11 @@ fn wake_by_ref(data: *const ()) {
     let task_header_ptr = data as *const TaskHeader;
     let task_ref = unsafe { TaskRef::from_raw(task_header_ptr) };
 
-    task_ref.schedule();
+    if ctx_check_task_safety_error_and_clear() {
+        task_ref.schedule_safety();
+    } else {
+        task_ref.schedule();
+    }
 
     ::core::mem::forget(task_ref); // don't touch refcount from our data since this is done by drop_waker
 }

@@ -13,8 +13,11 @@
 
 use super::task_state::*;
 use crate::core::types::*;
-use crate::scheduler::safety_waker::create_safety_waker;
+#[cfg(not(any(test, feature = "runtime-api-mock")))]
+use crate::scheduler::context::ctx_set_task_safety_error;
 use crate::scheduler::scheduler_mt::SchedulerTrait;
+#[cfg(any(test, feature = "runtime-api-mock"))]
+use crate::testing::mock::ctx_set_task_safety_error;
 use ::core::future::Future;
 use ::core::mem;
 use ::core::ops::{Deref, DerefMut};
@@ -308,9 +311,8 @@ where
                     self.handle_waker.with_mut(|ptr: *mut Option<Waker>| match unsafe { (*ptr).take() } {
                         Some(v) => {
                             if is_safety_err && self.is_with_safety {
-                                unsafe {
-                                    create_safety_waker(v).wake();
-                                }
+                                ctx_set_task_safety_error(true);
+                                v.wake();
                             } else {
                                 v.wake();
                             }

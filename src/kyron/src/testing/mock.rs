@@ -225,6 +225,25 @@ where
     }
 }
 
+// Thread-local storage to track task safety errors
+thread_local! {
+    static THREAD_CTX_SAFETY_ERROR_FLAG: RefCell<bool> = const { RefCell::new(false) };
+}
+
+pub fn ctx_set_task_safety_error(is_error: bool) {
+    THREAD_CTX_SAFETY_ERROR_FLAG.with(|flag| {
+        *flag.borrow_mut() = is_error;
+    });
+}
+
+pub fn ctx_check_task_safety_error_and_clear() -> bool {
+    THREAD_CTX_SAFETY_ERROR_FLAG.with(|flag| {
+        let current = *flag.borrow();
+        *flag.borrow_mut() = false;
+        current
+    })
+}
+
 ///
 /// Spawns a given `future` into runtime and let it execute on dedicated worker using `worker_id`.
 /// This function allocates a `future` dynamically using [`Box`]
