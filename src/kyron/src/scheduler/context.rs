@@ -318,6 +318,9 @@ pub(crate) struct WorkerContext {
     /// Helper flag to check if safety was enabled in runtime builder
     is_safety_enabled: bool,
 
+    /// Flag to check if current task resulted in safety error, then schedule on safety worker from wake function.
+    is_task_safety_error: bool,
+
     wakeup_time: Cell<Option<u64>>,
 }
 
@@ -399,6 +402,7 @@ impl ContextBuilder {
             worker_id: Cell::new(self.worker_id.expect("Worker type must be set in context builder!")),
             handler: RefCell::new(Some(Rc::new(self.handle.expect("Handler type must be set in context builder!")))),
             is_safety_enabled: self.is_with_safety,
+            is_task_safety_error: false,
             wakeup_time: Cell::new(None),
             drivers: Some(self.drivers),
         }
@@ -450,6 +454,32 @@ pub(crate) fn ctx_get_worker_id() -> WorkerId {
 pub(crate) fn ctx_is_with_safety() -> bool {
     CTX.try_with(|ctx| ctx.borrow().as_ref().expect("Called before CTX init?").is_safety_enabled)
         .unwrap_or_default()
+}
+
+#[allow(dead_code)] // mock function is used in tests instead of this one
+///
+/// Sets task safety error flag
+///
+pub(crate) fn ctx_set_task_safety_error(is_error: bool) {
+    CTX.try_with(|ctx| {
+        ctx.borrow_mut().as_mut().expect("Called before CTX init?").is_task_safety_error = is_error;
+    })
+    .unwrap_or_default();
+}
+
+#[allow(dead_code)] // mock function is used in tests instead of this one
+///
+/// Check if current task resulted in safety error and clear the flag.
+///
+pub(crate) fn ctx_check_task_safety_error_and_clear() -> bool {
+    CTX.try_with(|ctx| {
+        let mut binding = ctx.borrow_mut();
+        let ctx = binding.as_mut().expect("Called before CTX init?");
+        let val = ctx.is_task_safety_error;
+        ctx.is_task_safety_error = false;
+        val
+    })
+    .unwrap_or_default()
 }
 
 pub(crate) fn ctx_set_wakeup_time(time: u64) {
