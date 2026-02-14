@@ -59,17 +59,6 @@ struct WorkerInner {
     next_task_tick: u64,
 }
 
-///
-/// Async Worker implementation
-///
-/// TODO:
-///     - shutdown
-///     - join logic
-///     - prio & affinity
-///     - migrate to iceoryxbb2 once we know details
-///     - ....
-///
-///
 impl Worker {
     pub(crate) fn new(id: WorkerId, engine_has_safety_worker: bool) -> Self {
         Self {
@@ -275,10 +264,9 @@ impl WorkerInner {
 
     fn next_task(&mut self) -> (Option<TaskRef>, bool) {
         let mut should_notify = false;
-        //TODO: Remove hardcoded values into global config
         if self.next_task_tick % 16 == 0 {
             // It's time to check if we have work in global queue
-            should_notify = self.try_take_global_work_internal() > 0; //TODO(https://github.com/qorix-group/inc_orchestrator_internal/issues/153) - try semantic missing
+            should_notify = self.try_take_global_work_internal() > 0;
         }
 
         (self.producer_consumer.pop(), should_notify)
