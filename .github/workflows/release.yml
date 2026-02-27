@@ -56,17 +56,25 @@ jobs:
       - name: Build via Bazel
         run: |
           echo "Running: bazel build //src/..."
-          bazel build //src/...
+          bazel build --config=x86_64-linux //src/...
 
       - name: Run Unit Tests via Bazel
         run: |
           echo "Running: bazel test //:unit_tests"
-          bazel test //:unit_tests
+          bazel test --config=x86_64-linux --config=ferrocene-coverage \
+            --nocache_test_results \
+            //src/...
+
+      - name: Generate Ferrocene coverage reports
+        run: |
+          set -euo pipefail
+          bazel run //:rust_coverage
 
       - name: Create archive of test report
         run: |
           mkdir -p artifacts
           find bazel-testlogs/src -name 'test.xml' -print0 | xargs -0 -I{} cp --parents {} artifacts/
+          cp -r $(bazel info bazel-bin)/coverage/rust-tests artifacts/
           zip -r ${{ github.event.repository.name }}_coverage_report.zip artifacts/
         shell: bash
 
