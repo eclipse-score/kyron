@@ -13,19 +13,23 @@
 alias(
     name = "select",
     actual = "//src/kyron:select",
+    visibility = ["//visibility:public"],
 )
 
 alias(
     name = "main_macro",
     actual = "//src/kyron:main_macro",
+    visibility = ["//visibility:public"],
 )
 
 alias(
     name = "mpmc",
     actual = "//src/kyron:mpmc",
+    visibility = ["//visibility:public"],
 )
 
 alias(
     name = "safety_task",
     actual = "//src/kyron:safety_task",
+    visibility = ["//visibility:public"],
 )

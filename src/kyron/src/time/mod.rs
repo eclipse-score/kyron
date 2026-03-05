@@ -562,7 +562,7 @@ mod tests {
         }
 
         // Linear Congruential Generator (LCG)
-        fn next_u32(&mut self) -> u64 {
+        fn next_u64(&mut self) -> u64 {
             // Constants from Numerical Recipes
             self.state = self.state.wrapping_mul(6364136223846793005).wrapping_add(1);
             self.state >> 32
@@ -570,7 +570,7 @@ mod tests {
 
         /// Generates a random number in the range [0, max)
         fn gen_range(&mut self, max: u64) -> u64 {
-            self.next_u32() % max
+            self.next_u64() % max
         }
     }
 
@@ -625,7 +625,7 @@ mod tests {
             let current = timeouts[i];
             let next = timeouts[i + 1];
 
-            let before = prev + rng.next_u32() % (current - prev);
+            let before = prev + rng.next_u64() % (current - prev);
 
             driver.process_internal(before);
             assert_eq!(
@@ -647,7 +647,7 @@ mod tests {
                 current
             ); // Shall fire
 
-            let after = current + rng.next_u32() % (next - current);
+            let after = current + rng.next_u64() % (next - current);
             driver.process_internal(after);
             assert_eq!(
                 current_call_times,
