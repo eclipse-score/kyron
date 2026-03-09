@@ -29,6 +29,7 @@ jobs:
     with:
       bazel-target: '//src/...'
       bazel-config: ${{ matrix.config }}
+      extra-bazel-flags: '--lockfile_mode=error'
       credential-helper: 'scripts/internal/qnx_creds.py'
       environment-name: 'workflow-approval'
     secrets:
