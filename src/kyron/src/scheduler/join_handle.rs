@@ -10,7 +10,8 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 // *******************************************************************************
-use kyron_foundation::prelude::*;
+
+use crate::macros::log::*;
 use kyron_foundation::{not_recoverable_error, prelude::CommonErrors};
 
 use crate::{

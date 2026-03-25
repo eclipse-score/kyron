@@ -13,6 +13,7 @@
 
 use super::task_state::*;
 use crate::common::types::*;
+use crate::macros::log::*;
 use crate::scheduler::safety_waker::create_safety_waker;
 use crate::scheduler::scheduler_mt::SchedulerTrait;
 use crate::scheduler::workers::worker_types::WorkerId;
@@ -23,7 +24,7 @@ use ::core::pin::Pin;
 use core::{ptr::NonNull, task::Context, task::Waker};
 use kyron_foundation::cell::UnsafeCell;
 use kyron_foundation::not_recoverable_error;
-use kyron_foundation::prelude::*;
+use kyron_foundation::prelude::CommonErrors;
 
 ///
 /// Table of pointers to access API of generic `AsyncTask` without a need to know it's type along a way

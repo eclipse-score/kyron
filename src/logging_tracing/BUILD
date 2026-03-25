@@ -15,17 +15,38 @@ load("@rules_rust//rust:defs.bzl", "rust_library")
 rust_library(
     name = "liblogging_tracing",
     srcs = glob(["src/**/*.rs"]),
-    crate_features = [
-        "bazel_build_iceoryx2_qnx8",
-        "tracing",
-    ],
+    crate_features = select({
+        "//src/flags:logging_feature_tracing": [
+            "bazel_build_iceoryx2_qnx8",
+            "tracing",
+        ],
+        "//src/flags:logging_feature_log": [
+            "bazel_build_iceoryx2_qnx8",
+            "log",
+        ],
+        "//src/flags:logging_feature_score_log": [
+            "score-log",
+            "score-log-bridge",
+        ],
+        "//conditions:default": [],
+    }),
     crate_name = "logging_tracing",
     visibility = ["//visibility:public"],
-    deps = [
-        "//src/kyron-foundation:libkyron_foundation",
-        "@score_crates//:env_logger",
-        "@score_crates//:iceoryx2_qnx8",
-        "@score_crates//:tracing",
-        "@score_crates//:tracing_subscriber",
-    ],
+    deps = select({
+        "//src/flags:logging_feature_tracing": [
+            "@score_crates//:iceoryx2_qnx8",
+            "@score_crates//:tracing",
+            "@score_crates//:tracing_subscriber",
+        ],
+        "//src/flags:logging_feature_log": [
+            "//src/kyron-foundation:libkyron_foundation",
+            "@score_crates//:env_logger",
+            "@score_crates//:iceoryx2_qnx8",
+        ],
+        "//src/flags:logging_feature_score_log": [
+            "@score_baselibs_rust//src/log/score_log",
+            "@score_logging//score/mw/log/rust/score_log_bridge",
+        ],
+        "//conditions:default": [],
+    }),
 )

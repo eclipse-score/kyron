@@ -13,7 +13,8 @@
 use crate::{scheduler::driver::Drivers, time::clock::*};
 use ::core::{future::Future, task::Waker, time::Duration};
 
-use kyron_foundation::{not_recoverable_error, prelude::error, prelude::CommonErrors};
+use crate::macros::log::*;
+use kyron_foundation::{not_recoverable_error, prelude::CommonErrors};
 
 use crate::{
     futures::{FutureInternalReturn, FutureState},

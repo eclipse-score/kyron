@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
-kyron-foundation = { workspace = true }
+kyron-foundation = { workspace = true, optional = true }
 tracing-appender = { workspace = true, optional = true }
 tracing-subscriber = { workspace = true, optional = true }
 tracing-perfetto-sdk-schema = { workspace = true, optional = true }
@@ -12,10 +12,13 @@ tracing-perfetto-sdk-layer = { workspace = true, optional = true }
 tracing = { workspace = true, optional = true }
 iceoryx2 = { workspace = true, optional = true }
 env_logger = { version = "0.11.8", optional = true }
+score_log = { workspace = true, optional = true }
+stdout_logger = { workspace = true, optional = true }
 
 [features]
 default = ["tracing"]
-score-log = ["kyron-foundation/score-log"] # Bazel compatibility only
+score-log = ["dep:score_log", "stdout-logger"]
+stdout-logger = ["dep:stdout_logger"]
 log = ["kyron-foundation/log", "dep:env_logger", "iceoryx2/logger_log"]
 tracing = [
     "kyron-foundation/tracing",
@@ -32,5 +35,5 @@ perfetto = [
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = [
-    'cfg(feature, values("bazel_build_iceoryx2_qnx8"))',
+    'cfg(feature, values("bazel_build_iceoryx2_qnx8", "stdout-logger", "score-log-bridge"))',
 ] }

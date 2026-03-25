@@ -34,6 +34,11 @@ where
     }
 }
 
+kyron_foundation::impl_score_debug_for_type_t!(TcpListenerBridge<T>, IoSelector, |x: &TcpListenerBridge<T>| format!(
+    "TcpListenerBridge<fd: {:?}>",
+    x.inner.as_inner().as_raw_fd()
+));
+
 impl<T: IoSelector> TcpListenerBridge<T> {
     pub fn bind(addr: SocketAddr) -> IoResult<TcpListenerBridge<T>> {
         let listener = TcpListener::bind(addr)?;

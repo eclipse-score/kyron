@@ -11,8 +11,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // *******************************************************************************
 
+use crate::macros::log::*;
 use crate::{
-    error,
     futures::{FutureInternalReturn, FutureState},
     io::AsyncWrite,
     not_recoverable_error,

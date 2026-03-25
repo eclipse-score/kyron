@@ -59,8 +59,11 @@ impl TaskId {
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
-pub struct UniqueWorkerId(u64);
+kyron_foundation::import_score_log!();
+kyron_foundation::derive_score_debug_for_struct!(
+    #[derive(Copy, Clone, Debug, PartialEq)]
+    pub struct UniqueWorkerId(u64);
+);
 
 impl From<&str> for UniqueWorkerId {
     fn from(value: &str) -> Self {

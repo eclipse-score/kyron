@@ -15,16 +15,37 @@ load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
 rust_library(
     name = "libkyron_foundation",
     srcs = glob(["src/**/*.rs"]),
-    crate_features = [
+    crate_features = select({
+        "//src/flags:logging_feature_tracing": [
+            "tracing",
+        ],
+        "//src/flags:logging_feature_log": [
+            "log",
+        ],
+        "//src/flags:logging_feature_score_log": [
+            "score-log",
+        ],
+        "//conditions:default": [],
+    }) + [
         "bazel_build_iceoryx2_qnx8",
-        "tracing",
     ],
     crate_name = "kyron_foundation",
     proc_macro_deps = [
         "@score_crates//:iceoryx2_bb_derive_macros_qnx8",
     ],
     visibility = ["//visibility:public"],
-    deps = [
+    deps = select({
+        "//src/flags:logging_feature_tracing": [
+            "@score_crates//:tracing",
+        ],
+        "//src/flags:logging_feature_log": [
+            "@score_crates//:log",
+        ],
+        "//src/flags:logging_feature_score_log": [
+            "@score_baselibs_rust//src/log/score_log",
+        ],
+        "//conditions:default": [],
+    }) + [
         "@score_crates//:iceoryx2_bb_container_qnx8",
         "@score_crates//:iceoryx2_bb_elementary_qnx8",
         "@score_crates//:iceoryx2_bb_elementary_traits_qnx8",
@@ -35,16 +56,24 @@ rust_library(
         "@score_crates//:iceoryx2_bb_testing_qnx8",
         "@score_crates//:iceoryx2_bb_threadsafe_qnx8",
         "@score_crates//:iceoryx2_pal_concurrency_sync_qnx8",
-        "@score_crates//:tracing",
-        "@score_crates//:tracing_subscriber",
     ],
 )
 
 rust_test(
     name = "tests",
     crate = ":libkyron_foundation",
-    crate_features = [
+    crate_features = select({
+        "//src/flags:logging_feature_tracing": [
+            "tracing",
+        ],
+        "//src/flags:logging_feature_log": [
+            "log",
+        ],
+        "//src/flags:logging_feature_score_log": [
+            "score-log",
+        ],
+        "//conditions:default": [],
+    }) + [
         "bazel_build_iceoryx2_qnx8",
-        "tracing",
     ],
 )

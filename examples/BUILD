@@ -33,3 +33,9 @@ alias(
     actual = "//src/kyron:safety_task",
     visibility = ["//visibility:public"],
 )
+
+alias(
+    name = "logging",
+    actual = "//src/kyron:logging",
+    visibility = ["//visibility:public"],
+)

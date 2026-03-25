@@ -13,6 +13,7 @@
 
 // TODO: To be removed once used in IO APIs
 #![allow(dead_code)]
+use crate::macros::log::*;
 
 use core::{
     cell::RefCell,
@@ -23,11 +24,13 @@ use core::{
 };
 use std::sync::{Arc, Mutex};
 
+kyron_foundation::import_score_log!();
+
 use kyron_foundation::{
     cell::UnsafeCell,
     containers::intrusive_linked_list,
     not_recoverable_error,
-    prelude::{debug, error, trace, CommonErrors, FoundationAtomicU32},
+    prelude::{CommonErrors, FoundationAtomicU32, ScoreLogDebug},
 };
 
 use crate::{
@@ -47,11 +50,13 @@ pub(crate) struct AsyncRegistration<S: IoSelector = AsyncSelector> {
 }
 
 impl AsyncRegistration<AsyncSelector> {
-    pub(crate) fn new<T: IoRegistryEntry<AsyncSelector> + core::fmt::Debug>(mio: &mut T) -> Result<Self, CommonErrors> {
+    pub(crate) fn new<T: IoRegistryEntry<AsyncSelector> + core::fmt::Debug + ScoreLogDebug>(
+        mio: &mut T,
+    ) -> Result<Self, CommonErrors> {
         Self::new_with_interest(mio, IoEventInterest::READABLE | IoEventInterest::WRITABLE)
     }
 
-    pub(crate) fn new_with_interest<T: IoRegistryEntry<AsyncSelector> + core::fmt::Debug>(
+    pub(crate) fn new_with_interest<T: IoRegistryEntry<AsyncSelector> + core::fmt::Debug + ScoreLogDebug>(
         mio: &mut T,
         interest: IoEventInterest,
     ) -> Result<Self, CommonErrors> {
@@ -60,7 +65,7 @@ impl AsyncRegistration<AsyncSelector> {
 }
 
 impl<S: IoSelector> AsyncRegistration<S> {
-    pub(crate) fn drop_registration<T: IoRegistryEntry<S> + core::fmt::Debug>(&self, mio: &mut T) {
+    pub(crate) fn drop_registration<T: IoRegistryEntry<S> + core::fmt::Debug + ScoreLogDebug>(&self, mio: &mut T) {
         // Deregister the source from the driver
         self.handle.remove_io_source(mio, &self.inner);
     }
@@ -84,7 +89,7 @@ impl<S: IoSelector> AsyncRegistration<S> {
         self.inner.poll_register_interest(interest, cx).into()
     }
 
-    fn new_internal<T: IoRegistryEntry<S> + core::fmt::Debug>(
+    fn new_internal<T: IoRegistryEntry<S> + core::fmt::Debug + ScoreLogDebug>(
         mio: &mut T,
         interest: IoEventInterest,
         handle: IoDriverHandle<S>,
@@ -452,6 +457,12 @@ impl core::fmt::Debug for ReadinessState {
     }
 }
 
+kyron_foundation::impl_score_debug_for_newtype!(ReadinessState, |x: &ReadinessState| format!(
+    "ReadinessState(s: 0b{:b}, t: {})",
+    x.extract_state(),
+    x.extract_tick()
+));
+
 impl From<ReadinessState> for u32 {
     fn from(value: ReadinessState) -> Self {
         value.0
@@ -484,6 +495,11 @@ impl core::fmt::Debug for TracingId<RegistrationInfo> {
         write!(f, "RegistrationInfo({:p})", self.0)
     }
 }
+
+kyron_foundation::impl_score_debug_for_newtype!(
+    TracingId<RegistrationInfo>,
+    |x: &TracingId<RegistrationInfo>| format!("RegistrationInfo({:p})", x.0)
+);
 
 struct ReadinessFuture<'a, S: IoSelector = AsyncSelector> {
     registration: &'a AsyncRegistration<S>,
@@ -895,8 +911,10 @@ mod tests {
         } // For simplicity, we use the type itself as the proxy
     }
 
-    #[derive(Clone, Debug)]
-    pub struct IoMock {}
+    kyron_foundation::derive_score_debug_for_struct!(
+        #[derive(Clone, Debug)]
+        pub struct IoMock {}
+    );
     impl IoRegistryEntry<AsyncSelectorMock> for IoMock {
         fn register(
             &mut self,

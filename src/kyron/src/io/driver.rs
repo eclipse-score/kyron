@@ -34,6 +34,7 @@
 // TODO: To be removed once used in IO APIs
 #![allow(dead_code)]
 
+use crate::macros::log::*;
 use core::time::Duration;
 use std::sync::{Arc, Mutex};
 
@@ -50,9 +51,14 @@ use crate::{
         types::{IoEvent, IoEventInterest, IoId, IoRegistryEntry, IoSelector},
     },
 };
-use kyron_foundation::prelude::{vector_extension::VectorExtension, *};
-
-use iceoryx2_bb_container::slotmap::{SlotMap, SlotMapKey};
+use kyron_foundation::{
+    containers::*,
+    prelude::{
+        iceoryx2_bb_container::slotmap::{SlotMap, SlotMapKey},
+        vector_extension::VectorExtension,
+        CommonErrors, FoundationAtomicBool, ScoreLogDebug,
+    },
+};
 
 /// Holds MIO object and all parts needed to manage it
 pub struct IoDriver {
@@ -169,7 +175,7 @@ impl<T: IoSelector> IoDriverHandle<T> {
         interest: IoEventInterest,
     ) -> Result<Arc<RegistrationInfo>, CommonErrors>
     where
-        Source: IoRegistryEntry<T> + core::fmt::Debug,
+        Source: IoRegistryEntry<T> + core::fmt::Debug + ScoreLogDebug,
     {
         self.async_registration
             .create_registration_info()
@@ -211,7 +217,7 @@ impl<T: IoSelector> IoDriverHandle<T> {
     /// we ensure that if this source was considered in the poll call it will be still valid until we finish processing
     pub(crate) fn remove_io_source<Source>(&self, source: &mut Source, registration: &Arc<RegistrationInfo>)
     where
-        Source: IoRegistryEntry<T> + core::fmt::Debug,
+        Source: IoRegistryEntry<T> + core::fmt::Debug + ScoreLogDebug,
     {
         match self.registry.deregister(source) {
             Ok(_) => info!("Successfully deregistered IO source ({:?})", source),

@@ -26,6 +26,10 @@ build --tool_java_language_version=17
 build --java_runtime_version=remotejdk_17
 build --tool_java_runtime_version=remotejdk_17
 
+build --@score_baselibs_rust//src/log:safety_level=qm
+build --@score_baselibs//score/json:base_library=nlohmann
+build --@score_logging//score/mw/log/flags:KRemote_Logging=False
+
 test --test_output=errors
 
 # Ferrocene must be common compiler for HOST. To ensure metadata compatibility for proc macro crates!

@@ -15,12 +15,12 @@ use ::core::task::Context;
 use core::time::Duration;
 use std::{rc::Rc, sync::Arc};
 
+use crate::macros::log::*;
 use crate::scheduler::{
     context::ctx_get_drivers, driver::Drivers, scheduler_mt::DedicatedScheduler, waker::create_waker, workers::Thread,
 };
 use kyron_foundation::base::fast_rand::FastRand;
 use kyron_foundation::containers::spmc_queue::BoundProducerConsumer;
-use kyron_foundation::prelude::*;
 use kyron_foundation::threading::thread_wait_barrier::ThreadReadyNotifier;
 
 use crate::scheduler::{
@@ -418,12 +418,13 @@ mod tests {
     // for an example CI run.
     #[cfg(not(miri))]
     fn test_worker_stop() {
+        use crate::macros::log::*;
         use crate::scheduler::driver::Drivers;
         use crate::testing::create_mock_worker_id;
-        use crate::{box_future, AsyncTask, FoundationAtomicBool, TaskRef};
+        use crate::{box_future, AsyncTask, TaskRef};
         use core::sync::atomic;
         use core::time::Duration;
-        use kyron_foundation::prelude::debug;
+        use kyron_foundation::prelude::FoundationAtomicBool;
         use kyron_foundation::threading::thread_wait_barrier::ThreadWaitBarrier;
         use std::sync::Arc;
 

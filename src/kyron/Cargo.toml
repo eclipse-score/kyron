@@ -26,6 +26,7 @@ loom = { version = "0.7", features = ["checkpoint"] }
 kyron-testing.workspace = true
 kyron-testing-macros.workspace = true
 tracing-subscriber.workspace = true
+logging_tracing.workspace = true
 
 [features]
 default = ["iceoryx2-ipc", "tracing"]
@@ -36,7 +37,7 @@ iceoryx2-ipc = ["iceoryx2", "iceoryx2-cal"]
 # For now we enable it always on x86_64, but when you run native Linux you can disable it by this flag
 disable_vm_correction = []
 
-score-log = ["kyron-foundation/score-log"] # Bazel compatibility only
+score-log = ["kyron-foundation/score-log"]
 log = ["kyron-foundation/log"]
 tracing = ["kyron-foundation/tracing"]
 

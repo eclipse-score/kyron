@@ -17,6 +17,7 @@ use super::{iceoryx2, iceoryx2_cal};
 use crate::io::bridgedfd::BridgedFd;
 use crate::io::AsyncSelector;
 use crate::ipc::iceoryx2::EventBuilderAsyncExt;
+use crate::macros::log::*;
 use crate::mio::rawfd::RawFdBridge;
 use crate::mio::types::{IoEventInterest, IoResult};
 use iceoryx2::port::listener::ListenerCreateError;
@@ -26,7 +27,7 @@ use iceoryx2::service;
 use iceoryx2::service::port_factory::listener::PortFactoryListener;
 use iceoryx2_cal::event::ListenerWaitError;
 use kyron_foundation::not_recoverable_error;
-use kyron_foundation::prelude::*;
+use kyron_foundation::prelude::CommonErrors;
 
 impl<Service: service::Service> EventBuilderAsyncExt for PortFactoryListener<'_, Service>
 where
@@ -94,6 +95,7 @@ where
             })
     }
 
+    #[allow(clippy::to_string_in_format_args)] // to_string() is needed to avoid implementing ScoreDebug for simple cases.
     /// Async wait for new [`EventId`]s. Collects all [`EventId`]s that were received and
     /// calls the provided callback is with the [`EventId`] as input argument. This will `await` until callback is called at least once
     pub async fn wait_all<F: FnMut(EventId)>(&self, callback: &mut F) -> Result<(), ListenerWaitError> {
@@ -111,7 +113,7 @@ where
                                 called_at_least_once = true;
                             },
                             Ok(Err(e)) => {
-                                warn!("Error waiting for iceoryx2 event: {}", e);
+                                warn!("Error waiting for iceoryx2 event: {}", e.to_string());
                                 return Ok(Err(e));
                             },
                             // This means all samples are fetched out, we can exit
@@ -133,6 +135,7 @@ where
             })
     }
 
+    #[allow(clippy::to_string_in_format_args)] // to_string() is needed to avoid implementing ScoreDebug for simple cases.
     fn wait_one_internal(&self) -> IoResult<Result<EventId, ListenerWaitError>> {
         loop {
             match self.listener.try_wait_one() {
@@ -150,7 +153,7 @@ where
                     continue;
                 },
                 Err(e) => {
-                    error!("Error waiting for iceoryx2 event: {}", e);
+                    error!("Error waiting for iceoryx2 event: {}", e.to_string());
                     return Ok(Err(e));
                 },
             }

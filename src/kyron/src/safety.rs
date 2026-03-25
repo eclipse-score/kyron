@@ -11,6 +11,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // *******************************************************************************
 
+use crate::macros::log::*;
 use crate::{
     common::types::{box_future, FutureBox, UniqueWorkerId},
     ctx_get_handler,
@@ -19,7 +20,6 @@ use crate::{
 };
 use ::core::future::Future;
 use kyron_foundation::not_recoverable_error;
-use kyron_foundation::prelude::*;
 
 pub type SafetyResult<T, E> = Result<T, E>;
 

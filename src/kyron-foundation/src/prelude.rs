@@ -59,7 +59,24 @@ pub use tracing::{debug, error, info, span, trace, warn, Level};
 pub use log::{debug, error, info, trace, warn, Level};
 
 #[cfg(feature = "score-log")]
-compile_error!("Not ready yet!");
+pub use score_log::{
+    self, debug, error, fatal,
+    fmt::{DebugStruct, DebugTuple, Error, FormatSpec, ScoreDebug, ScoreWrite, Writer},
+    info, log_enabled, trace, warn, Level, ScoreDebug,
+};
+
+// Adapter super trait with blanket implementations to use wherever ScoreDebug is needed.
+// This helps to avoid many cfg conditions and code duplications.
+#[cfg(feature = "score-log")]
+pub trait ScoreLogDebug: ScoreDebug {}
+#[cfg(not(feature = "score-log"))]
+pub trait ScoreLogDebug {}
+
+// Blanket impls
+#[cfg(feature = "score-log")]
+impl<T: ScoreDebug> ScoreLogDebug for T {}
+#[cfg(not(feature = "score-log"))]
+impl<T> ScoreLogDebug for T {}
 
 #[cfg(feature = "log")]
 #[macro_export]
@@ -111,6 +128,7 @@ macro_rules! tracing_adapter {
     };
 }
 
+#[cfg(any(feature = "tracing", feature = "log"))]
 /// Proxy for `trace!` macro, works with `tracing` and `log` features.
 /// `tracing` key-value syntax (`name =? value`) is supported for `log` derived crates.
 /// NOTE: provided variables cannot be interpolated into the message literal directly.

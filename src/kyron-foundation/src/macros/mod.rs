@@ -11,6 +11,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // *******************************************************************************
 
+pub mod log;
+pub mod score_debug;
+
 ///
 /// `not_recoverable_error!` shall be used when the code is in position that it can only abort and there is no sense to return back to user
 /// with the error. After calling this macro, control will never return to the user.
@@ -23,10 +26,10 @@ macro_rules! not_recoverable_error {
     ( on_cond $result_obj:expr, $literal_str:expr ) => {{
         const MSG: &str = $literal_str;
         if !($result_obj) {
-            error!("not_recoverable_error: {} at {}:{}", $literal_str, file!(), line!());
+            error!("not_recoverable_error: {} at {}:{}", MSG, file!(), line!());
             panic!(
                 "Currently no custom handler connected for panic, using rust one. Panicked with {}",
-                $literal_str
+                MSG
             );
         }
     }};
@@ -37,30 +40,31 @@ macro_rules! not_recoverable_error {
         if ($result_obj).is_err() {
             let err = ($result_obj).unwrap_err();
 
-            error!("not_recoverable_error: {} with error {:?}", $literal_str, err);
+            error!("not_recoverable_error: {} with error {:?}", MSG, err);
             panic!(
                 "Currently no custom handler connected for panic, using rust one. Panicked with {} with {:?}",
-                $literal_str, err
+                MSG, err
             );
         }
     }};
     // handles a case where we want to log the object with an error in form not_recoverable_error!(with OBJECT, "MSG");
     ( with $obj_to_log:expr, $literal_str:expr ) => {{
         const MSG: &str = $literal_str;
-        error!("not_recoverable_error: {}. with {:?}", $literal_str, $obj_to_log);
+        let obj_str = format!("{:?}", $obj_to_log);
+        error!("not_recoverable_error: {}. with {:?}", MSG, obj_str);
         panic!(
             "Currently no custom handler connected for panic, using rust one. Panicked with {} with {:?}",
-            $literal_str, $obj_to_log
+            MSG, obj_str
         );
     }};
 
     // handles a simple string literal error not_recoverable_error!("MSG");
     ( $literal_str:expr ) => {{
         const MSG: &str = $literal_str;
-        error!("not_recoverable_error: {}", $literal_str);
+        error!("not_recoverable_error: {}", MSG);
         panic!(
             "Currently no custom handler connected for panic, using rust one. Panicked with {}",
-            $literal_str
+            MSG
         );
     }};
 }

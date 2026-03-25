@@ -13,11 +13,15 @@
 
 use crate::common::types::UniqueWorkerId;
 use crate::io::driver::{IoDriver, IoDriverUnparker};
+use crate::macros::log::*;
 use crate::scheduler::scheduler_mt::AsyncScheduler;
 use crate::scheduler::task::async_task::TaskRef;
 use ::core::ops::Deref;
 use kyron_foundation::containers::spmc_queue::*;
-use kyron_foundation::{not_recoverable_error, prelude::*};
+use kyron_foundation::{
+    not_recoverable_error,
+    prelude::{CommonErrors, FoundationAtomicU8},
+};
 use std::sync::Arc;
 
 use ::core::sync::atomic::Ordering;
@@ -169,7 +173,7 @@ impl ParkerTrait for WorkerInteractor {
 
             // Make sure our state is consistent after we come back from IO wait
             self.move_to_executing(scheduler);
-            debug!("Unparked on IO Driver with result: {:?}", ret);
+            debug!("Unparked on IO Driver with result: {}", &format!("{:?}", ret));
 
             ret
         } else {
@@ -284,6 +288,7 @@ impl WorkerInteractor {
         Ok(())
     }
 
+    #[allow(clippy::to_string_in_format_args)] // to_string() is needed to avoid implementing ScoreDebug for simple cases.
     fn park_on_cv_timeout(
         &self,
         scheduler: &AsyncScheduler,
@@ -303,7 +308,7 @@ impl WorkerInteractor {
         // Call user code if he needs it under specific conditions
         after_park_decision();
 
-        debug!("Parking on CV with timeout {} ms", dur.as_millis());
+        debug!("Parking on CV with timeout {} ms", dur.as_millis().to_string());
 
         let wait_result;
 

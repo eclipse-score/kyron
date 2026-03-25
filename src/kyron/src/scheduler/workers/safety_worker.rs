@@ -14,12 +14,12 @@ use ::core::sync::atomic::Ordering;
 use ::core::task::Context;
 use std::sync::Arc;
 
-use iceoryx2_bb_posix::thread::Thread;
 use kyron_foundation::{
     containers::trigger_queue::TriggerQueue, prelude::vector_extension::VectorExtension,
     threading::thread_wait_barrier::ThreadReadyNotifier,
 };
 
+use crate::macros::log::*;
 use crate::{
     scheduler::{
         context::{ctx_initialize, ContextBuilder},
@@ -30,7 +30,10 @@ use crate::{
     },
     TaskRef,
 };
-use kyron_foundation::prelude::*;
+use kyron_foundation::{
+    containers::*,
+    prelude::{iceoryx2_bb_posix::thread::Thread, CommonErrors, FoundationAtomicBool},
+};
 
 use super::{spawn_thread, worker_types::WorkerId, ThreadParameters};
 

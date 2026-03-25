@@ -11,6 +11,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // *******************************************************************************
 
+use crate::macros::log::*;
 use crate::mio::{
     registry::Registry,
     types::{
@@ -18,8 +19,11 @@ use crate::mio::{
     },
 };
 use core::time::Duration;
-use iceoryx2_bb_container::flatmap::FlatMap;
-use kyron_foundation::{containers::vector_extension::VectorExtension, not_recoverable_error, prelude::*};
+use kyron_foundation::{
+    not_recoverable_error,
+    prelude::{iceoryx2_bb_container::flatmap::FlatMap, CommonErrors, FoundationAtomicUsize, FoundationOrdering},
+    {containers::vector_extension::VectorExtension, containers::*},
+};
 use libc::{
     close, fcntl, pipe, poll, pollfd, read, write, EAGAIN, EINTR, FD_CLOEXEC, F_SETFD, F_SETFL, O_CLOEXEC, O_NONBLOCK,
     POLLERR, POLLHUP, POLLIN, POLLOUT, POLLPRI,

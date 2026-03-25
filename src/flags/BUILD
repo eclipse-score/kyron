@@ -11,7 +11,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 
-load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
+load("@bazel_skylib//rules:common_settings.bzl", "bool_flag", "string_flag")
 
 bool_flag(
     name = "k_runtime_disable_time_correction",
@@ -40,4 +40,32 @@ config_setting(
         ":k_enable_ipc": "True",
     },
     visibility = ["//visibility:public"],
+)
+
+# To select logging feature
+string_flag(
+    name = "logging_feature",
+    build_setting_default = "tracing",
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "logging_feature_tracing",
+    flag_values = {
+        ":logging_feature": "tracing",
+    },
+)
+
+config_setting(
+    name = "logging_feature_log",
+    flag_values = {
+        ":logging_feature": "log",
+    },
+)
+
+config_setting(
+    name = "logging_feature_score_log",
+    flag_values = {
+        ":logging_feature": "score-log",
+    },
 )

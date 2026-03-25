@@ -63,6 +63,21 @@ Shows how to use Kyron's safety-critical features, including:
 
 **Key concepts:** Safety-critical tasks, dedicated workers, task context, failure handling
 
+### logging.rs
+
+Demontrates how to use the Kyron's logging framework (liblogging_tracing), which supports logging through tracing/log/score-log loggers.
+
+The example application can be built as folows,
+
+`bazel build --config=x86_64-linux --//src/flags:logging_feature=<feature> //examples:logging`
+
+where `<feature>` is tracing/log/score-log. The default feature is `tracing`.
+
+For example with score-log, copy the `../src/kyron/examples/config/logging.json` to where executable is present and then execute `logging` application.
+Alternatively, the configuration file path can be specified in the source code using `config_path()` function of `LogAndTraceBuilder`.
+
+**Key concepts:** Logging using Kyron's logging framework
+
 ## Runtime Configuration
 
 Most examples demonstrate different runtime configurations:

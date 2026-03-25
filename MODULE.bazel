@@ -40,6 +40,27 @@ bazel_dep(name = "score_rust_policies", version = "0.0.3")
 bazel_dep(name = "score_process", version = "1.4.3", dev_dependency = True)
 bazel_dep(name = "score_platform", version = "0.5.3", dev_dependency = True)  # This is main score repo
 
+# S-CORE log dependencies
+bazel_dep(name = "score_baselibs", version = "0.2.4")
+
+# TODO: remove git_override and specify correct version for next release.
+bazel_dep(name = "score_baselibs_rust", version = "0.0.0")
+git_override(
+    module_name = "score_baselibs_rust",
+    commit = "7227b67c45dff719901d8f3763d5a37fb55aa0ad",
+    remote = "https://github.com/eclipse-score/baselibs_rust.git",
+)
+
+bazel_dep(name = "score_logging", version = "0.1.0")
+
+# TODO: remove once inherited properly from `score_logging`.
+bazel_dep(name = "trlc", version = "0.0.0", dev_dependency = True)
+git_override(
+    module_name = "trlc",
+    commit = "650b51a47264a4f232b3341f473527710fc32669",  # trlc-2.0.2 release
+    remote = "https://github.com/bmw-software-engineering/trlc.git",
+)
+
 # Toolchains and extensions
 bazel_dep(name = "score_bazel_cpp_toolchains", version = "0.2.2", dev_dependency = True)
 bazel_dep(name = "score_toolchains_rust", version = "0.4.0", dev_dependency = True)

@@ -36,6 +36,11 @@ where
     }
 }
 
+kyron_foundation::impl_score_debug_for_type_t!(RawFdBridge<T>, IoSelector, |x: &RawFdBridge<T>| format!(
+    "RawFdBridge<fd: {:?}>",
+    x.inner.as_inner().as_raw_fd()
+));
+
 impl<T: IoSelector> RawFdBridge<T> {
     ///
     /// Takes ownership of given RawFd to use it as IoSource in mio based selector.

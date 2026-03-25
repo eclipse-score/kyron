@@ -1,0 +1,7 @@
+{
+    "appId": "EXAM",
+    "appDesc": "Example application for logging",
+    "logMode": "kConsole",
+    "logLevel": "kVerbose",
+    "logLevelThresholdConsole": "kDebug"
+}

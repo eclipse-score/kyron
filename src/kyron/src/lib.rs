@@ -45,8 +45,9 @@ use ::core::future::Future;
 use common::types::{box_future, FutureBox};
 
 use crate::common::types::UniqueWorkerId;
+use crate::macros::log::*;
 use futures::reusable_box_future::ReusableBoxFuture;
-use kyron_foundation::{not_recoverable_error, prelude::*};
+use kyron_foundation::not_recoverable_error;
 use scheduler::{
     context::ctx_get_handler,
     task::async_task::{AsyncTask, TaskRef},

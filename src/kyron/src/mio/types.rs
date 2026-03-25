@@ -27,9 +27,12 @@ pub type IoResult<T> = core::result::Result<T, std::io::Error>;
 /// The return type for non IO API
 pub type Result<T> = core::result::Result<T, CommonErrors>;
 
-/// A unique identifier for an I/O resource.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct IoId(u64);
+kyron_foundation::import_score_log!();
+kyron_foundation::derive_score_debug_for_struct!(
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+    /// A unique identifier for an I/O resource.
+    pub struct IoId(u64);
+);
 
 impl IoId {
     /// Create an `Id`.
@@ -83,11 +86,13 @@ pub trait IoSelectorEventContainer {
     fn capacity(&self) -> usize;
 }
 
-/// Describes the interest in I/O operations on a file.
-///
-///Bit-wise operations can be used to combine interests.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub struct IoEventInterest(pub(crate) u8);
+kyron_foundation::derive_score_debug_for_struct!(
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+    /// Describes the interest in I/O operations on a file.
+    ///
+    ///Bit-wise operations can be used to combine interests.
+    pub struct IoEventInterest(pub(crate) u8);
+);
 
 impl IoEventInterest {
     /// Describes interest in read operations on a file.

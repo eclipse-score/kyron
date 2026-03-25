@@ -37,6 +37,11 @@ where
     }
 }
 
+kyron_foundation::impl_score_debug_for_type_t!(TcpStreamBridge<T>, IoSelector, |x: &TcpStreamBridge<T>| format!(
+    "TcpStreamBridge<fd: {:?}>",
+    x.inner.as_inner().as_raw_fd()
+));
+
 impl<T: IoSelector> TcpStreamBridge<T> {
     pub(crate) fn new(s: std::net::TcpStream) -> IoResult<Self> {
         s.set_nonblocking(true)?;

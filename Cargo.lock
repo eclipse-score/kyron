@@ -871,6 +871,7 @@ dependencies = [
  "kyron-testing",
  "kyron-testing-macros",
  "libc",
+ "logging_tracing",
  "loom",
  "tracing-subscriber",
 ]
@@ -893,6 +894,7 @@ dependencies = [
  "kyron-testing",
  "log",
  "loom",
+ "score_log",
  "tracing",
 ]
 
@@ -979,6 +981,8 @@ dependencies = [
  "env_logger",
  "iceoryx2",
  "kyron-foundation",
+ "score_log",
+ "stdout_logger",
  "tracing",
  "tracing-appender",
  "tracing-perfetto-sdk-layer",
@@ -1313,6 +1317,31 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
+name = "score_log"
+version = "0.0.1"
+source = "git+https://github.com/eclipse-score/baselibs_rust.git?rev=7227b67c45dff719901d8f3763d5a37fb55aa0ad#7227b67c45dff719901d8f3763d5a37fb55aa0ad"
+dependencies = [
+ "score_log_fmt",
+ "score_log_fmt_macro",
+]
+
+[[package]]
+name = "score_log_fmt"
+version = "0.0.1"
+source = "git+https://github.com/eclipse-score/baselibs_rust.git?rev=7227b67c45dff719901d8f3763d5a37fb55aa0ad#7227b67c45dff719901d8f3763d5a37fb55aa0ad"
+
+[[package]]
+name = "score_log_fmt_macro"
+version = "0.0.1"
+source = "git+https://github.com/eclipse-score/baselibs_rust.git?rev=7227b67c45dff719901d8f3763d5a37fb55aa0ad#7227b67c45dff719901d8f3763d5a37fb55aa0ad"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "score_log_fmt",
+ "syn",
+]
+
+[[package]]
 name = "scratch"
 version = "1.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1402,6 +1431,14 @@ name = "smallvec"
 version = "1.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "67b1b7a3b5fe4f1376887184045fcf45c69e92af734b7aaddc05fb777b6fbd03"
+
+[[package]]
+name = "stdout_logger"
+version = "0.0.1"
+source = "git+https://github.com/eclipse-score/baselibs_rust.git?rev=7227b67c45dff719901d8f3763d5a37fb55aa0ad#7227b67c45dff719901d8f3763d5a37fb55aa0ad"
+dependencies = [
+ "score_log",
+]
 
 [[package]]
 name = "strsim"

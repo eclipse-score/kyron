@@ -11,20 +11,23 @@
 // SPDX-License-Identifier: Apache-2.0
 // *******************************************************************************
 
-#[derive(Copy, Clone, Debug, PartialEq)]
-pub enum CommonErrors {
-    NoData,
-    AlreadyDone,
-    GenericError,
-    OperationAborted,
-    Panicked, // panic! was handled
-    Timeout,
-    NoSpaceLeft,
-    NotFound,
-    WrongArgs,
-    AlreadyExists,
-    NotSupported,
-}
+crate::import_score_log!();
+crate::derive_score_debug_for_enum!(
+    #[derive(Copy, Clone, Debug, PartialEq)]
+    pub enum CommonErrors {
+        NoData,
+        AlreadyDone,
+        GenericError,
+        OperationAborted,
+        Panicked, // panic! was handled
+        Timeout,
+        NoSpaceLeft,
+        NotFound,
+        WrongArgs,
+        AlreadyExists,
+        NotSupported,
+    }
+);
 
 impl From<CommonErrors> for std::io::Error {
     fn from(err: CommonErrors) -> Self {

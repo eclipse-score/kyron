@@ -20,8 +20,6 @@ use std::{
     os::fd::AsRawFd,
 };
 
-use kyron_foundation::prelude::info;
-
 use crate::{
     impl_io_source_proxy,
     mio::types::{IoCall, IoResult, IoSelector},
@@ -39,6 +37,11 @@ where
         write!(f, "UdpSocketBridge<fd: {:?}>", self.inner.as_inner().as_raw_fd())
     }
 }
+
+kyron_foundation::impl_score_debug_for_type_t!(UdpSocketBridge<T>, IoSelector, |x: &UdpSocketBridge<T>| format!(
+    "UdpSocketBridge<fd: {:?}>",
+    x.inner.as_inner().as_raw_fd()
+));
 
 impl<T: IoSelector> UdpSocketBridge<T> {
     pub fn bind(addr: SocketAddr) -> IoResult<UdpSocketBridge<T>> {

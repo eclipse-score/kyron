@@ -41,8 +41,11 @@ kyron-testing = { path = "src/kyron-testing" }
 
 logging_tracing = { path = "src/logging_tracing", default-features = false }
 xtask = { path = "src/xtask" }
-
-
+# TODO: rev shall be replaced with tag for next release for score_log and stdout_logger.
+score_log = { git = "https://github.com/eclipse-score/baselibs_rust.git", rev = "7227b67c45dff719901d8f3763d5a37fb55aa0ad", features = [
+    "qm",
+] }
+stdout_logger = { git = "https://github.com/eclipse-score/baselibs_rust.git", rev = "7227b67c45dff719901d8f3763d5a37fb55aa0ad" }
 iceoryx2 = { git = "https://github.com/eclipse-iceoryx/iceoryx2.git", rev = "d3d1c9a727d3dc405733081923be5dba8213d6d8", default-features = false }
 iceoryx2-cal = { git = "https://github.com/eclipse-iceoryx/iceoryx2.git", rev = "d3d1c9a727d3dc405733081923be5dba8213d6d8" }
 iceoryx2-bb-container = { git = "https://github.com/eclipse-iceoryx/iceoryx2.git", rev = "d3d1c9a727d3dc405733081923be5dba8213d6d8" }

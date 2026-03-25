@@ -31,6 +31,7 @@ _KYRON_DEPS = (
 
 _EXAMPLE_DEPS = _COMMON_DEPS + [
     ":libkyron",
+    "//src/logging_tracing:liblogging_tracing",
     "@score_crates//:tracing_subscriber",
 ]
 
@@ -40,9 +41,19 @@ rust_library(
     crate_features = selects.with_or({
         "//src/flags:runtime_disable_time_correction": ["disable_vm_correction"],
         "//src/flags:enable_ipc": ["iceoryx2-ipc"],
+    }) + select({
+        "//src/flags:logging_feature_tracing": [
+            "tracing",
+        ],
+        "//src/flags:logging_feature_log": [
+            "log",
+        ],
+        "//src/flags:logging_feature_score_log": [
+            "score-log",
+        ],
+        "//conditions:default": [],
     }) + [
         "bazel_build_iceoryx2_qnx8",
-        "tracing",
     ],
     crate_name = "kyron",
     proc_macro_deps = [
@@ -56,9 +67,19 @@ rust_library(
     name = "libkyron_mocked",
     testonly = True,
     srcs = glob(["src/**/*.rs"]),
-    crate_features = [
+    crate_features = select({
+        "//src/flags:logging_feature_tracing": [
+            "tracing",
+        ],
+        "//src/flags:logging_feature_log": [
+            "log",
+        ],
+        "//src/flags:logging_feature_score_log": [
+            "score-log",
+        ],
+        "//conditions:default": [],
+    }) + [
         "runtime-api-mock",
-        "tracing",
     ],
     crate_name = "kyron",
     proc_macro_deps = [
@@ -119,6 +140,30 @@ rust_binary(
     srcs = [
         "examples/safety_task.rs",
     ],
+    proc_macro_deps = [
+        "//src/kyron-macros:runtime_macros",
+    ],
+    visibility = ["//visibility:public"],
+    deps = _EXAMPLE_DEPS,
+)
+
+rust_binary(
+    name = "logging",
+    srcs = [
+        "examples/logging.rs",
+    ],
+    crate_features = select({
+        "//src/flags:logging_feature_tracing": [
+            "tracing",
+        ],
+        "//src/flags:logging_feature_log": [
+            "log",
+        ],
+        "//src/flags:logging_feature_score_log": [
+            "score-log",
+        ],
+        "//conditions:default": [],
+    }),
     proc_macro_deps = [
         "//src/kyron-macros:runtime_macros",
     ],

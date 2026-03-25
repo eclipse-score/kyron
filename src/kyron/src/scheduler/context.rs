@@ -14,6 +14,7 @@
 use crate::common::types::BoxCustom;
 use crate::common::types::FutureBox;
 use crate::futures::reusable_box_future::ReusableBoxFuture;
+use crate::macros::log::*;
 use crate::safety::SafetyResult;
 use crate::scheduler::driver::Drivers;
 use ::core::future::Future;
@@ -21,7 +22,6 @@ use core::cell::Cell;
 use core::cell::RefCell;
 use kyron_foundation::containers::spmc_queue::BoundProducerConsumer;
 use kyron_foundation::not_recoverable_error;
-use kyron_foundation::prelude::error;
 
 use ::core::pin::Pin;
 use std::{rc::Rc, sync::Arc};

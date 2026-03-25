@@ -12,7 +12,8 @@
 // *******************************************************************************
 use core::task::{ready, Context, Poll};
 
-use kyron_foundation::prelude::{error, CommonErrors};
+use crate::macros::log::*;
+use kyron_foundation::prelude::{CommonErrors, ScoreLogDebug};
 
 use crate::{
     io::{
@@ -29,12 +30,12 @@ use std::io::{Error, ErrorKind};
 /// This is a basic building block for async IO operations in implementations like networking part.
 /// User shall only need to use this type to get async IO operations on top of MIO objects. All other work is done by
 /// the internals of this type.
-pub struct BridgedFd<T: IoRegistryEntry<AsyncSelector> + core::fmt::Debug> {
+pub struct BridgedFd<T: IoRegistryEntry<AsyncSelector> + core::fmt::Debug + ScoreLogDebug> {
     pub(crate) mio_object: T,
     registration: AsyncRegistration,
 }
 
-impl<T: IoRegistryEntry<AsyncSelector> + core::fmt::Debug> BridgedFd<T> {
+impl<T: IoRegistryEntry<AsyncSelector> + core::fmt::Debug + ScoreLogDebug> BridgedFd<T> {
     /// Creates MIO <-> async bridge for the given MIO object with READABLE and WRITABLE interests.
     pub fn new(mut mio_object: T) -> Result<Self, CommonErrors> {
         let registration = AsyncRegistration::new(&mut mio_object)?;
@@ -62,6 +63,7 @@ impl<T: IoRegistryEntry<AsyncSelector> + core::fmt::Debug> BridgedFd<T> {
             .map_err(|e| e.into())
     }
 
+    #[allow(clippy::to_string_in_format_args)] // to_string() is needed to avoid implementing ScoreDebug for simple cases.
     /// This bring ability to conduct synchronous, non blocking IO calls from upper layers with async behavior.
     ///
     /// # Notes
@@ -83,13 +85,14 @@ impl<T: IoRegistryEntry<AsyncSelector> + core::fmt::Debug> BridgedFd<T> {
                     continue;
                 },
                 Err(e) => {
-                    error!("Error reading from mio object via async: {}", e);
+                    error!("Error reading from mio object via async: {}", e.to_string());
                     return Err(e);
                 },
             }
         }
     }
 
+    #[allow(clippy::to_string_in_format_args)] // to_string() is needed to avoid implementing ScoreDebug for simple cases.
     /// Synchronous read operation that will read data into the provided `buf` which will register waker so the current task is waken when IO is ready.
     /// This is future compatible API to be used from Futures. This is also main API that powers AsyncRead trait implementation and it's derivatives
     pub fn poll_read(&mut self, cx: &mut Context<'_>, buf: &mut ReadBuf<'_>) -> Poll<Result<(), Error>>
@@ -124,13 +127,14 @@ impl<T: IoRegistryEntry<AsyncSelector> + core::fmt::Debug> BridgedFd<T> {
                     self.registration.clear_readiness(readiness, IoEventInterest::READABLE);
                 },
                 Err(e) => {
-                    error!("Error reading from mio object: {}", e);
+                    error!("Error reading from mio object: {}", e.to_string());
                     return Poll::Ready(Err(e));
                 },
             }
         }
     }
 
+    #[allow(clippy::to_string_in_format_args)] // to_string() is needed to avoid implementing ScoreDebug for simple cases.
     /// Synchronous write operation that will write data from the provided `buf` which will register waker so the current task is waken when IO is ready.
     /// This is future compatible API to be used from Futures. This is also main API that powers AsyncWrite trait implementation and it's derivatives
     ///
@@ -154,7 +158,7 @@ impl<T: IoRegistryEntry<AsyncSelector> + core::fmt::Debug> BridgedFd<T> {
                     self.registration.clear_readiness(readiness, IoEventInterest::WRITABLE);
                 },
                 Err(e) => {
-                    error!("Error writing using mio object: {}", e);
+                    error!("Error writing using mio object: {}", e.to_string());
                     return Poll::Ready(Err(e));
                 },
             }
@@ -162,7 +166,7 @@ impl<T: IoRegistryEntry<AsyncSelector> + core::fmt::Debug> BridgedFd<T> {
     }
 }
 
-impl<T: IoRegistryEntry<AsyncSelector> + core::fmt::Debug> Deref for BridgedFd<T> {
+impl<T: IoRegistryEntry<AsyncSelector> + core::fmt::Debug + ScoreLogDebug> Deref for BridgedFd<T> {
     type Target = T;
 
     fn deref(&self) -> &Self::Target {
@@ -170,13 +174,13 @@ impl<T: IoRegistryEntry<AsyncSelector> + core::fmt::Debug> Deref for BridgedFd<T
     }
 }
 
-impl<T: IoRegistryEntry<AsyncSelector> + core::fmt::Debug> DerefMut for BridgedFd<T> {
+impl<T: IoRegistryEntry<AsyncSelector> + core::fmt::Debug + ScoreLogDebug> DerefMut for BridgedFd<T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.mio_object
     }
 }
 
-impl<T: IoRegistryEntry<AsyncSelector> + core::fmt::Debug> Drop for BridgedFd<T> {
+impl<T: IoRegistryEntry<AsyncSelector> + core::fmt::Debug + ScoreLogDebug> Drop for BridgedFd<T> {
     fn drop(&mut self) {
         // Deregister the source from the driver
         self.registration.drop_registration(&mut self.mio_object);
