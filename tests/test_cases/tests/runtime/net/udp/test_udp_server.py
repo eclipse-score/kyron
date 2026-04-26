@@ -61,11 +61,13 @@ class TestUdpServer(CitRuntimeScenario):
 
     def test_multiple_client_send_receive(self, connection_params: dict[str, Any], executable: Executable) -> None:
         executable.wait_for_log(
-            lambda log_container: log_container.find_log(
-                "message",
-                pattern=f"UDP server listener running on {connection_params['ip']}:{connection_params['port']}",
+            lambda log_container: (
+                log_container.find_log(
+                    "message",
+                    pattern=f"UDP server listener running on {connection_params['ip']}:{connection_params['port']}",
+                )
+                is not None
             )
-            is not None
         )
 
         address = Address.from_dict(connection_params)

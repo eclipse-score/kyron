@@ -32,11 +32,13 @@ def udp_client(connection_params: dict[str, Any], executable: Executable):
     """
 
     executable.wait_for_log(
-        lambda log_container: log_container.find_log(
-            "message",
-            pattern=f"UDP server listener running on {connection_params['ip']}:{connection_params['port']}",
+        lambda log_container: (
+            log_container.find_log(
+                "message",
+                pattern=f"UDP server listener running on {connection_params['ip']}:{connection_params['port']}",
+            )
+            is not None
         )
-        is not None
     )
 
     return socket(Address.from_dict(connection_params).family(), SOCK_DGRAM)
