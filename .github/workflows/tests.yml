@@ -56,3 +56,8 @@ jobs:
         run: |
           echo "Running: bazel test --lockfile_mode=error --config x86_64-linux //src/..."
           bazel test --lockfile_mode=error --config x86_64-linux //src/...
+
+      - name: Run Miri Tests via Bazel
+        run: |
+          echo "Running: bazel test --lockfile_mode=error --config x86_64-linux //:miri_tests --test_output=errors"
+          bazel test --lockfile_mode=error --config x86_64-linux //:miri_tests --test_output=errors

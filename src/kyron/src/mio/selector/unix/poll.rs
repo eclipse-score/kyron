@@ -227,6 +227,10 @@ struct InternalWaker {
 }
 
 impl InternalWaker {
+    fn running_under_miri() -> bool {
+        cfg!(miri) || std::env::var_os("RULES_RUST_MIRI").is_some()
+    }
+
     /// Wrapper around pipe to provide functionality similar to pipe2 since it is not available on QNX.
     /// This creates a pipe and then sets the flags manually. The supported flags are O_NONBLOCK and O_CLOEXEC.
     fn pipe_with_flags(fds: &mut [RawFd; 2], flags: i32) -> i32 {
@@ -244,7 +248,10 @@ impl InternalWaker {
                     }
                 }
             }
-            if (flags & O_CLOEXEC) != 0 {
+            if (flags & O_CLOEXEC) != 0 && !Self::running_under_miri() {
+                // Miri does not emulate `fcntl(F_SETFD, FD_CLOEXEC)`. Skipping
+                // close-on-exec is acceptable for interpreted runs because we
+                // are not validating fd inheritance across `exec`.
                 unsafe {
                     if fcntl(*fd, F_SETFD, FD_CLOEXEC) == -1 {
                         close(fds[0]);
