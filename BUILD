@@ -122,3 +122,13 @@ test_suite(
         "//tests/test_cases:cit",
     ],
 )
+
+test_suite(
+    name = "miri_tests",
+    testonly = True,
+    tests = [
+        "//src/kyron:tests_miri",
+        "//src/kyron-foundation:tests_miri",
+        "//src/kyron-testing:tests_miri",
+    ],
+)

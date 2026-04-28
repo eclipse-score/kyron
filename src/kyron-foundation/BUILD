@@ -10,7 +10,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
-load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
+load("@rules_rust//rust:defs.bzl", "miri_test", "rust_library", "rust_test")
 
 rust_library(
     name = "libkyron_foundation",
@@ -47,4 +47,26 @@ rust_test(
         "bazel_build_iceoryx2_qnx8",
         "tracing",
     ],
+)
+
+miri_test(
+    name = "tests_miri",
+    crate = ":tests",
+    miri_args = [
+        "--skip",
+        "test_mt_one_pop_one_stealer",
+        "--skip",
+        "test_mt_one_push_mpmc_one_stealer",
+        "--skip",
+        "test_one_producer_multi_stealer_mt_thread",
+        "--skip",
+        "test_one_producer_one_stealer_mt_thread",
+    ],
+    miri_flags = [
+        "-Zmiri-disable-isolation",
+        '--cfg=feature="bazel_build_iceoryx2_qnx8"',
+        '--cfg=feature="tracing"',
+    ],
+    tags = ["manual"],
+    visibility = ["//visibility:public"],
 )
