@@ -31,11 +31,13 @@ def client_connection(connection_params: dict[str, Any], executable: Executable)
     """
 
     executable.wait_for_log(
-        lambda log_container: log_container.find_log(
-            "message",
-            pattern=f"TCP server listening on {connection_params['ip']}:{connection_params['port']}",
+        lambda log_container: (
+            log_container.find_log(
+                "message",
+                pattern=f"TCP server listening on {connection_params['ip']}:{connection_params['port']}",
+            )
+            is not None
         )
-        is not None
     )
 
     s = create_connection(Address.from_dict(connection_params), timeout=3.0)

@@ -19,35 +19,24 @@ module(
 # Bazel global rules
 bazel_dep(name = "rules_python", version = "1.4.1")
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
-bazel_dep(name = "rules_rust", version = "0.61.0")
-git_override(
-    module_name = "rules_rust",
-    commit = "d655071dfc8783bbdad4e27db349abd221ba170c",
-    remote = "https://github.com/pawelrutkaq/rules_rust.git",  # To be fixed once rule_rust is in score bazel registry
-)
-
+bazel_dep(name = "rules_rust", version = "0.68.1-score")
 bazel_dep(name = "rules_cc", version = "0.1.1")
 bazel_dep(name = "aspect_rules_lint", version = "1.0.3")
 bazel_dep(name = "buildifier_prebuilt", version = "7.3.1")
 bazel_dep(name = "platforms", version = "1.0.0")
 
 # S-CORE process rules
-bazel_dep(name = "score_bazel_platforms", version = "0.0.4")
-bazel_dep(name = "score_docs_as_code", version = "4.0.1")
-bazel_dep(name = "score_tooling", version = "1.1.0")
+bazel_dep(name = "score_bazel_platforms", version = "0.1.2")
+bazel_dep(name = "score_docs_as_code", version = "4.0.3")
+bazel_dep(name = "score_tooling", version = "1.1.2")
 bazel_dep(name = "score_rust_policies", version = "0.0.3")
 
-bazel_dep(name = "score_process", version = "1.4.3", dev_dependency = True)
-bazel_dep(name = "score_platform", version = "0.5.3", dev_dependency = True)  # This is main score repo
-git_override(
-    module_name = "score_platform",
-    commit = "5b8a1e34c417384d919bb8c08d32213896ffe5aa",
-    remote = "https://github.com/eclipse-score/score.git",
-)
+bazel_dep(name = "score_process", version = "1.5.4", dev_dependency = True)
+bazel_dep(name = "score_platform", version = "0.5.5", dev_dependency = True)  # This is main score repo
 
 # Toolchains and extensions
-bazel_dep(name = "score_bazel_cpp_toolchains", version = "0.2.2", dev_dependency = True)
-bazel_dep(name = "score_toolchains_rust", version = "0.4.0", dev_dependency = True)
+bazel_dep(name = "score_bazel_cpp_toolchains", version = "0.5.1", dev_dependency = True)
+bazel_dep(name = "score_toolchains_rust", version = "0.8.0", dev_dependency = True)
 
 # Others
 bazel_dep(name = "score_test_scenarios", version = "0.3.1", dev_dependency = True)

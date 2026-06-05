@@ -42,11 +42,13 @@ class TestTcpServer(CitRuntimeScenario):
 
     def test_multiple_connections(self, connection_params: dict[str, Any], executable: Executable) -> None:
         executable.wait_for_log(
-            lambda log_container: log_container.find_log(
-                "message",
-                pattern=f"TCP server listening on {connection_params['ip']}:{connection_params['port']}",
+            lambda log_container: (
+                log_container.find_log(
+                    "message",
+                    pattern=f"TCP server listening on {connection_params['ip']}:{connection_params['port']}",
+                )
+                is not None
             )
-            is not None
         )
 
         address = Address.from_dict(connection_params)
@@ -75,8 +77,9 @@ class TestTcpServer(CitRuntimeScenario):
         message = b"Let's check External Traits!"
         client_connection.sendall(message)
         executable.wait_for_log(
-            lambda log_container: log_container.find_log(field="message", pattern=f"Written {len(message)} bytes")
-            is not None
+            lambda log_container: (
+                log_container.find_log(field="message", pattern=f"Written {len(message)} bytes") is not None
+            )
         )
         logs = executable.get_stdout_until_now()
         assert logs.find_log(field="message", pattern=f"Read {len(message)} bytes") is not None
@@ -104,11 +107,13 @@ class TestTcpNoResponseServer(CitRuntimeScenario):
         message = b"Sending a message, out"
         client_connection.sendall(message)
         executable.wait_for_log(
-            lambda log_container: log_container.find_log(
-                "message_read",
-                pattern=message.decode(),
+            lambda log_container: (
+                log_container.find_log(
+                    "message_read",
+                    pattern=message.decode(),
+                )
+                is not None
             )
-            is not None
         )
         logs = executable.get_stdout_until_now()
         assert logs.find_log(field="message_read", pattern=message.decode()) is not None
@@ -140,8 +145,9 @@ class TestTcpPollWriteServer(CitRuntimeScenario):
         message = b"Let's check poll methods!"
         client_connection.sendall(message)
         executable.wait_for_log(
-            lambda log_container: log_container.find_log(field="message", pattern=f"Written {len(message)} bytes")
-            is not None
+            lambda log_container: (
+                log_container.find_log(field="message", pattern=f"Written {len(message)} bytes") is not None
+            )
         )
         logs = executable.get_stdout_until_now()
         assert logs.find_log(field="message", pattern=f"Read {len(message)} bytes") is not None
