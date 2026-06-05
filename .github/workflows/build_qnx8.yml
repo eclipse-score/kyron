@@ -28,6 +28,7 @@ jobs:
         config: ['arm64-qnx', 'x86_64-qnx']
     with:
       bazel-target: '//src/...'
+      bazel-test-target: '//src/...'
       bazel-config: ${{ matrix.config }}
       extra-bazel-flags: '--lockfile_mode=error'
       credential-helper: 'scripts/internal/qnx_creds.py'

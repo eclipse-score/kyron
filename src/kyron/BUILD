@@ -12,6 +12,7 @@
 # *******************************************************************************
 load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_library", "rust_test")
+load("@score_qnx_unit_tests//:defs.bzl", "rust_test_qnx")
 
 _COMMON_DEPS = [
     "//src/kyron-foundation:libkyron_foundation",
@@ -75,6 +76,11 @@ rust_test(
         "//src/kyron:libkyron",
         "//src/kyron-testing:test_utils",
     ] + _COMMON_DEPS,
+)
+
+rust_test_qnx(
+    name = "tests_qnx",
+    rust_test = ":tests",
 )
 
 # Examples binaries

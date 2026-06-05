@@ -11,6 +11,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 load("@rules_rust//rust:defs.bzl", "rust_library", "rust_test")
+load("@score_qnx_unit_tests//:defs.bzl", "rust_test_qnx")
 
 rust_library(
     name = "test_utils",
@@ -26,4 +27,9 @@ rust_library(
 rust_test(
     name = "tests",
     crate = ":test_utils",
+)
+
+rust_test_qnx(
+    name = "tests_qnx",
+    rust_test = ":tests",
 )
