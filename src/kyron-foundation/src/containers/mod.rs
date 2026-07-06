@@ -20,7 +20,7 @@ pub mod reusable_vec_pool;
 pub mod spmc_queue;
 pub mod trigger_queue;
 pub mod vector_extension;
-use crate::prelude::*;
+use crate::prelude::{iceoryx2_bb_container, iceoryx2_bb_memory};
 pub use iceoryx2_bb_container::vector::*;
 
 pub type Vec<T> =

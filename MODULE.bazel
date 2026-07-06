@@ -27,7 +27,7 @@ bazel_dep(name = "platforms", version = "1.0.0")
 
 # S-CORE process rules
 bazel_dep(name = "score_bazel_platforms", version = "0.1.2")
-bazel_dep(name = "score_docs_as_code", version = "4.0.3")
+bazel_dep(name = "score_docs_as_code", version = "4.6.0")
 bazel_dep(name = "score_tooling", version = "1.1.2")
 bazel_dep(name = "score_rust_policies", version = "0.0.3")
 
@@ -35,7 +35,7 @@ bazel_dep(name = "score_process", version = "1.5.4", dev_dependency = True)
 bazel_dep(name = "score_platform", version = "0.5.5", dev_dependency = True)  # This is main score repo
 
 # Toolchains and extensions
-bazel_dep(name = "score_bazel_cpp_toolchains", version = "0.5.1", dev_dependency = True)
+bazel_dep(name = "score_bazel_cpp_toolchains", version = "0.5.4", dev_dependency = True)
 bazel_dep(name = "score_toolchains_rust", version = "0.8.0", dev_dependency = True)
 
 # Others
@@ -58,7 +58,7 @@ gcc.toolchain(
 )
 gcc.toolchain(
     name = "score_qcc_x86_64_toolchain",
-    sdp_version = "8.0.0",
+    sdp_version = "8.0.4",
     target_cpu = "x86_64",
     target_os = "qnx",
     use_default_package = True,
@@ -66,7 +66,7 @@ gcc.toolchain(
 )
 gcc.toolchain(
     name = "score_qcc_aarch64_toolchain",
-    sdp_version = "8.0.0",
+    sdp_version = "8.0.4",
     target_cpu = "aarch64",
     target_os = "qnx",
     use_default_package = True,
@@ -114,4 +114,9 @@ archive_override(
 )
 
 # S-CORE crates
-bazel_dep(name = "score_crates", version = "0.0.7")
+bazel_dep(name = "score_crates", version = "0.0.10")
+
+single_version_override(
+    module_name = "grpc-java",
+    version = "1.82.0",
+)

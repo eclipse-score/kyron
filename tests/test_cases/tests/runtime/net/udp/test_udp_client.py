@@ -113,7 +113,7 @@ class UdpClientBase(CitScenario):
             "client_type": client_type,
         }
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture(scope="class", autouse=True)
     def udp_server_echo(self, address: Address, test_config: dict[str, Any]) -> Generator[UdpServer, None, None]:
         # test_config required to restart the server for each test param
         with UdpServerEcho(address) as server:
@@ -125,8 +125,11 @@ class TestUdpClient(UdpClientBase):
     def scenario_name(self) -> str:
         return "runtime.net.udp.client.log_response"
 
+    @pytest.fixture(scope="class")
+    def server_ready(self, udp_server_echo: UdpServer) -> None:
+        return None
+
     def test_send_receive(self, message: str, udp_server_echo: UdpServer, logs_info_level: LogContainer) -> None:
-        # udp_server_echo must be before logs_info_level to ensure server is running before client sends message
         log = logs_info_level.find_log("received_message")
         assert log is not None
         assert log.received_message == message

@@ -45,10 +45,22 @@ class CitScenario(Scenario):
         return False
 
     @pytest.fixture(scope="class")
+    def server_ready(self) -> None:
+        """
+        Override hook for scenarios that depend on an out-of-process server
+        (e.g. a Python echo server) being up before the scenario binary runs.
+        Subclasses managing such a server should override this to depend on
+        it, forcing it to start before `results` regardless of fixture
+        declaration order.
+        """
+        return None
+
+    @pytest.fixture(scope="class")
     def results(
         self,
         command: list[str],
         execution_timeout: float,
+        server_ready: None,
         *args,
         **kwargs,
     ) -> ScenarioResult:

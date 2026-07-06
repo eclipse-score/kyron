@@ -159,6 +159,10 @@ class TestSmoke(CitScenario):
         with EchoServer(address) as server:
             yield server
 
+    @pytest.fixture(scope="class")
+    def server_ready(self, echo_server: EchoServer) -> None:
+        return None
+
     def test_message_ok(
         self,
         echo_server: EchoServer,
@@ -215,6 +219,10 @@ class TestTTL(CitScenario):
         # that it is setup and torn down for each variant thus each binary execution.
         with EchoServer(address) as server:
             yield server
+
+    @pytest.fixture(scope="class")
+    def server_ready(self, echo_server: EchoServer) -> None:
+        return None
 
 
 class TestTTL_Valid(TestTTL):

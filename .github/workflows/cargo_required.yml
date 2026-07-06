@@ -48,7 +48,7 @@ jobs:
       # ---------- TARPAULIN(TEST + COVERAGE) ----------
       - name: Run tests under coverage
         # The stack size is set to 8MB considering additional stack usage of instrumented code and possible additional consumption due to newer version of toolchain.
-        run: RUST_MIN_STACK=8388608 cargo +nightly tarpaulin --skip-clean --out html --verbose --no-dead-code --engine llvm
+        run: RUST_MIN_STACK=8388608 cargo +nightly-2025-05-30 tarpaulin --skip-clean --out html --verbose --no-dead-code --engine llvm
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
