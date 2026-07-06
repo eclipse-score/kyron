@@ -34,5 +34,9 @@
   {
     "version": "v0.1.2",
     "url": "https://eclipse-score.github.io/kyron/v0.1.2/"
+  },
+  {
+    "version": "pr-163",
+    "url": "https://eclipse-score.github.io/kyron/pr-163/"
   }
 ]
