@@ -1,0 +1,9 @@
+.github/PULL_REQUEST_TEMPLATE/bug_fix.md
+.github/PULL_REQUEST_TEMPLATE/improvement.md
+.github/pull_request_template.md
+internal_docs/qnx.md
+src/kyron/README.md
+src/kyron/doc/features.md
+src/kyron/doc/io_driver.md
+src/logging_tracing/README.md
+tests/README.md
