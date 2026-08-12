@@ -25,7 +25,7 @@ use std::sync::{Arc, Mutex};
 
 use kyron_foundation::{
     cell::UnsafeCell,
-    containers::intrusive_linked_list,
+    containers::{intrusive_linked_list, StaticVec, Vector},
     not_recoverable_error,
     prelude::{debug, error, trace, CommonErrors, FoundationAtomicU32},
 };
@@ -202,9 +202,7 @@ impl RegistrationInfo {
     fn wake_all(&self, readiness: ReadinessState) {
         const MAX_WAKEUPS: usize = 6; // Limit the number of wakers to wake up out of lock as we cannot allocate here
 
-        //TODO: FixedSizeVec once miri issues are fixed there
-        let mut offloader = [const { Option::<Waker>::None }; MAX_WAKEUPS];
-        let mut iter = offloader.iter_mut();
+        let mut offloader = StaticVec::<Waker, MAX_WAKEUPS>::new();
 
         let mut wakers = self.wakers.lock().unwrap();
         trace!(
@@ -215,13 +213,13 @@ impl RegistrationInfo {
 
         if readiness.is_readable() {
             if let Some(waker) = wakers.read.take() {
-                *iter.next().unwrap() = Some(waker);
+                let _ = offloader.push(waker);
             }
         }
 
         if readiness.is_writable() {
             if let Some(waker) = wakers.write.take() {
-                *iter.next().unwrap() = Some(waker);
+                let _ = offloader.push(waker);
             }
         }
 
@@ -229,9 +227,7 @@ impl RegistrationInfo {
             if readiness.intersection(elem.interest.into()).is_some() {
                 let waker_opt = elem.waker.as_ref().unwrap();
 
-                if let Some(slot) = iter.next() {
-                    *slot = Some(waker_opt.clone());
-                } else {
+                if offloader.push(waker_opt.clone()).is_err() {
                     waker_opt.wake_by_ref();
                 }
 
@@ -244,8 +240,8 @@ impl RegistrationInfo {
         drop(wakers);
 
         // Notify out of lock
-        for e in offloader.into_iter().take_while(|e| e.is_some()) {
-            e.unwrap().wake();
+        while let Some(waker) = offloader.pop() {
+            waker.wake();
         }
     }
 
