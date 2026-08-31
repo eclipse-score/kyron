@@ -38,6 +38,8 @@ extensions = [
     "score_plantuml",
     "score_metamodel",
     "score_metrics",
+    "sphinx_mounts",
+    "score_mounts",
     "score_draw_uml_funcs",
     "score_source_code_linker",
     "score_layout",
