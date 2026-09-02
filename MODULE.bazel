@@ -28,7 +28,7 @@ bazel_dep(name = "platforms", version = "1.0.0")
 # S-CORE process rules
 bazel_dep(name = "score_bazel_platforms", version = "1.0.0")
 bazel_dep(name = "score_docs_as_code", version = "8.0.1")
-bazel_dep(name = "score_tooling", version = "1.1.2")
+bazel_dep(name = "score_tooling", version = "2.2.1")
 bazel_dep(name = "score_rust_policies", version = "0.0.5")
 
 bazel_dep(name = "score_process", version = "1.5.4", dev_dependency = True)
@@ -40,6 +40,19 @@ bazel_dep(name = "score_toolchains_rust", version = "0.10.0", dev_dependency = T
 
 # Others
 bazel_dep(name = "score_test_scenarios", version = "0.3.1", dev_dependency = True)
+
+# LLVM distribution: supplies the llvm-cov/llvm-profdata/llvm-cxxfilt report
+# tools for the LLVM coverage pipeline (@score_tooling//coverage) via labels.
+# It is NOT registered as a C++ toolchain (pure-Rust coverage scope); Rust
+# coverage tools come from the standard score_toolchains_rust Ferrocene
+# toolchains (>= 0.10.0) - no Rust additions.
+bazel_dep(name = "toolchains_llvm", version = "1.8.0", dev_dependency = True)
+
+llvm = use_extension("@toolchains_llvm//toolchain/extensions:llvm.bzl", "llvm", dev_dependency = True)
+llvm.toolchain(
+    llvm_version = "22.1.7",
+)
+use_repo(llvm, "llvm_toolchain", "llvm_toolchain_llvm")
 
 gcc = use_extension("@score_bazel_cpp_toolchains//extensions:gcc.bzl", "gcc", dev_dependency = True)
 gcc.toolchain(

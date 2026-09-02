@@ -70,3 +70,6 @@ component_integration_tests/python_test_cases/*.xml
 .vscode*
 *.orig
 .venv_docs
+
+# LLVM coverage report output
+/coverage_artifact/

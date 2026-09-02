@@ -26,24 +26,27 @@ jobs:
       - name: Setup Bazel
         uses: bazel-contrib/setup-bazel@0.14.0
 
-      - name: Run Rust tests with coverage instrumentation
+      - name: Run tests with LLVM coverage (source-based, line + branch)
         run: |
           set -euo pipefail
-          bazel test --lockfile_mode=error --config=x86_64-linux --config=ferrocene-coverage \
-            --nocache_test_results \
-            //src/...
+          bazel coverage --lockfile_mode=error --config=llvm_cov --build_tests_only -- //src/...
 
-      - name: Generate Ferrocene coverage reports
+      - name: Generate coverage report
+        env:
+          # Gate carried over from the legacy blanket flow (--min-line-coverage
+          # 44). The LLVM pipeline measures 74.4% raw lines at introduction
+          # (untested files now count as exact 0%), so 44 stays a safe floor;
+          # ratchet once a baseline is agreed.
+          COVERAGE_THRESHOLD: "44"
         run: |
           set -euo pipefail
-          bazel run --lockfile_mode=error //:rust_coverage -- --min-line-coverage 44
-
-      - name: Locate coverage artifacts
-        run: |
-          echo "COVERAGE_DIR=$(bazel info bazel-bin)/coverage/rust-tests" >> "${GITHUB_ENV}"
+          bazel run --lockfile_mode=error @score_tooling//coverage:generate_coverage_html -- \
+            --yaml tools/coverage/coverage_justifications.yaml \
+            --testlogs-subdir src \
+            --archive-dir coverage_artifact
 
       - name: Upload coverage HTML
         uses: actions/upload-artifact@v4
         with:
           name: rust-coverage-html
-          path: ${{ env.COVERAGE_DIR }}
+          path: coverage_artifact/

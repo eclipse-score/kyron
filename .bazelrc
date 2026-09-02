@@ -59,17 +59,9 @@ build:x86_64-linux --extra_toolchains=@score_gcc_x86_64_toolchain//:x86_64-linux
 build:x86_64-linux --extra_toolchains=@score_toolchains_rust//toolchains/ferrocene:ferrocene_x86_64_unknown_linux_gnu
 
 # -------------------------------------------------------------------------------
-# Ferrocene Rust coverage config
+# LLVM source-based coverage (@score_tooling//coverage): --config=llvm_cov
 # -------------------------------------------------------------------------------
-build:ferrocene-coverage --@rules_rust//rust/settings:extra_rustc_flag=-Cinstrument-coverage
-build:ferrocene-coverage --@rules_rust//rust/settings:extra_rustc_flag=-Clink-dead-code
-build:ferrocene-coverage --@rules_rust//rust/settings:extra_rustc_flag=-Ccodegen-units=1
-build:ferrocene-coverage --@rules_rust//rust/settings:extra_rustc_flag=-Cdebuginfo=2
-build:ferrocene-coverage --@rules_rust//rust/settings:extra_exec_rustc_flag=-Cinstrument-coverage
-build:ferrocene-coverage --@rules_rust//rust/settings:extra_exec_rustc_flag=-Clink-dead-code
-build:ferrocene-coverage --@rules_rust//rust/settings:extra_exec_rustc_flag=-Ccodegen-units=1
-build:ferrocene-coverage --@rules_rust//rust/settings:extra_exec_rustc_flag=-Cdebuginfo=2
-test:ferrocene-coverage --run_under=@score_tooling//coverage:llvm_profile_wrapper
+import %workspace%/tools/coverage/coverage.bazelrc
 
 # to be removed
 build:build_qnx8 --config=arm64-qnx

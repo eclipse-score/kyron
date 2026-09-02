@@ -11,7 +11,8 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 load("@score_docs_as_code//:docs.bzl", "docs")
-load("@score_tooling//:defs.bzl", "copyright_checker", "dash_license_checker", "rust_coverage_report", "setup_starpls", "use_format_targets")
+load("@score_tooling//:defs.bzl", "copyright_checker", "dash_license_checker", "setup_starpls")
+load("@score_tooling//third_party/format:macros.bzl", "use_format_targets")
 load("//:project_config.bzl", "PROJECT_CONFIG")
 
 setup_starpls(
@@ -23,15 +24,15 @@ copyright_checker(
     name = "copyright",
     srcs = [
         ".github",
+        "BUILD",
+        "MODULE.bazel",
         "docs",
         "internal_docs",
+        "project_config.bzl",
         "scripts",
         "src",
         "tests",
         "virtualization",
-        "//:BUILD",
-        "//:MODULE.bazel",
-        "//:project_config.bzl",
     ],
     config = "@score_tooling//cr_checker/resources:config",
     exclusion = "//:cr_checker_exclusion",
@@ -86,23 +87,6 @@ docs(
         # "@score_process//:needs_json",
     ],
     source_dir = "docs",
-)
-
-# Rust coverage
-rust_coverage_report(
-    name = "rust_coverage",
-    bazel_configs = [
-        "x86_64-linux",
-        "ferrocene-coverage",
-    ],
-    query = 'kind("rust_test", //src/...)',
-    visibility = ["//visibility:public"],
-)
-
-alias(
-    name = "rust_coverage_report",
-    actual = ":rust_coverage",
-    visibility = ["//visibility:public"],
 )
 
 # Test suites
