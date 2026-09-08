@@ -40,7 +40,7 @@ user.bazelrc
 .ruff_cache
 
 # docs:incremental and docs:ide_support build artifacts
-/_build
+_build
 
 # Vale - editorial style guide
 .vale.ini
@@ -73,3 +73,4 @@ component_integration_tests/python_test_cases/*.xml
 
 # LLVM coverage report output
 /coverage_artifact/
+ubproject.toml
