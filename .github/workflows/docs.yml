@@ -30,7 +30,7 @@ on:
 
 jobs:
   build-docs:
-    uses: eclipse-score/cicd-workflows/.github/workflows/docs.yml@main
+    uses: eclipse-score/cicd-workflows/.github/workflows/docs.yml@37eaadadfefc263d94a858d25665735659e916fa # 08/09/2026
     permissions:
       contents: write
       pages: write
@@ -38,5 +38,5 @@ jobs:
       id-token: write
 
     with:
-      bazel-target: "--lockfile_mode=error //:docs -- --github_user=${{ github.repository_owner }} --github_repo=${{ github.event.repository.name }}"
+      bazel-target: "--lockfile_mode=error //:docs"
       retention-days: 3

@@ -22,6 +22,6 @@ env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 jobs:
   formatting-check:
-    uses: eclipse-score/cicd-workflows/.github/workflows/format.yml@main
+    uses: eclipse-score/cicd-workflows/.github/workflows/format.yml@37eaadadfefc263d94a858d25665735659e916fa # 08/09/2026
     with:
       bazel-target: "test --lockfile_mode=error //:format.check" # optional, this is the default

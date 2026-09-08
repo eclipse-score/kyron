@@ -25,7 +25,7 @@ permissions:
 jobs:
   license-check:
     if: ${{ github.repository == 'eclipse-score/kyron' }}
-    uses: eclipse-score/cicd-workflows/.github/workflows/license-check.yml@main
+    uses: eclipse-score/cicd-workflows/.github/workflows/license-check.yml@37eaadadfefc263d94a858d25665735659e916fa # 08/09/2026
     with:
       repo-url: "${{ github.server_url }}/${{ github.repository }}"
       bazel-target: "run --lockfile_mode=error //:license-check"
