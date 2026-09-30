@@ -19,7 +19,7 @@ module(
 # Bazel global rules
 bazel_dep(name = "rules_python", version = "1.8.5")
 bazel_dep(name = "bazel_skylib", version = "1.9.0")
-bazel_dep(name = "rules_rust", version = "0.68.1-score")
+bazel_dep(name = "rules_rust", version = "0.68.2-score")
 bazel_dep(name = "rules_cc", version = "0.2.17")
 bazel_dep(name = "aspect_rules_lint", version = "2.5.0")
 bazel_dep(name = "buildifier_prebuilt", version = "8.5.1")
@@ -29,6 +29,11 @@ bazel_dep(name = "platforms", version = "1.0.0")
 bazel_dep(name = "score_bazel_platforms", version = "1.0.0")
 bazel_dep(name = "score_docs_as_code", version = "8.0.1")
 bazel_dep(name = "score_tooling", version = "2.2.1")
+
+# LLVM source-based coverage pipeline: the qualified S-CORE coverage tool,
+# successor of @score_tooling//coverage. See tools/coverage/.
+bazel_dep(name = "score_coverage", version = "0.3.1", dev_dependency = True)
+
 bazel_dep(name = "score_rust_policies", version = "0.0.5")
 
 bazel_dep(name = "score_process", version = "1.5.4", dev_dependency = True)
@@ -42,7 +47,7 @@ bazel_dep(name = "score_toolchains_rust", version = "0.10.0", dev_dependency = T
 bazel_dep(name = "score_test_scenarios", version = "0.3.1", dev_dependency = True)
 
 # LLVM distribution: supplies the llvm-cov/llvm-profdata/llvm-cxxfilt report
-# tools for the LLVM coverage pipeline (@score_tooling//coverage) via labels.
+# tools for the LLVM coverage pipeline (@score_coverage) via labels.
 # It is NOT registered as a C++ toolchain (pure-Rust coverage scope); Rust
 # coverage tools come from the standard score_toolchains_rust Ferrocene
 # toolchains (>= 0.10.0) - no Rust additions.

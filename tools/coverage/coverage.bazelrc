@@ -10,7 +10,9 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
-# LLVM source-based coverage via @score_tooling//coverage.
+# LLVM source-based coverage via @score_coverage (the qualified S-CORE
+# coverage tool), guide:
+# https://eclipse-score.github.io/coverage_tool/main/manual/user_manual.html
 # Use with: bazel coverage --config=llvm_cov //src/... --build_tests_only
 #
 # Pure-Rust scope: the C++ toolchain stays the hermetic GCC (Clang covmap is
@@ -19,6 +21,11 @@
 # llvm-cxxfilt binaries to the reporter via labels.
 
 coverage:llvm_cov --nocache_test_results
+# Instrument everything under //src. Left unset, Bazel guesses the filter
+# from the packages of the test targets (stripping only a trailing "/tests");
+# a crate tested from a "test" subpackage is then compiled without counters
+# unless one of its deps happens to be instrumented (score_coverage 0.3.1).
+coverage:llvm_cov --instrumentation_filter=^//src[/:]
 coverage:llvm_cov --combined_report=lcov
 coverage:llvm_cov --experimental_fetch_all_coverage_outputs
 coverage:llvm_cov --dynamic_mode=off
@@ -29,7 +36,7 @@ coverage:llvm_cov --platforms=@score_bazel_platforms//:x86_64-linux-gcc_12.2.0-p
 coverage:llvm_cov --extra_toolchains=@score_gcc_x86_64_toolchain//:x86_64-linux-gcc_12.2.0
 coverage:llvm_cov --extra_toolchains=@score_toolchains_rust//toolchains/ferrocene:ferrocene_x86_64_unknown_linux_gnu
 
-coverage:llvm_cov --coverage_output_generator=@score_tooling//coverage:merger
+coverage:llvm_cov --coverage_output_generator=@score_coverage//:merger
 coverage:llvm_cov --coverage_report_generator=//tools/coverage:reporter_wrapper
 coverage:llvm_cov --test_env=GENERATE_LLVM_LCOV=0
 coverage:llvm_cov --test_env=COVERAGE_GCOV_PATH=/usr/bin/true

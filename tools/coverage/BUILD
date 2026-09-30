@@ -11,7 +11,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # *******************************************************************************
 
-load("@score_tooling//coverage:defs.bzl", "score_coverage_reporter", "score_coverage_scope")
+load("@score_coverage//:defs.bzl", "score_coverage_reporter", "score_coverage_scope")
 
 # Coverage scope: ALL production Rust crates of the kyron runtime, listed
 # explicitly (the same surface the legacy rust_coverage_report measured).
