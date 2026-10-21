@@ -46,6 +46,13 @@ bazel_dep(name = "score_toolchains_rust", version = "0.10.0", dev_dependency = T
 # Others
 bazel_dep(name = "score_test_scenarios", version = "0.3.1", dev_dependency = True)
 
+# Temporary override until score_test_scenarios publishes a BCR release with score/ paths.
+git_override(
+    module_name = "score_test_scenarios",
+    commit = "c16400a3f7c71ca26b67965c5e7469560b6de496",
+    remote = "https://github.com/eclipse-score/testing_tools.git",
+)
+
 # LLVM distribution: supplies the llvm-cov/llvm-profdata/llvm-cxxfilt report
 # tools for the LLVM coverage pipeline (@score_coverage) via labels.
 # It is NOT registered as a C++ toolchain (pure-Rust coverage scope); Rust
