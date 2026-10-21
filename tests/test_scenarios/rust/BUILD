@@ -28,6 +28,6 @@ rust_binary(
         "@score_crates//:serde_json",
         "@score_crates//:tracing",
         "@score_crates//:tracing_subscriber",
-        "@score_test_scenarios//test_scenarios_rust",
+        "@score_test_scenarios//score/test_scenarios_rust",
     ],
 )
