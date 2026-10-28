@@ -25,7 +25,7 @@ jobs:
     timeout-minutes: 6 # 6 minutes is the maximum allowed for a cold run
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
