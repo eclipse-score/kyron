@@ -29,7 +29,7 @@ jobs:
   component-integration-tests:
     permissions:
       contents: read
-    runs-on: ${{ vars.REPO_RUNNER_LABELS && fromJSON(vars.REPO_RUNNER_LABELS) || 'ubuntu-latest' }}
+    runs-on: ${{ vars.REPO_RUNNER_LABELS && fromJSON(vars.REPO_RUNNER_LABELS) || 'ubuntu-24.04' }}
     defaults:
       run:
         shell: bash
