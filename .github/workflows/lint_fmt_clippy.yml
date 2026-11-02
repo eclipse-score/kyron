@@ -23,7 +23,7 @@ env:
 jobs:
   lint-fmt-clippy:
     timeout-minutes: 6 # 6 minutes is the maximum allowed for a cold run
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4.2.2
         with:
