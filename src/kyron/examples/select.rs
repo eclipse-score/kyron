@@ -11,7 +11,10 @@
 // SPDX-License-Identifier: Apache-2.0
 // *******************************************************************************
 
+use core::time::Duration;
+
 use kyron::{
+    futures::sleep::sleep,
     prelude::*,
     safety::{ensure_safety_enabled, spawn, SafetyResult},
     select,
@@ -39,18 +42,19 @@ fn main() {
     runtime.block_on(async {
         ensure_safety_enabled();
 
+        // Sleeps instead of busy loops, whose runtime differences vanish under CPU load.
         async fn short_job(result: i32) -> SafetyResult<i32, ()> {
-            for _ in 0..1_000_usize {}
+            sleep(Duration::from_millis(10)).await;
             Ok(result)
         }
 
         async fn long_job(result: i32) -> SafetyResult<i32, ()> {
-            for _ in 0..1_000_000_usize {}
+            sleep(Duration::from_millis(300)).await;
             Ok(result)
         }
 
         async fn very_long_job(result: i32) -> SafetyResult<i32, ()> {
-            for _ in 0..1_000_000_000_usize {}
+            sleep(Duration::from_millis(1000)).await;
             Ok(result)
         }
 
