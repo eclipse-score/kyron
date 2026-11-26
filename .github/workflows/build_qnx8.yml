@@ -33,7 +33,7 @@ jobs:
       # Pin the runner: iceoryx2-pal-posix-qnx8 runs bindgen against the
       # runner's system libclang, and clang >= 19 rejects the
       # '*-nto-qnx800' target triple ("version 'qnx800' ... is invalid").
-      # Ubuntu 24.04 ships clang 16-18; ubuntu-latest no longer does.
+      # Ubuntu 24.04 ships clang 16-18; ubuntu-24.04 no longer does.
       runner-labels: '"ubuntu-24.04"'
       credential-helper: 'scripts/internal/qnx_creds.py'
       environment-name: 'workflow-approval'
