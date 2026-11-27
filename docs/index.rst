@@ -24,8 +24,23 @@ This documentation describes the **Kyron** - the functional safety async runtime
 Overview
 --------
 
-This repository provides a standardized setup for projects using **C++** or **Rust** and **Bazel** as a build system.
-It integrates best practices for build, test, CI/CD and documentation.
+Kyron is an ``async/await`` runtime for Rust, built with Bazel and Cargo. Its configurable
+execution engines give fine-grained control over scheduling, thread management and
+workload isolation.
+
+Safety classification
+---------------------
+
+Kyron is designed for safety-critical use, with ASIL B as the long-term target.
+Its current classification in the S-CORE release is **QM**. Kyron makes no ASIL claim
+yet, and that includes the safety worker. The deferred safety work products and the
+conditions that bring them back are listed in :doc:`module/qm_tailoring`.
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   module/qm_tailoring
 
 Requirements
 ------------

@@ -12,6 +12,8 @@
 # *******************************************************************************
 # project_config.bzl
 PROJECT_CONFIG = {
-    "asil_level": "ASIL_B",
+    # Current S-CORE release classification. The design targets ASIL_B; the
+    # deferred safety work products are listed in docs/module/qm_tailoring.rst.
+    "asil_level": "QM",
     "source_code": ["rust"],
 }

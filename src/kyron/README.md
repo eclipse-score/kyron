@@ -1,10 +1,15 @@
 # Kyron
 
 **Kyron** is a customizable, high-performance `async/await` runtime designed for
-advanced concurrent programming with focus on **funcional safety**
+advanced concurrent programming with focus on **functional safety**
 (https://en.wikipedia.org/wiki/ISO_26262). It allows fine-grained control over
 scheduling, thread management, and workload isolation through configurable
 execution engines.
+
+> **Safety classification:** Kyron is designed for safety-critical use, with
+> ASIL B as the long-term target. Its current classification in the S-CORE
+> release is **QM** (no ASIL claim yet). See
+> [`docs/module/qm_tailoring.rst`](../../docs/module/qm_tailoring.rst).
 
 
 ## 🚀 Key Features
