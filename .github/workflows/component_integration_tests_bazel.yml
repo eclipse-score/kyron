@@ -21,56 +21,21 @@ on:
   schedule:
     - cron: '15 1 * * *' # This runs every day at 1:15 UTC
 
-env:
-  CARGO_TERM_COLOR: always
+permissions:
+  contents: read
 
 jobs:
   build:
     name: Build Bazel Code
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4.2.2
-
-      - name: Setup Bazel
-        uses: bazel-contrib/setup-bazel@0.15.0
-        with:
-          disk-cache: true
-          repository-cache: true
-          bazelisk-cache: true
-
-      - name: Bazel info (discover paths)
-        id: bazel-info
-        run: |
-          echo "BAZEL_OUTPUT_BASE=$(bazel info output_base)" >> $GITHUB_ENV
-          echo "BAZEL_USER_ROOT=$(bazel info output_user_root)" >> $GITHUB_ENV
-          echo "BAZEL_REPO_CACHE=$(bazel info repository_cache)" >> $GITHUB_ENV
-          bazel info
-
-      - name: Cache Bazel output base
-        uses: actions/cache@v4
-        with:
-          path: |
-            ${{ env.BAZEL_OUTPUT_BASE }}/action_cache
-            ${{ env.BAZEL_OUTPUT_BASE }}/bazel-out
-            ${{ env.BAZEL_OUTPUT_BASE }}/external
-            ${{ env.BAZEL_OUTPUT_BASE }}/execroot
-          key: bazel-ob-v2-${{ runner.os }}-${{ hashFiles('.bazelversion', 'MODULE.bazel', 'MODULE.bazel.lock', '**/*.bzl', 'Cargo.lock') }}
-          restore-keys: |
-            bazel-ob-v2-${{ runner.os }}-
-
-      - name: Build Test Scenarios with Bazel
-        run: |
-          bazel build --lockfile_mode=error --config x86_64-linux //tests/test_scenarios/rust:test_scenarios
-
-      - name: Build Test Scenarios with Bazel (PR)
-        if: github.event_name == 'pull_request' || github.event_name == 'push'
-        run: |
-          bazel test --lockfile_mode=error --config x86_64-linux //tests/test_cases:cit
-
-      - name: Build Test Scenarios with Bazel (Nightly)
-        if: github.event_name == 'schedule'
-        env:
-          NIGHTLY: TRUE
-        run: |
-          bazel test --lockfile_mode=error --config x86_64-linux //tests/test_cases:cit_repeat --test_timeout=1200
+    permissions:
+      contents: read
+      # Allows bazel.yml to prune replaced cache generations once it supports this.
+      actions: write
+    uses: eclipse-score/cicd-workflows/.github/workflows/bazel.yml@419f87cb66c1a0eb444416ae47c4c97bdc5732fc # bazel/v0.1.0
+    with:
+      build-targets: //tests/test_scenarios/rust:test_scenarios
+      # Nightly runs repeat the component integration tests.
+      test-targets: ${{ github.event_name == 'schedule' && '//tests/test_cases:cit_repeat' || '//tests/test_cases:cit' }}
+      bazel-configs: x86_64-linux
+      test-args: ${{ github.event_name == 'schedule' && '--test_timeout=1200' || '' }}
+      cache-key: cit
