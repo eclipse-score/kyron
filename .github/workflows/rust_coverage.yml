@@ -16,39 +16,28 @@ permissions:
 on:
   pull_request:
     types: [opened, reopened, synchronize]
+  # bazel.yml saves caches only from the default branch.
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
   rust_coverage:
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4.2.2
-
-      - name: Setup Bazel
-        uses: bazel-contrib/setup-bazel@0.14.0
-
-      - name: Run tests with LLVM coverage (source-based, line + branch)
-        run: |
-          set -euo pipefail
-          bazel coverage --lockfile_mode=error --config=llvm_cov --build_tests_only -- //src/...
-
-      - name: Generate coverage report
-        env:
-          # Gate carried over from the legacy blanket flow (--min-line-coverage
-          # 44). The LLVM pipeline measures 74.4% raw lines at introduction
-          # (untested files now count as exact 0%), so 44 stays a safe floor;
-          # ratchet once a baseline is agreed.
-          COVERAGE_THRESHOLD: "44"
-        run: |
-          set -euo pipefail
-          bazel run --lockfile_mode=error @score_coverage//:generate_coverage_html -- \
-            --yaml tools/coverage/coverage_justifications.yaml \
-            --testlogs-subdir src \
-            --archive-dir coverage_artifact
-
-      - name: Upload coverage HTML
-        uses: actions/upload-artifact@v4
-        with:
-          name: rust-coverage-html
-          path: coverage_artifact/
+    permissions:
+      contents: read
+      # Allows bazel.yml to prune replaced cache generations once it supports this.
+      actions: write
+    uses: eclipse-score/cicd-workflows/.github/workflows/bazel.yml@419f87cb66c1a0eb444416ae47c4c97bdc5732fc # bazel/v0.1.0
+    with:
+      test-targets: //src/...
+      test-command: coverage
+      bazel-configs: llvm_cov
+      test-args: --build_tests_only
+      # Gate carried over from the legacy blanket flow (--min-line-coverage
+      # 44). The LLVM pipeline measures 74.4% raw lines at introduction
+      # (untested files now count as exact 0%), so 44 stays a safe floor;
+      # ratchet once a baseline is agreed.
+      coverage-threshold: 44
+      coverage-justifications: tools/coverage/coverage_justifications.yaml
+      cache-key: rust-coverage
